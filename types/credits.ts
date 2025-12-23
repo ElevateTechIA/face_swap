@@ -48,6 +48,7 @@ export interface FaceSwap {
   creditsUsed: number;
   status: 'processing' | 'completed' | 'failed';
   transactionId: string;
+  resultImageUrl?: string; // URL pública de la imagen en Firebase Storage
   errorMessage?: string;
   createdAt: Timestamp;
   completedAt?: Timestamp;

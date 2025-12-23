@@ -1,6 +1,7 @@
 import { getApps, initializeApp, cert, ServiceAccount } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -61,6 +62,7 @@ export function getAdminAuth() {
       console.log('🚀 Inicializando Firebase Admin...');
       initializeApp({
         credential: cert(account),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       });
       console.log('✅ Firebase Admin inicializado correctamente');
     }
@@ -74,7 +76,7 @@ export function getAdminAuth() {
 
 export function getAdminFirestore() {
   const account = getServiceAccount();
-  
+
   if (!account) {
     throw new Error("Missing Firebase Admin credentials.");
   }
@@ -84,6 +86,7 @@ export function getAdminFirestore() {
       console.log('🚀 Inicializando Firebase Admin...');
       initializeApp({
         credential: cert(account),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       });
       console.log('✅ Firebase Admin inicializado correctamente');
     }
@@ -91,6 +94,30 @@ export function getAdminFirestore() {
     return getFirestore();
   } catch (error: any) {
     console.error('❌ Error inicializando Firebase Admin:', error.message);
+    throw error;
+  }
+}
+
+export function getAdminStorage() {
+  const account = getServiceAccount();
+
+  if (!account) {
+    throw new Error("Missing Firebase Admin credentials.");
+  }
+
+  try {
+    if (!getApps().length) {
+      console.log('🚀 Inicializando Firebase Admin...');
+      initializeApp({
+        credential: cert(account),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      });
+      console.log('✅ Firebase Admin inicializado correctamente');
+    }
+
+    return getStorage();
+  } catch (error: any) {
+    console.error('❌ Error inicializando Firebase Storage:', error.message);
     throw error;
   }
 }

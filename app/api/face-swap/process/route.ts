@@ -132,9 +132,21 @@ export async function POST(request: NextRequest) {
 
     const resultImage = `data:${generatedPart.inlineData.mimeType};base64,${generatedPart.inlineData.data}`;
 
+    // Subir imagen a Firebase Storage
+    let resultImageUrl = '';
+    try {
+      const { uploadFaceSwapImage } = await import('@/lib/firebase/storage');
+      resultImageUrl = await uploadFaceSwapImage(resultImage, userId!, faceSwapId);
+      console.log(`✅ Image uploaded to Storage: ${resultImageUrl}`);
+    } catch (uploadError: any) {
+      console.error('⚠️ Error uploading to Storage:', uploadError.message);
+      // Continue without storage URL - non-critical failure
+    }
+
     // Actualizar face swap a completed
     await db.collection('faceSwaps').doc(faceSwapId).update({
       status: 'completed',
+      resultImageUrl: resultImageUrl || null,
       completedAt: FieldValue.serverTimestamp(),
     });
 

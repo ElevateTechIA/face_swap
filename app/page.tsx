@@ -7,7 +7,7 @@ import { CreditsDisplay } from './components/CreditsDisplay';
 import { InsufficientCreditsModal } from './components/InsufficientCreditsModal';
 import {
   Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
-  Grid, Flame, Layers, Play, Zap, LogOut, LogIn
+  Grid, Flame, Layers, Play, Zap, LogOut, LogIn, History
 } from 'lucide-react';
 
 // --- Constantes de Encuesta (Onboarding) ---
@@ -443,6 +443,14 @@ export default function Home() {
 
           <div className="flex items-center gap-3">
             <CreditsDisplay credits={userCredits} loading={loadingCredits} />
+
+            <button
+              onClick={() => router.push('/history')}
+              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              title="Ver historial"
+            >
+              <History size={16} />
+            </button>
 
             {user?.photoURL && (
               <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-white/20" />
