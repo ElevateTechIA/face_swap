@@ -32,33 +32,44 @@ const packages = [
   {
     packageId: 'starter',
     name: 'Starter',
-    credits: 10,
-    priceUSD: 999, // $9.99 en centavos
-    stripePriceId: 'price_1ShW1RIGoSU0Z9Wx8YErhZJa',
+    credits: 1000,
+    priceUSD: 800, // $8.00 en centavos
+    stripePriceId: 'price_1ShcaAIGoSU0Z9WxKWOrF6H3',
     stripeProductId: 'prod_TepgcwlafBj39q',
-    description: '10 Face Swaps',
+    description: '~12 Face Swaps',
+    popular: false,
+    active: true,
+  },
+  {
+    packageId: 'creator',
+    name: 'Creator',
+    credits: 2200,
+    priceUSD: 1500, // $15.00 en centavos
+    stripePriceId: 'price_1ShcbuIGoSU0Z9Wx9OiDhFfE',
+    stripeProductId: 'prod_Tepi9qdceb47e8',
+    description: '~27 Face Swaps',
     popular: false,
     active: true,
   },
   {
     packageId: 'pro',
     name: 'Pro',
-    credits: 30,
-    priceUSD: 2499, // $24.99 en centavos
-    stripePriceId: 'price_1ShW30IGoSU0Z9Wx5cSre7MC',
-    stripeProductId: 'prod_Tepi9qdceb47e8',
-    description: '30 Face Swaps',
+    credits: 4000,
+    priceUSD: 2500, // $25.00 en centavos
+    stripePriceId: 'price_1ShcccIGoSU0Z9WxaNcczskY',
+    stripeProductId: 'prod_TepjcjMUd6Gq0H',
+    description: '~50 Face Swaps',
     popular: true,
     active: true,
   },
   {
-    packageId: 'ultimate',
-    name: 'Ultimate',
-    credits: 100,
-    priceUSD: 4999, // $49.99 en centavos
-    stripePriceId: 'price_1ShW3uIGoSU0Z9Wxa0E5kS8b',
-    stripeProductId: 'prod_TepjcjMUd6Gq0H',
-    description: '100 Face Swaps',
+    packageId: 'ultra',
+    name: 'Ultra',
+    credits: 8000,
+    priceUSD: 4500, // $45.00 en centavos
+    stripePriceId: 'price_1ShcdLIGoSU0Z9WxZnSwxLCl',
+    stripeProductId: 'prod_TewWuGfXMLcltF',
+    description: '~100 Face Swaps',
     popular: false,
     active: true,
   },
