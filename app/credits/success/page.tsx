@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../auth/AuthProvider';
 import { CheckCircle2, Sparkles, RefreshCw } from 'lucide-react';
 
-export default function SuccessPage() {
+function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getUserIdToken } = useAuth();
@@ -116,5 +116,17 @@ export default function SuccessPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#050505] text-white font-sans flex items-center justify-center">
+        <RefreshCw size={40} className="animate-spin text-pink-600" />
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }
