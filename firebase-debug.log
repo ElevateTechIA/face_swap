@@ -1,0 +1,50 @@
+[debug] [2025-12-22T18:15:30.826Z] ----------------------------------------------------------------------
+[debug] [2025-12-22T18:15:30.829Z] Command:       C:\nvm4w\nodejs\node.exe C:\Users\cvega\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\bin\firebase.js auth:import --project=face-swap-nextjs
+[debug] [2025-12-22T18:15:30.829Z] CLI Version:   15.1.0
+[debug] [2025-12-22T18:15:30.829Z] Platform:      win32
+[debug] [2025-12-22T18:15:30.829Z] Node Version:  v20.19.0
+[debug] [2025-12-22T18:15:30.829Z] Time:          Mon Dec 22 2025 13:15:30 GMT-0500 (Eastern Standard Time)
+[debug] [2025-12-22T18:15:30.830Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-12-22T18:15:31.047Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T18:15:31.047Z] > authorizing via signed-in user (cesarvega.col20@gmail.com)
+[debug] [2025-12-22T18:15:31.048Z] [iam] checking project face-swap-nextjs for permissions ["firebase.projects.get","firebaseauth.users.create","firebaseauth.users.update"]
+[debug] [2025-12-22T18:15:31.049Z] Checked if tokens are valid: true, expires at: 1766430352829
+[debug] [2025-12-22T18:15:31.049Z] Checked if tokens are valid: true, expires at: 1766430352829
+[debug] [2025-12-22T18:15:31.050Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions [none]
+[debug] [2025-12-22T18:15:31.050Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions x-goog-quota-user=projects/face-swap-nextjs
+[debug] [2025-12-22T18:15:31.050Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions {"permissions":["firebase.projects.get","firebaseauth.users.create","firebaseauth.users.update"]}
+[debug] [2025-12-22T18:15:31.272Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions 200
+[debug] [2025-12-22T18:15:31.272Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions {"permissions":["firebase.projects.get","firebaseauth.users.create","firebaseauth.users.update"]}
+[warn] !  No hash algorithm specified. Password users cannot be imported. 
+[debug] [2025-12-22T18:15:31.275Z] TypeError: Cannot read properties of undefined (reading 'endsWith')
+    at Command.actionFn (C:\Users\cvega\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\commands\auth-import.js:37:19)
+    at C:\Users\cvega\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\command.js:265:25
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2025-12-22T18:19:28.480Z] ----------------------------------------------------------------------
+[debug] [2025-12-22T18:19:28.483Z] Command:       C:\nvm4w\nodejs\node.exe C:\Users\cvega\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\bin\firebase.js auth:import --project=face-swap-nextjs
+[debug] [2025-12-22T18:19:28.483Z] CLI Version:   15.1.0
+[debug] [2025-12-22T18:19:28.483Z] Platform:      win32
+[debug] [2025-12-22T18:19:28.483Z] Node Version:  v20.19.0
+[debug] [2025-12-22T18:19:28.484Z] Time:          Mon Dec 22 2025 13:19:28 GMT-0500 (Eastern Standard Time)
+[debug] [2025-12-22T18:19:28.484Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-12-22T18:19:28.700Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T18:19:28.700Z] > authorizing via signed-in user (cesarvega.col20@gmail.com)
+[debug] [2025-12-22T18:19:28.700Z] [iam] checking project face-swap-nextjs for permissions ["firebase.projects.get","firebaseauth.users.create","firebaseauth.users.update"]
+[debug] [2025-12-22T18:19:28.701Z] Checked if tokens are valid: true, expires at: 1766430352829
+[debug] [2025-12-22T18:19:28.702Z] Checked if tokens are valid: true, expires at: 1766430352829
+[debug] [2025-12-22T18:19:28.703Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions [none]
+[debug] [2025-12-22T18:19:28.703Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions x-goog-quota-user=projects/face-swap-nextjs
+[debug] [2025-12-22T18:19:28.703Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions {"permissions":["firebase.projects.get","firebaseauth.users.create","firebaseauth.users.update"]}
+[debug] [2025-12-22T18:19:28.910Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions 200
+[debug] [2025-12-22T18:19:28.910Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/face-swap-nextjs:testIamPermissions {"permissions":["firebase.projects.get","firebaseauth.users.create","firebaseauth.users.update"]}
+[warn] !  No hash algorithm specified. Password users cannot be imported. 
+[debug] [2025-12-22T18:19:28.912Z] TypeError: Cannot read properties of undefined (reading 'endsWith')
+    at Command.actionFn (C:\Users\cvega\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\commands\auth-import.js:37:19)
+    at C:\Users\cvega\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\command.js:265:25
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: An unexpected error has occurred.

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(taskkill:*)",
+      "Bash(dir:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, ProcessName | Format-Table\")",
+      "Bash(node -e:*)",
+      "Bash(powershell -Command \"Test-Path ''firebase-service-account.json''\")",
+      "Bash(copy \"c:\\\\Users\\\\cvega\\\\Downloads\\\\face-swap-nextjs-3cb23d1de83c.json\" \"c:\\\\Working Projects\\\\FACE_SWAP_NEXTJS\\\\firebase-service-account.json\")",
+      "Bash(powershell -Command \"Copy-Item ''c:\\\\Users\\\\cvega\\\\Downloads\\\\face-swap-nextjs-3cb23d1de83c.json'' ''c:\\\\Working Projects\\\\FACE_SWAP_NEXTJS\\\\firebase-service-account.json''\")",
+      "Bash(npx tsx:*)",
+      "Bash(powershell:*)",
+      "Bash(scoop bucket add:*)",
+      "Bash(scoop install:*)"
+    ]
+  }
+}

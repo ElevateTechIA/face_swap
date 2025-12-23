@@ -1,0 +1,662 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from './auth/AuthProvider';
+import { CreditsDisplay } from './components/CreditsDisplay';
+import { InsufficientCreditsModal } from './components/InsufficientCreditsModal';
+import {
+  Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
+  Grid, Flame, Layers, Play, Zap, LogOut, LogIn
+} from 'lucide-react';
+
+// --- Constantes de Encuesta (Onboarding) ---
+const SURVEY_QUESTIONS = [
+  {
+    id: 1,
+    question: "¿Cuál es tu objetivo principal?",
+    subtitle: "Personalizaremos la IA según tu meta.",
+    options: [
+      { id: 'fun', text: "Divertirme y reír", icon: "😂" },
+      { id: 'beauty', text: "Mejorar mis fotos", icon: "✨" },
+      { id: 'content', text: "Crear contenido", icon: "📸" },
+      { id: 'explore', text: "Probar estilos nuevos", icon: "🎨" }
+    ]
+  },
+  {
+    id: 2,
+    question: "¿Qué estilo te define mejor?",
+    subtitle: "Para sugerirte los mejores filtros.",
+    options: [
+      { id: 'chic', text: "Chic & Glamour", icon: "💎" },
+      { id: 'urban', text: "Urbano & Street", icon: "👟" },
+      { id: 'vintage', text: "Retro & Vintage", icon: "🎞️" },
+      { id: 'fantasy', text: "Fantasía & Cosplay", icon: "🦄" }
+    ]
+  },
+  {
+    id: 3,
+    question: "¿Con quién te identificas?",
+    subtitle: "Ajustaremos los modelos base.",
+    options: [
+      { id: 'female', text: "Femenino", icon: "👩" },
+      { id: 'male', text: "Masculino", icon: "👨" },
+      { id: 'nb', text: "No Binario / Otro", icon: "🌈" }
+    ]
+  }
+];
+
+// --- Categorías de Contenido ---
+const CATEGORIES = [
+  { id: 'all', name: 'Todos', icon: <Grid size={14}/> },
+  { id: 'trending', name: 'Tendencias', icon: <Flame size={14}/> },
+  { id: 'editorial', name: 'Moda', icon: <Layers size={14}/> },
+  { id: 'cinematic', name: 'Cine', icon: <Play size={14}/> },
+];
+
+// --- Plantillas ---
+const TEMPLATES = [
+  { id: 't1', url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80', title: 'Vogue Cover', category: 'editorial', trending: true },
+  { id: 't2', url: 'https://images.unsplash.com/photo-1618085222100-89162c806006?w=600&q=80', title: 'Cyberpunk 2077', category: 'cinematic', trending: true },
+  { id: 't3', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&q=80', title: 'Old Money', category: 'editorial', trending: false },
+  { id: 't4', url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&q=80', title: 'CEO Portait', category: 'editorial', trending: false },
+  { id: 't5', url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80', title: 'Duna Sci-Fi', category: 'cinematic', trending: true },
+  { id: 't6', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80', title: 'Urban Night', category: 'cinematic', trending: false },
+];
+
+// --- Estilos de IA ---
+const STYLES = [
+  { id: 'natural', name: 'Natural', color: 'from-green-400 to-emerald-600', filter: 'none' },
+  { id: 'glam', name: 'Glamour', color: 'from-pink-500 to-rose-500', filter: 'contrast(1.1) saturate(1.3) brightness(1.1)' },
+  { id: 'cyber', name: 'Cyberpunk', color: 'from-blue-500 to-cyan-500', filter: 'hue-rotate(180deg) contrast(1.2)' },
+  { id: 'vintage', name: '90s Retro', color: 'from-yellow-400 to-orange-500', filter: 'sepia(0.4) contrast(0.9) brightness(0.9)' },
+  { id: 'bw', name: 'Noir', color: 'from-gray-400 to-gray-600', filter: 'grayscale(1) contrast(1.2)' },
+];
+
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'survey' | 'ai';
+  className?: string;
+  disabled?: boolean;
+  isLoading?: boolean;
+}
+
+const Button: React.FC<ButtonProps> = ({ children, onClick, variant = 'primary', className = '', disabled = false, isLoading = false }) => {
+  const baseStyle = "px-6 py-4 rounded-2xl font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 w-full";
+  const variants = {
+    primary: "bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-xl shadow-pink-500/20",
+    secondary: "bg-white/5 backdrop-blur-md text-gray-200 border border-white/10 hover:bg-white/10",
+    outline: "border-2 border-pink-500 text-pink-500",
+    ghost: "text-gray-400 hover:text-white",
+    survey: "bg-gray-900/80 border border-white/10 text-left justify-start h-20 px-5",
+    ai: "bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30"
+  };
+
+  return (
+    <button onClick={onClick} disabled={disabled || isLoading} className={`${baseStyle} ${variants[variant]} ${className} ${disabled || isLoading ? 'opacity-50' : ''}`}>
+      {isLoading ? <RefreshCw className="animate-spin" size={20} /> : children}
+    </button>
+  );
+};
+
+export default function Home() {
+  const router = useRouter();
+  const { user, loading: authLoading, signInWithGoogle, signOutUser, getUserIdToken } = useAuth();
+  const [step, setStep] = useState(-1); // -1 = login, 0 = encuesta, 1+ = app
+  const [sourceImg, setSourceImg] = useState<string | null>(null);
+  const [targetImg, setTargetImg] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState('trending');
+  const [selectedStyle, setSelectedStyle] = useState(STYLES[0]);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
+
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiCaption, setAiCaption] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+  const [surveyIndex, setSurveyIndex] = useState(0);
+  const [isSurveyLoading, setIsSurveyLoading] = useState(false);
+  const [surveyAnswers, setSurveyAnswers] = useState<Record<number, string>>({});
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  // Estados de créditos
+  const [userCredits, setUserCredits] = useState(0);
+  const [loadingCredits, setLoadingCredits] = useState(true);
+  const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
+
+  // Cargar preferencias y créditos al autenticarse
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      loadPreferences();
+      loadUserCredits();
+    } else {
+      setStep(-1);
+    }
+  }, [user, authLoading]);
+
+  const loadPreferences = async () => {
+    try {
+      const token = await getUserIdToken();
+      if (!token) {
+        setStep(-1);
+        return;
+      }
+      const response = await fetch('/api/preferences', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.preferences) {
+          setSurveyAnswers(data.preferences);
+          setStep(1); // Ir directo a la app si ya tiene preferencias
+        } else {
+          setStep(0); // Mostrar encuesta si no tiene preferencias
+        }
+      } else if (response.status === 401) {
+        setStep(-1);
+      } else {
+        setStep(0);
+      }
+    } catch (error) {
+      setStep(0);
+    }
+  };
+
+  const loadUserCredits = async () => {
+    try {
+      const token = await getUserIdToken();
+      if (!token) return;
+
+      const response = await fetch('/api/credits/balance', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserCredits(data.credits || 0);
+      }
+    } catch (error) {
+      console.error('Error cargando créditos:', error);
+    } finally {
+      setLoadingCredits(false);
+    }
+  };
+
+  const savePreferences = async (preferences: Record<number, string>) => {
+    try {
+      const token = await getUserIdToken();
+      if (!token) return;
+      await fetch('/api/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(preferences),
+      });
+    } catch (error) {
+      console.error('Error guardando preferencias:', error);
+    }
+  };
+
+  const analyzeStyle = async () => {
+    if (!sourceImg) return;
+    setIsAiLoading(true);
+    try {
+      const token = await getUserIdToken();
+      const response = await fetch('/api/ai/analyze-style', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ image: sourceImg }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiAnalysis(data.analysis);
+      } else {
+        setAiAnalysis("¡Tienes un rostro increíble! Te sugerimos probar el estilo Glamour.");
+      }
+    } catch (e) {
+      setAiAnalysis("¡Tienes un rostro increíble! Te sugerimos probar el estilo Glamour.");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const generateCaption = async () => {
+    if (!resultImage) return;
+    setIsAiLoading(true);
+    try {
+      const token = await getUserIdToken();
+      const response = await fetch('/api/ai/generate-caption', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          image: resultImage,
+          style: selectedStyle.name,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiCaption(data.caption);
+      } else {
+        setAiCaption("Viviendo mi mejor versión ✨📸 #GlamAI #NewMe");
+      }
+    } catch (e) {
+      setAiCaption("Viviendo mi mejor versión ✨📸 #GlamAI #NewMe");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const urlToBase64 = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const handleSurveyOption = (optionId: string) => {
+    const newAnswers = { ...surveyAnswers, [surveyIndex + 1]: optionId };
+    setSurveyAnswers(newAnswers);
+
+    if (surveyIndex < SURVEY_QUESTIONS.length - 1) {
+      setSurveyIndex(prev => prev + 1);
+    } else {
+      setIsSurveyLoading(true);
+      savePreferences(newAnswers);
+      setTimeout(() => {
+        setIsSurveyLoading(false);
+        setStep(1);
+      }, 1000);
+    }
+  };
+
+  const selectTemplate = async (url: string) => {
+    setProcessingProgress(10);
+    try {
+      const base64 = await urlToBase64(url);
+      setTargetImg(base64);
+      setStep(2);
+    } catch (e) {
+      setTargetImg(url);
+      setStep(2);
+    }
+    setProcessingProgress(0);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'source' | 'target') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (type === 'source') {
+          setSourceImg(event.target?.result as string);
+          setAiAnalysis(null);
+        } else {
+          setTargetImg(event.target?.result as string);
+          setStep(2);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const processFaceSwapOnServer = async () => {
+    setProcessingProgress(45);
+
+    try {
+      const token = await getUserIdToken();
+
+      const response = await fetch('/api/face-swap/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sourceImage: sourceImg,
+          targetImage: targetImg,
+          style: selectedStyle.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        if (error.code === 'INSUFFICIENT_CREDITS') {
+          setShowInsufficientCreditsModal(true);
+          setStep(3);
+          return;
+        }
+        throw new Error(error.error || 'Error procesando Face Swap');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setResultImage(data.resultImage);
+        setUserCredits(data.creditsRemaining);
+        setProcessingProgress(100);
+        setStep(5);
+      } else {
+        throw new Error('Error en el procesamiento');
+      }
+    } catch (error: any) {
+      console.error('Error en Face Swap:', error);
+      alert('Error procesando imagen. Por favor, intenta de nuevo.');
+      setStep(3);
+    }
+  };
+
+  const startProcessing = async () => {
+    // Validar créditos antes de iniciar
+    if (userCredits < 1) {
+      setShowInsufficientCreditsModal(true);
+      return;
+    }
+
+    setStep(4);
+    await processFaceSwapOnServer();
+  };
+
+  const filteredTemplates = TEMPLATES.filter(t => {
+    if (activeCategory === 'all') return true;
+    if (activeCategory === 'trending') return t.trending;
+    return t.category === activeCategory;
+  });
+
+  // Pantalla de Login
+  if (step === -1 || !user) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden flex items-center justify-center">
+        <div className="max-w-md mx-auto px-6 text-center">
+          <div className="mb-12">
+            <div className="w-24 h-24 bg-gradient-to-tr from-pink-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Sparkles className="w-12 h-12 text-white" />
+            </div>
+            <h1 className="text-6xl font-black tracking-tighter leading-none mb-4 uppercase italic">
+              Face<br/><span className="text-pink-600">Clone</span>
+            </h1>
+            <p className="text-gray-400 font-medium mb-2">Nano Banana Pro Engine Enabled</p>
+            <p className="text-gray-500 text-sm">Inicia sesión para guardar tus creaciones</p>
+          </div>
+
+          {authLoading ? (
+            <div className="flex items-center justify-center">
+              <RefreshCw className="animate-spin w-8 h-8 text-pink-500" />
+            </div>
+          ) : (
+            <Button 
+              onClick={async () => {
+                if (isSigningIn) return;
+                setIsSigningIn(true);
+                try {
+                  await signInWithGoogle();
+                } catch (error) {
+                  console.error('Error al iniciar sesión:', error);
+                } finally {
+                  setIsSigningIn(false);
+                }
+              }}
+              disabled={isSigningIn}
+            >
+              {isSigningIn ? (
+                <>
+                  <RefreshCw className="animate-spin" size={20} /> Iniciando sesión...
+                </>
+              ) : (
+                <>
+                  <LogIn size={20} /> Iniciar sesión con Google
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden">
+      {step > 0 && (
+        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-14 bg-black/70 backdrop-blur-2xl border-b border-white/10 z-50 flex items-center justify-between px-4">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setStep(1)}>
+            <div className="w-8 h-8 bg-gradient-to-tr from-pink-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-black text-lg tracking-tighter italic uppercase">GLAM</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <CreditsDisplay credits={userCredits} loading={loadingCredits} />
+
+            {user?.photoURL && (
+              <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-white/20" />
+            )}
+            <button
+              onClick={() => signOutUser()}
+              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              title="Cerrar sesión"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* Modal de créditos insuficientes */}
+      <InsufficientCreditsModal
+        isOpen={showInsufficientCreditsModal}
+        onClose={() => setShowInsufficientCreditsModal(false)}
+        onBuyCredits={() => {
+          setShowInsufficientCreditsModal(false);
+          router.push('/credits');
+        }}
+      />
+
+      <main className={`max-w-md mx-auto px-6 ${step > 0 ? 'pt-20' : 'pt-12'} pb-24 min-h-screen flex flex-col`}>
+
+        {step === 0 && (
+          <div className="flex flex-col flex-1">
+            {isSurveyLoading ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
+                <Sparkles className="w-12 h-12 text-pink-500 animate-pulse mb-4" />
+                <h2 className="text-2xl font-black italic">CALIBRANDO IA...</h2>
+              </div>
+            ) : (
+              <>
+                <div className="mb-12">
+                  <h1 className="text-5xl font-black tracking-tighter leading-none mb-4 uppercase italic">Face<br/><span className="text-pink-600">Clone</span></h1>
+                  <p className="text-gray-400 font-medium">Nano Banana Pro Engine Enabled.</p>
+                </div>
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold mb-6">{SURVEY_QUESTIONS[surveyIndex].question}</h2>
+                  <p className="text-gray-500 text-sm mb-4">{SURVEY_QUESTIONS[surveyIndex].subtitle}</p>
+                  <div className="grid gap-3">
+                    {SURVEY_QUESTIONS[surveyIndex].options.map((opt) => (
+                      <Button key={opt.id} variant="survey" onClick={() => handleSurveyOption(opt.id)}>
+                        <span className="text-2xl mr-4">{opt.icon}</span>
+                        <span className="font-bold text-lg">{opt.text}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="flex flex-col gap-6">
+            <h2 className="text-3xl font-black italic">EXPLORAR</h2>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+              {CATEGORIES.map(cat => (
+                <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold border ${activeCategory === cat.id ? 'bg-white text-black border-white' : 'bg-white/5 text-gray-400 border-white/10'}`}>
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black border border-white/10 p-6 flex items-center justify-between group active:scale-95 transition-all">
+              <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'target')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
+              <div className="flex flex-col gap-1">
+                <p className="text-lg font-black italic uppercase">SUBIR ESCENA</p>
+                <p className="text-xs text-gray-500">Usa tu propia foto de fondo</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-pink-600 flex items-center justify-center">
+                <Upload size={20} className="text-white" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {filteredTemplates.map((t) => (
+                <div key={t.id} onClick={() => selectTemplate(t.url)} className="relative aspect-[3/4.5] rounded-3xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer">
+                  <img src={t.url} className="w-full h-full object-cover" alt={t.title} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                  <p className="absolute bottom-4 left-4 text-[10px] font-black uppercase tracking-widest">{t.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="flex flex-col flex-1 gap-6">
+            <div className="text-center">
+              <h2 className="text-4xl font-black mb-2 italic uppercase">TU ROSTRO</h2>
+              <p className="text-gray-500 font-medium">Sube el rostro que quieres usar.</p>
+            </div>
+
+            <div className="relative mx-auto w-full aspect-square max-w-[280px]">
+              <div className={`w-full h-full rounded-[60px] border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
+                <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'source')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
+                {sourceImg ? (
+                  <img src={sourceImg} className="w-full h-full object-cover" alt="Selfie" />
+                ) : (
+                  <Camera size={64} className="text-white/10" />
+                )}
+              </div>
+            </div>
+
+            {sourceImg && (
+              <div className="animate-fade-in">
+                {!aiAnalysis ? (
+                  <Button variant="ai" onClick={analyzeStyle} isLoading={isAiLoading}>
+                    ✨ Analizar Rasgos
+                  </Button>
+                ) : (
+                  <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4 text-sm text-indigo-200 italic">
+                    <Sparkles size={14} className="inline mr-2" />
+                    &quot;{aiAnalysis}&quot;
+                  </div>
+                )}
+              </div>
+            )}
+
+            <Button onClick={() => setStep(3)} disabled={!sourceImg} className="mt-auto h-16 text-xl italic uppercase font-black">
+              SIGUIENTE <ChevronRight size={24} />
+            </Button>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="flex flex-col flex-1 gap-6">
+            <h2 className="text-2xl font-black text-center italic uppercase">PREPARAR SWAP</h2>
+
+            <div className="relative aspect-[3/4] w-full rounded-[40px] overflow-hidden bg-black border border-white/10">
+              <img src={targetImg || ''} className="w-full h-full object-cover" style={{ filter: selectedStyle.filter }} alt="Preview" />
+              <div className="absolute bottom-6 left-6 right-6 p-4 bg-black/60 backdrop-blur-xl rounded-2xl border border-white/10">
+                <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">PROMPT ACTIVO</p>
+                <p className="text-[9px] italic text-pink-500 line-clamp-2 leading-relaxed">&quot;A high-quality face swap where the face from the second image replaces...&quot;</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto py-4 no-scrollbar">
+              {STYLES.map((s) => (
+                <button key={s.id} onClick={() => setSelectedStyle(s)} className={`flex-shrink-0 transition-all ${selectedStyle.id === s.id ? 'scale-110 opacity-100' : 'opacity-40'}`}>
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${s.color} border-2 ${selectedStyle.id === s.id ? 'border-white' : 'border-transparent'}`} />
+                </button>
+              ))}
+            </div>
+
+            <Button onClick={startProcessing} className="mt-auto h-16 bg-white text-black text-xl italic font-black uppercase">
+              INICIAR SWAP <Zap size={22} fill="currentColor" />
+            </Button>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="flex-1 flex flex-col items-center justify-center text-center">
+            <div className="relative w-48 h-48 mb-12">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="96" cy="96" r="86" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray={540} strokeDashoffset={540 - (540 * processingProgress) / 100} className="text-pink-600 transition-all duration-300" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-5xl font-black italic tracking-tighter">{processingProgress}%</span>
+              </div>
+            </div>
+            <h3 className="text-3xl font-black italic uppercase">FUSIONANDO...</h3>
+            <p className="text-gray-500 text-sm mt-2">Integrando iluminación y texturas...</p>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="flex flex-col flex-1 animate-fade-in">
+            <div className="relative aspect-[3/4.5] w-full rounded-[40px] overflow-hidden border border-white/10 mb-6">
+              <img src={showComparison ? targetImg || '' : resultImage || ''} className="w-full h-full object-cover" alt="Result" />
+              <button
+                onMouseDown={() => setShowComparison(true)}
+                onMouseUp={() => setShowComparison(false)}
+                onTouchStart={() => setShowComparison(true)}
+                onTouchEnd={() => setShowComparison(false)}
+                className="absolute bottom-6 right-6 w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-2xl border border-white/20 flex items-center justify-center"
+              >
+                <RefreshCw size={24} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              {!aiCaption ? (
+                <Button variant="ai" onClick={generateCaption} isLoading={isAiLoading}>
+                  ✨ Generar Pie de Foto
+                </Button>
+              ) : (
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 italic text-sm text-gray-300">
+                  &quot;{aiCaption}&quot;
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-auto">
+              <Button variant="secondary" onClick={() => setStep(1)}>NUEVO</Button>
+              <a href={resultImage || ''} download="swap_result.png">
+                <Button><Download size={20} /> GUARDAR</Button>
+              </a>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <style jsx>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
+      `}</style>
+    </div>
+  );
+}
