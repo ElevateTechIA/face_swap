@@ -100,6 +100,9 @@ export async function POST(request: NextRequest) {
     // Obtener el prompt específico del template (o usar el default)
     const prompt = getTemplatePrompt(templateTitle);
     console.log(`🎯 Using prompt for template: ${templateTitle || 'default'}`);
+    console.log(`📝 Prompt length: ${prompt.length} characters`);
+    console.log(`📸 Target image size: ${targetImage.split(',')[1]?.length || 0} bytes`);
+    console.log(`📸 Source image size: ${sourceImage.split(',')[1]?.length || 0} bytes`);
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`;
 
@@ -114,11 +117,14 @@ export async function POST(request: NextRequest) {
       generationConfig: { responseModalities: ["IMAGE"] }
     };
 
+    console.log(`🚀 Calling Gemini API...`);
     const geminiResponse = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+
+    console.log(`📡 Gemini response status: ${geminiResponse.status}`);
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
@@ -127,13 +133,18 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await geminiResponse.json();
+    console.log(`📦 Gemini response received, candidates: ${data.candidates?.length || 0}`);
+
     const generatedPart = data.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
 
     if (!generatedPart?.inlineData) {
+      console.error('❌ No image in Gemini response');
+      console.error('Response data:', JSON.stringify(data, null, 2));
       throw new Error('GEMINI_NO_IMAGE');
     }
 
     const resultImage = `data:${generatedPart.inlineData.mimeType};base64,${generatedPart.inlineData.data}`;
+    console.log(`✅ Generated image received, size: ${generatedPart.inlineData.data.length} bytes`);
 
     // Subir imagen a Firebase Storage
     let resultImageUrl = '';
