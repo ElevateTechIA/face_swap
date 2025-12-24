@@ -104,8 +104,8 @@ export async function POST(request: NextRequest) {
     console.log(`📸 Target image size: ${targetImage.split(',')[1]?.length || 0} bytes`);
     console.log(`📸 Source image size: ${sourceImage.split(',')[1]?.length || 0} bytes`);
 
-    // Using Pro model for better image editing capabilities
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`;
+    // Using gemini-3-pro-image-preview for image generation and editing
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${geminiApiKey}`;
 
     const payload = {
       contents: [{
