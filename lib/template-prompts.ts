@@ -7,11 +7,7 @@
  */
 
 export const TEMPLATE_PROMPTS: Record<string, string> = {
-  'Midnight Celebration': `Based on the first image, the scene shows a glamorous woman wearing an elegant black sequin evening dress with a deep V-neckline. She holds a champagne flute with golden sparkling champagne in one hand and a lit sparkler in the other. The background features an elegant nighttime New Year's Eve celebration with soft bokeh city lights, fireworks in the sky, and a vintage clock. The lighting is soft, cinematic with warm golden highlights.
-
-The face of the woman in this scene is replaced with the face from the second image (the user's photo). Preserve exactly: skin tone, all facial features (eyes, nose, mouth, bone structure), any makeup, eyebrows, freckles, moles, piercings, facial hair, or glasses present in the second image.
-
-The warm golden light from the sparkler and the soft ambient celebration lighting must illuminate the new face, creating realistic highlights on the cheekbones and nose, and natural shadows under the chin and around the facial contours. The face must blend seamlessly at the hairline, jawline, and neck, matching the head position and angle of the original. Everything else - the long wavy brown hair, the black sequin dress, the champagne glass, the sparkler, hands, body, and entire background - remains completely unchanged.`,
+  'Midnight Celebration': `Take the face from image 2 and swap it onto the person in image 1. The result must show image 1's exact body, clothes, hair, hands, and background with only the face replaced. Match image 1's lighting and head angle. Keep image 2's facial features, skin tone, and any makeup/glasses/piercings. Blend naturally at face edges.`,
 
   'The Champagne Toast': `Based on the first image, the scene shows an elegant person in sophisticated New Year's attire raising a champagne glass in a celebratory toast. The setting features warm, luxurious lighting with golden bokeh effects suggesting an upscale celebration venue. The atmosphere is festive and refined.
 
