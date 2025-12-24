@@ -11,14 +11,27 @@ export async function POST(request: NextRequest) {
   let faceSwapId: string | null = null;
   let transactionId: string | null = null;
   let userId: string | null = null;
+  let isGuestTrial = false;
 
   try {
-    // Verificar autenticación
-    userId = await verifyUserAuth(request);
-
-    // Obtener body del request
+    // Obtener body del request primero
     const body = await request.json();
-    const { sourceImage, targetImage, style, templateTitle } = body;
+    const { sourceImage, targetImage, style, templateTitle, isGuestTrial: requestIsGuest } = body;
+
+    // Detectar si es guest trial
+    const guestHeader = request.headers.get('X-Guest-Trial');
+    isGuestTrial = guestHeader === 'true' || requestIsGuest === true;
+
+    // Verificar autenticación solo si NO es guest trial
+    if (!isGuestTrial) {
+      userId = await verifyUserAuth(request);
+    } else {
+      // Guest trial - generar ID temporal basado en IP o timestamp
+      const forwardedFor = request.headers.get('x-forwarded-for');
+      const ip = forwardedFor?.split(',')[0] || 'unknown';
+      userId = `guest_${ip}_${Date.now()}`;
+      console.log('🎁 Processing GUEST TRIAL for:', userId);
+    }
 
     if (!sourceImage || !targetImage) {
       return NextResponse.json(
@@ -30,65 +43,75 @@ export async function POST(request: NextRequest) {
     const db = getAdminFirestore();
     const creditsPerSwap = parseInt(process.env.CREDITS_PER_FACE_SWAP || '1');
 
-    // Transacción atómica: verificar créditos y descontarlos
-    const result = await db.runTransaction(async (transaction) => {
-      const userRef = db.collection('users').doc(userId!);
-      const userDoc = await transaction.get(userRef);
+    let newCredits = 0;
 
-      if (!userDoc.exists) {
-        throw new Error('INSUFFICIENT_CREDITS');
-      }
+    // Solo procesar créditos si NO es guest trial
+    if (!isGuestTrial) {
+      // Transacción atómica: verificar créditos y descontarlos
+      const result = await db.runTransaction(async (transaction) => {
+        const userRef = db.collection('users').doc(userId!);
+        const userDoc = await transaction.get(userRef);
 
-      const userData = userDoc.data()!;
-      const currentCredits = userData.credits || 0;
+        if (!userDoc.exists) {
+          throw new Error('INSUFFICIENT_CREDITS');
+        }
 
-      if (currentCredits < creditsPerSwap) {
-        throw new Error('INSUFFICIENT_CREDITS');
-      }
+        const userData = userDoc.data()!;
+        const currentCredits = userData.credits || 0;
 
-      const newCredits = currentCredits - creditsPerSwap;
+        if (currentCredits < creditsPerSwap) {
+          throw new Error('INSUFFICIENT_CREDITS');
+        }
 
-      // Actualizar créditos
-      transaction.update(userRef, {
-        credits: newCredits,
-        updatedAt: FieldValue.serverTimestamp(),
+        const calculatedNewCredits = currentCredits - creditsPerSwap;
+
+        // Actualizar créditos
+        transaction.update(userRef, {
+          credits: calculatedNewCredits,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        // Crear registro de transacción
+        const txRef = db.collection('transactions').doc();
+        const txId = txRef.id;
+
+        transaction.set(txRef, {
+          userId: userId!,
+          type: 'usage',
+          credits: -creditsPerSwap,
+          balanceBefore: currentCredits,
+          balanceAfter: calculatedNewCredits,
+          description: 'Face Swap completed',
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+        // Crear registro de face swap
+        const faceSwapRef = db.collection('faceSwaps').doc();
+        const swapId = faceSwapRef.id;
+
+        transaction.set(faceSwapRef, {
+          faceSwapId: swapId,
+          userId: userId!,
+          style: style || 'natural',
+          creditsUsed: creditsPerSwap,
+          status: 'processing',
+          transactionId: txId,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+
+        return { newCredits: calculatedNewCredits, txId, swapId };
       });
 
-      // Crear registro de transacción
-      const txRef = db.collection('transactions').doc();
-      const txId = txRef.id;
+      transactionId = result.txId;
+      faceSwapId = result.swapId;
+      newCredits = result.newCredits;
 
-      transaction.set(txRef, {
-        userId: userId!,
-        type: 'usage',
-        credits: -creditsPerSwap,
-        balanceBefore: currentCredits,
-        balanceAfter: newCredits,
-        description: 'Face Swap completed',
-        createdAt: FieldValue.serverTimestamp(),
-      });
-
-      // Crear registro de face swap
-      const faceSwapRef = db.collection('faceSwaps').doc();
-      const swapId = faceSwapRef.id;
-
-      transaction.set(faceSwapRef, {
-        faceSwapId: swapId,
-        userId: userId!,
-        style: style || 'natural',
-        creditsUsed: creditsPerSwap,
-        status: 'processing',
-        transactionId: txId,
-        createdAt: FieldValue.serverTimestamp(),
-      });
-
-      return { newCredits, txId, swapId };
-    });
-
-    transactionId = result.txId;
-    faceSwapId = result.swapId;
-
-    console.log(`✅ Credits deducted: user ${userId} now has ${result.newCredits} credits`);
+      console.log(`✅ Credits deducted: user ${userId} now has ${newCredits} credits`);
+    } else {
+      // Guest trial - no deducir créditos, solo crear registro temporal
+      faceSwapId = `guest_${Date.now()}`;
+      console.log(`🎁 Guest trial - no credit deduction`);
+    }
 
     // Llamar a Gemini API para procesar el Face Swap
     const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -158,12 +181,14 @@ export async function POST(request: NextRequest) {
       // Continue without storage URL - non-critical failure
     }
 
-    // Actualizar face swap a completed
-    await db.collection('faceSwaps').doc(faceSwapId).update({
-      status: 'completed',
-      resultImageUrl: resultImageUrl || null,
-      completedAt: FieldValue.serverTimestamp(),
-    });
+    // Actualizar face swap a completed (solo para usuarios autenticados)
+    if (!isGuestTrial && faceSwapId) {
+      await db.collection('faceSwaps').doc(faceSwapId).update({
+        status: 'completed',
+        resultImageUrl: resultImageUrl || null,
+        completedAt: FieldValue.serverTimestamp(),
+      });
+    }
 
     console.log(`✅ Face swap completed successfully: ${faceSwapId}`);
 
@@ -171,14 +196,14 @@ export async function POST(request: NextRequest) {
       success: true,
       resultImage,
       faceSwapId,
-      creditsRemaining: result.newCredits,
+      creditsRemaining: isGuestTrial ? 0 : newCredits,
     });
 
   } catch (error: any) {
     console.error('❌ Error en Face Swap:', error.message);
 
-    // Si hay error y ya se descontaron créditos, revertirlos
-    if (userId && transactionId && faceSwapId) {
+    // Si hay error y ya se descontaron créditos, revertirlos (solo para usuarios autenticados)
+    if (!isGuestTrial && userId && transactionId && faceSwapId) {
       try {
         const db = getAdminFirestore();
         const creditsPerSwap = parseInt(process.env.CREDITS_PER_FACE_SWAP || '1');

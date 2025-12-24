@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from './auth/AuthProvider';
 import { CreditsDisplay } from './components/CreditsDisplay';
 import { InsufficientCreditsModal } from './components/InsufficientCreditsModal';
+import { LoginGateModal } from './components/LoginGateModal';
+import { canUseGuestTrial, markGuestTrialAsUsed, getGuestTrialStatus } from '@/lib/guest-trial';
 import {
   Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
   Grid, Flame, Layers, Play, Zap, LogOut, LogIn, History
@@ -127,14 +129,24 @@ export default function Home() {
   const [loadingCredits, setLoadingCredits] = useState(true);
   const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
 
+  // Estados de Guest Mode
+  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [showLoginGate, setShowLoginGate] = useState(false);
+  const [guestTrialAvailable, setGuestTrialAvailable] = useState(false);
+
   // Cargar preferencias y créditos al autenticarse
   useEffect(() => {
     if (authLoading) return;
     if (user) {
       loadPreferences();
       loadUserCredits();
+      setIsGuestMode(false);
     } else {
-      setStep(-1);
+      // Modo guest - permitir entrar directamente
+      setIsGuestMode(true);
+      setGuestTrialAvailable(canUseGuestTrial());
+      setStep(1); // Ir directamente a templates
+      setLoadingCredits(false);
     }
   }, [user, authLoading]);
 
@@ -318,27 +330,38 @@ export default function Home() {
     }
   };
 
-  const processFaceSwapOnServer = async () => {
+  const processFaceSwapOnServer = async (isGuest = false) => {
     setProcessingProgress(45);
 
     try {
-      const token = await getUserIdToken();
-
       console.log('🚀 Iniciando Face Swap...');
+      console.log('Modo:', isGuest ? 'GUEST TRIAL' : 'AUTHENTICATED');
       console.log('Template seleccionado:', selectedTemplate?.title || 'Ninguno (imagen personalizada)');
       console.log('Style:', selectedStyle.id);
 
+      // Preparar headers
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Si no es guest, agregar auth token
+      if (!isGuest) {
+        const token = await getUserIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        // Para guest, agregar header especial
+        headers['X-Guest-Trial'] = 'true';
+      }
+
       const response = await fetch('/api/face-swap/process', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
           sourceImage: sourceImg,
           targetImage: targetImg,
           style: selectedStyle.id,
           templateTitle: selectedTemplate?.title,
+          isGuestTrial: isGuest,
         }),
       });
 
@@ -361,7 +384,16 @@ export default function Home() {
 
       if (data.success) {
         setResultImage(data.resultImage);
-        setUserCredits(data.creditsRemaining);
+
+        // Si es guest, marcar trial como usado
+        if (isGuest) {
+          markGuestTrialAsUsed();
+          setGuestTrialAvailable(false);
+          console.log('✅ Guest trial marcado como usado');
+        } else {
+          setUserCredits(data.creditsRemaining);
+        }
+
         setProcessingProgress(100);
         setStep(5);
         console.log('✅ Face Swap completado - mostrando resultado');
@@ -376,14 +408,26 @@ export default function Home() {
   };
 
   const startProcessing = async () => {
-    // Validar créditos antes de iniciar
+    // Si es guest mode
+    if (isGuestMode) {
+      if (guestTrialAvailable) {
+        setStep(4);
+        await processFaceSwapOnServer(true); // Guest trial
+      } else {
+        // Ya usó su trial - mostrar modal de login
+        setShowLoginGate(true);
+      }
+      return;
+    }
+
+    // Usuario autenticado - validar créditos antes de iniciar
     if (userCredits < 1) {
       setShowInsufficientCreditsModal(true);
       return;
     }
 
     setStep(4);
-    await processFaceSwapOnServer();
+    await processFaceSwapOnServer(false); // Authenticated
   };
 
   const filteredTemplates = TEMPLATES.filter(t => {
@@ -392,53 +436,11 @@ export default function Home() {
     return t.category === activeCategory;
   });
 
-  // Pantalla de Login
-  if (step === -1 || !user) {
+  // Loading state
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden flex items-center justify-center">
-        <div className="max-w-md mx-auto px-6 text-center">
-          <div className="mb-12">
-            <div className="w-24 h-24 bg-gradient-to-tr from-pink-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <Sparkles className="w-12 h-12 text-white" />
-            </div>
-            <h1 className="text-6xl font-black tracking-tighter leading-none mb-4 uppercase italic">
-              Face<br/><span className="text-pink-600">Clone</span>
-            </h1>
-            <p className="text-gray-400 font-medium mb-2">Nano Banana Pro Engine Enabled</p>
-            <p className="text-gray-500 text-sm">Inicia sesión para guardar tus creaciones</p>
-          </div>
-
-          {authLoading ? (
-            <div className="flex items-center justify-center">
-              <RefreshCw className="animate-spin w-8 h-8 text-pink-500" />
-            </div>
-          ) : (
-            <Button 
-              onClick={async () => {
-                if (isSigningIn) return;
-                setIsSigningIn(true);
-                try {
-                  await signInWithGoogle();
-                } catch (error) {
-                  console.error('Error al iniciar sesión:', error);
-                } finally {
-                  setIsSigningIn(false);
-                }
-              }}
-              disabled={isSigningIn}
-            >
-              {isSigningIn ? (
-                <>
-                  <RefreshCw className="animate-spin" size={20} /> Iniciando sesión...
-                </>
-              ) : (
-                <>
-                  <LogIn size={20} /> Iniciar sesión con Google
-                </>
-              )}
-            </Button>
-          )}
-        </div>
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center">
+        <RefreshCw className="w-12 h-12 animate-spin text-pink-500" />
       </div>
     );
   }
@@ -455,26 +457,56 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <CreditsDisplay credits={userCredits} loading={loadingCredits} />
+            {isGuestMode ? (
+              // Guest mode - mostrar botón de login
+              <button
+                onClick={async () => {
+                  setIsSigningIn(true);
+                  try {
+                    await signInWithGoogle();
+                  } catch (error) {
+                    console.error('Error al iniciar sesión:', error);
+                  } finally {
+                    setIsSigningIn(false);
+                  }
+                }}
+                disabled={isSigningIn}
+                className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white text-sm font-bold active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSigningIn ? (
+                  <RefreshCw className="animate-spin" size={14} />
+                ) : (
+                  <>
+                    <LogIn size={14} />
+                    <span>Entrar</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              // Usuario autenticado - mostrar controles normales
+              <>
+                <CreditsDisplay credits={userCredits} loading={loadingCredits} />
 
-            <button
-              onClick={() => router.push('/history')}
-              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-              title="Ver historial"
-            >
-              <History size={16} />
-            </button>
+                <button
+                  onClick={() => router.push('/history')}
+                  className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                  title="Ver historial"
+                >
+                  <History size={16} />
+                </button>
 
-            {user?.photoURL && (
-              <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-white/20" />
+                {user?.photoURL && (
+                  <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-white/20" />
+                )}
+                <button
+                  onClick={() => signOutUser()}
+                  className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                  title="Cerrar sesión"
+                >
+                  <LogOut size={16} />
+                </button>
+              </>
             )}
-            <button
-              onClick={() => signOutUser()}
-              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-              title="Cerrar sesión"
-            >
-              <LogOut size={16} />
-            </button>
           </div>
         </header>
       )}
@@ -487,6 +519,17 @@ export default function Home() {
           setShowInsufficientCreditsModal(false);
           router.push('/credits');
         }}
+      />
+
+      {/* Modal de Login Gate para Guests */}
+      <LoginGateModal
+        isOpen={showLoginGate}
+        onClose={() => setShowLoginGate(false)}
+        onLogin={async () => {
+          await signInWithGoogle();
+          setShowLoginGate(false);
+        }}
+        resultImage={resultImage || undefined}
       />
 
       <main className={`max-w-md mx-auto px-6 ${step > 0 ? 'pt-20' : 'pt-12'} pb-24 min-h-screen flex flex-col`}>
@@ -663,10 +706,27 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-auto">
-              <Button variant="secondary" onClick={() => setStep(1)}>NUEVO</Button>
-              <a href={resultImage || ''} download="swap_result.png">
-                <Button><Download size={20} /> GUARDAR</Button>
-              </a>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (isGuestMode) {
+                    setShowLoginGate(true);
+                  } else {
+                    setStep(1);
+                  }
+                }}
+              >
+                NUEVO
+              </Button>
+              {isGuestMode ? (
+                <Button onClick={() => setShowLoginGate(true)}>
+                  <Download size={20} /> GUARDAR
+                </Button>
+              ) : (
+                <a href={resultImage || ''} download="swap_result.png">
+                  <Button><Download size={20} /> GUARDAR</Button>
+                </a>
+              )}
             </div>
           </div>
         )}
