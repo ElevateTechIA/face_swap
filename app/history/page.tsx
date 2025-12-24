@@ -84,7 +84,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-md mx-auto px-6 py-12">
         {/* Header */}
         <button
           onClick={() => router.push('/')}
@@ -125,7 +125,7 @@ export default function HistoryPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-2 gap-4 mb-8">
               {history.map((item) => (
                 <HistoryCard key={item.faceSwapId} faceSwap={item} />
               ))}

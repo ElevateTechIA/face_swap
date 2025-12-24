@@ -107,7 +107,7 @@ export default function CreditsPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-md mx-auto px-6 py-12">
         {/* Header */}
         <button
           onClick={() => router.push('/')}
@@ -152,7 +152,7 @@ export default function CreditsPage() {
             <p className="text-sm mt-2">Por favor, intenta más tarde.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-6">
             {packages.map((pkg) => (
               <CreditPackageCard
                 key={pkg.packageId}

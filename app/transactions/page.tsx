@@ -106,7 +106,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-md mx-auto px-6 py-12">
         {/* Header */}
         <button
           onClick={() => router.push('/credits')}
