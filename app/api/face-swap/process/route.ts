@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { verifyUserAuth } from '@/lib/api/auth-middleware';
 import { FieldValue } from 'firebase-admin/firestore';
+import { getTemplatePrompt } from '@/lib/template-prompts';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Face swap puede tomar tiempo
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // Obtener body del request
     const body = await request.json();
-    const { sourceImage, targetImage, style } = body;
+    const { sourceImage, targetImage, style, templateTitle } = body;
 
     if (!sourceImage || !targetImage) {
       return NextResponse.json(
@@ -96,7 +97,9 @@ export async function POST(request: NextRequest) {
       throw new Error('GEMINI_API_KEY not configured');
     }
 
-    const prompt = "A high-quality face swap where the face from the second image (source) replaces the face of the person in the first image (target). The new face should perfectly integrate into the scene, adopting the exact lighting, shadows, skin tone, and color grading of the first image. It should also maintain the specific features, makeup, and expression of the second image, ensuring a realistic and precise swap.";
+    // Obtener el prompt específico del template (o usar el default)
+    const prompt = getTemplatePrompt(templateTitle);
+    console.log(`🎯 Using prompt for template: ${templateTitle || 'default'}`);
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`;
 

@@ -106,6 +106,7 @@ export default function Home() {
   const [step, setStep] = useState(-1); // -1 = login, 0 = encuesta, 1+ = app
   const [sourceImg, setSourceImg] = useState<string | null>(null);
   const [targetImg, setTargetImg] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<typeof TEMPLATES[0] | null>(null);
   const [activeCategory, setActiveCategory] = useState('trending');
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0]);
   const [processingProgress, setProcessingProgress] = useState(0);
@@ -286,14 +287,15 @@ export default function Home() {
     }
   };
 
-  const selectTemplate = async (url: string) => {
+  const selectTemplate = async (template: typeof TEMPLATES[0]) => {
     setProcessingProgress(10);
+    setSelectedTemplate(template);
     try {
-      const base64 = await urlToBase64(url);
+      const base64 = await urlToBase64(template.url);
       setTargetImg(base64);
       setStep(2);
     } catch (e) {
-      setTargetImg(url);
+      setTargetImg(template.url);
       setStep(2);
     }
     setProcessingProgress(0);
@@ -332,6 +334,7 @@ export default function Home() {
           sourceImage: sourceImg,
           targetImage: targetImg,
           style: selectedStyle.id,
+          templateTitle: selectedTemplate?.title,
         }),
       });
 
@@ -532,7 +535,7 @@ export default function Home() {
 
             <div className="grid grid-cols-2 gap-4">
               {filteredTemplates.map((t) => (
-                <div key={t.id} onClick={() => selectTemplate(t.url)} className="relative aspect-[3/4.5] rounded-3xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer">
+                <div key={t.id} onClick={() => selectTemplate(t)} className="relative aspect-[3/4.5] rounded-3xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer">
                   <img src={t.url} className="w-full h-full object-cover" alt={t.title} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
                   <p className="absolute bottom-4 left-4 text-[10px] font-black uppercase tracking-widest">{t.title}</p>
