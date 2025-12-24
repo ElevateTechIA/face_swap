@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../auth/AuthProvider';
 import { CreditPackageCard } from '../components/CreditPackageCard';
-import { RefreshCw, ArrowLeft } from 'lucide-react';
+import { RefreshCw, ArrowLeft, Receipt } from 'lucide-react';
 import { getStripe } from '@/lib/stripe/client';
 
 interface CreditPackage {
@@ -126,11 +126,22 @@ export default function CreditsPage() {
           </p>
 
           {/* Current balance */}
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-pink-600/20 to-purple-600/20 border border-pink-500/30">
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-pink-600/20 to-purple-600/20 border border-pink-500/30 mb-4">
             <span className="text-2xl">🪙</span>
             <span className="text-lg">
               Tienes <span className="font-bold">{currentCredits}</span> créditos
             </span>
+          </div>
+
+          {/* Transactions link */}
+          <div>
+            <button
+              onClick={() => router.push('/transactions')}
+              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              <Receipt size={16} />
+              Ver historial de transacciones
+            </button>
           </div>
         </div>
 
