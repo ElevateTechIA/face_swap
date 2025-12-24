@@ -324,6 +324,10 @@ export default function Home() {
     try {
       const token = await getUserIdToken();
 
+      console.log('🚀 Iniciando Face Swap...');
+      console.log('Template seleccionado:', selectedTemplate?.title || 'Ninguno (imagen personalizada)');
+      console.log('Style:', selectedStyle.id);
+
       const response = await fetch('/api/face-swap/process', {
         method: 'POST',
         headers: {
@@ -338,8 +342,11 @@ export default function Home() {
         }),
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (!response.ok) {
         const error = await response.json();
+        console.error('❌ Error response:', error);
         if (error.code === 'INSUFFICIENT_CREDITS') {
           setShowInsufficientCreditsModal(true);
           setStep(3);
@@ -349,17 +356,20 @@ export default function Home() {
       }
 
       const data = await response.json();
+      console.log('✅ Success response received');
+      console.log('Result image length:', data.resultImage?.substring(0, 50) + '...');
 
       if (data.success) {
         setResultImage(data.resultImage);
         setUserCredits(data.creditsRemaining);
         setProcessingProgress(100);
         setStep(5);
+        console.log('✅ Face Swap completado - mostrando resultado');
       } else {
         throw new Error('Error en el procesamiento');
       }
     } catch (error: any) {
-      console.error('Error en Face Swap:', error);
+      console.error('❌ Error en Face Swap:', error);
       alert('Error procesando imagen. Por favor, intenta de nuevo.');
       setStep(3);
     }
