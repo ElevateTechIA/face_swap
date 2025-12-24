@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     // Obtener el prompt específico del template (o usar el default)
     const prompt = getTemplatePrompt(templateTitle);
     console.log(`🎯 Using prompt for template: ${templateTitle || 'default'}`);
-    console.log(`📝 Prompt length: ${prompt.length} characters`);
+    console.log(`📝 Prompt: ${prompt}`);
     console.log(`📸 Target image size: ${targetImage.split(',')[1]?.length || 0} bytes`);
     console.log(`📸 Source image size: ${sourceImage.split(',')[1]?.length || 0} bytes`);
 
