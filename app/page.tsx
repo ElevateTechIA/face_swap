@@ -56,12 +56,12 @@ const CATEGORIES = [
 
 // --- Plantillas ---
 const TEMPLATES = [
-  { id: 't1', url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80', title: 'Vogue Cover', category: 'editorial', trending: true },
-  { id: 't2', url: 'https://images.unsplash.com/photo-1618085222100-89162c806006?w=600&q=80', title: 'Cyberpunk 2077', category: 'cinematic', trending: true },
-  { id: 't3', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&q=80', title: 'Old Money', category: 'editorial', trending: false },
-  { id: 't4', url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&q=80', title: 'CEO Portait', category: 'editorial', trending: false },
-  { id: 't5', url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80', title: 'Duna Sci-Fi', category: 'cinematic', trending: true },
-  { id: 't6', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80', title: 'Urban Night', category: 'cinematic', trending: false },
+  { id: 't1', url: '/templates/Midnight Celebration.jpg', title: 'Midnight Celebration', category: 'cinematic', trending: true },
+  { id: 't2', url: '/templates/The Champagne Toast.jpg', title: 'The Champagne Toast', category: 'editorial', trending: true },
+  { id: 't3', url: '/templates/Red Velvet Euphoria.jpg', title: 'Red Velvet Euphoria', category: 'editorial', trending: true },
+  { id: 't4', url: '/templates/City Lights Glam.jpg', title: 'City Lights Glam', category: 'editorial', trending: false },
+  { id: 't5', url: '/templates/Confetti Party.jpg', title: 'Confetti Party', category: 'cinematic', trending: false },
+  { id: 't6', url: '/templates/Elegant Countdown.jpg', title: 'Elegant Countdown', category: 'editorial', trending: false },
 ];
 
 // --- Estilos de IA ---
