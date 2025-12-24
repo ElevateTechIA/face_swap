@@ -138,15 +138,34 @@ export default function Home() {
   useEffect(() => {
     if (authLoading) return;
     if (user) {
+      // Usuario acaba de autenticarse
+      // Transferir datos del guest si existen
+      transferGuestData();
+
       loadPreferences();
       loadUserCredits();
       setIsGuestMode(false);
     } else {
-      // Modo guest - permitir entrar directamente
+      // Modo guest - empezar con encuesta
       setIsGuestMode(true);
       setGuestTrialAvailable(canUseGuestTrial());
-      setStep(1); // Ir directamente a templates
+      setStep(0); // Mostrar encuesta inicial
       setLoadingCredits(false);
+
+      // Cargar respuestas previas de localStorage si existen
+      try {
+        const savedAnswers = localStorage.getItem('guest_survey_answers');
+        if (savedAnswers) {
+          const parsedAnswers = JSON.parse(savedAnswers);
+          setSurveyAnswers(parsedAnswers);
+          // Si ya completó la encuesta, ir a templates
+          if (Object.keys(parsedAnswers).length >= SURVEY_QUESTIONS.length) {
+            setStep(1);
+          }
+        }
+      } catch (e) {
+        console.error('Error loading guest survey:', e);
+      }
     }
   }, [user, authLoading]);
 
@@ -212,6 +231,45 @@ export default function Home() {
       });
     } catch (error) {
       console.error('Error guardando preferencias:', error);
+    }
+  };
+
+  const transferGuestData = async () => {
+    try {
+      const token = await getUserIdToken();
+      if (!token) return;
+
+      // 1. Transferir preferencias de encuesta
+      const guestSurvey = localStorage.getItem('guest_survey_answers');
+      if (guestSurvey) {
+        const answers = JSON.parse(guestSurvey);
+        await savePreferences(answers);
+        localStorage.removeItem('guest_survey_answers');
+        console.log('✅ Guest survey transferred');
+      }
+
+      // 2. Transferir face swap del guest al historial
+      const guestFaceSwap = localStorage.getItem('guest_face_swap');
+      if (guestFaceSwap) {
+        const faceSwapData = JSON.parse(guestFaceSwap);
+
+        // Llamar endpoint para guardar en historial
+        const response = await fetch('/api/history/transfer-guest', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(faceSwapData),
+        });
+
+        if (response.ok) {
+          localStorage.removeItem('guest_face_swap');
+          console.log('✅ Guest face swap transferred to history');
+        }
+      }
+    } catch (error) {
+      console.error('Error transferring guest data:', error);
     }
   };
 
@@ -291,7 +349,21 @@ export default function Home() {
       setSurveyIndex(prev => prev + 1);
     } else {
       setIsSurveyLoading(true);
-      savePreferences(newAnswers);
+
+      // Guardar según el modo
+      if (isGuestMode) {
+        // Guest: guardar en localStorage
+        try {
+          localStorage.setItem('guest_survey_answers', JSON.stringify(newAnswers));
+          console.log('✅ Guest survey saved to localStorage');
+        } catch (e) {
+          console.error('Error saving guest survey:', e);
+        }
+      } else {
+        // Usuario autenticado: guardar en Firestore
+        savePreferences(newAnswers);
+      }
+
       setTimeout(() => {
         setIsSurveyLoading(false);
         setStep(1);
@@ -385,10 +457,25 @@ export default function Home() {
       if (data.success) {
         setResultImage(data.resultImage);
 
-        // Si es guest, marcar trial como usado
+        // Si es guest, marcar trial como usado y guardar imagen para transferir al login
         if (isGuest) {
           markGuestTrialAsUsed();
           setGuestTrialAvailable(false);
+
+          // Guardar imagen y metadata en localStorage para transferir al hacer login
+          try {
+            const guestFaceSwap = {
+              resultImage: data.resultImage,
+              style: selectedStyle.id,
+              templateTitle: selectedTemplate?.title,
+              createdAt: Date.now(),
+            };
+            localStorage.setItem('guest_face_swap', JSON.stringify(guestFaceSwap));
+            console.log('✅ Guest face swap guardado para transferir al login');
+          } catch (e) {
+            console.error('Error guardando guest face swap:', e);
+          }
+
           console.log('✅ Guest trial marcado como usado');
         } else {
           setUserCredits(data.creditsRemaining);

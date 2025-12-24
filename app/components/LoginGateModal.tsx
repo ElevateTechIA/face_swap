@@ -101,8 +101,8 @@ export function LoginGateModal({ isOpen, onClose, onLogin, resultImage }: LoginG
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20">
               <Gift className="w-6 h-6 text-pink-400 flex-shrink-0" />
               <p className="text-left text-sm">
-                <span className="font-bold text-white">10 créditos GRATIS</span>
-                <span className="text-gray-400"> (valor $1.40 USD)</span>
+                <span className="font-bold text-white">80 créditos GRATIS</span>
+                <span className="text-gray-400"> (1 Face Swap completo)</span>
               </p>
             </div>
 
