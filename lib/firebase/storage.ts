@@ -74,3 +74,77 @@ export async function deleteFaceSwapImage(
     throw new Error(`Error al eliminar imagen: ${error.message}`);
   }
 }
+
+/**
+ * Sube una imagen de template a Firebase Storage
+ * @param imageData - Data URI de la imagen en formato base64 o File
+ * @param templateId - ID del template
+ * @returns URL pública de la imagen subida
+ */
+export async function uploadTemplateImage(
+  imageData: string | Buffer,
+  templateId: string
+): Promise<string> {
+  try {
+    let buffer: Buffer;
+
+    // Si es un data URI, extraer el base64
+    if (typeof imageData === 'string') {
+      const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+      buffer = Buffer.from(base64Data, 'base64');
+    } else {
+      buffer = imageData;
+    }
+
+    // Obtener el bucket de Storage
+    const storage = getAdminStorage();
+    const bucket = storage.bucket();
+
+    // Definir la ruta del archivo
+    const filePath = `templates/${templateId}.png`;
+    const file = bucket.file(filePath);
+
+    // Subir el archivo
+    await file.save(buffer, {
+      metadata: {
+        contentType: 'image/png',
+        metadata: {
+          templateId,
+          uploadedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    // Hacer el archivo público
+    await file.makePublic();
+
+    // Obtener la URL pública
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+
+    console.log(`✅ Template image uploaded to Storage: ${publicUrl}`);
+    return publicUrl;
+
+  } catch (error: any) {
+    console.error('❌ Error uploading template image to Storage:', error.message);
+    throw new Error(`Error al subir imagen de template: ${error.message}`);
+  }
+}
+
+/**
+ * Elimina una imagen de template de Firebase Storage
+ * @param templateId - ID del template
+ */
+export async function deleteTemplateImage(templateId: string): Promise<void> {
+  try {
+    const storage = getAdminStorage();
+    const bucket = storage.bucket();
+    const filePath = `templates/${templateId}.png`;
+
+    await bucket.file(filePath).delete();
+
+    console.log(`✅ Template image deleted from Storage: ${filePath}`);
+  } catch (error: any) {
+    console.error('❌ Error deleting template image from Storage:', error.message);
+    // Don't throw - deletion is optional
+  }
+}

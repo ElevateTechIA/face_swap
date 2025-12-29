@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../../auth/AuthProvider';
+import { useAuth } from '@/app/auth/AuthProvider';
 import { CheckCircle2, Sparkles, RefreshCw } from 'lucide-react';
 
 function SuccessContent() {

@@ -2,15 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from './auth/AuthProvider';
-import { CreditsDisplay } from './components/CreditsDisplay';
-import { InsufficientCreditsModal } from './components/InsufficientCreditsModal';
-import { LoginGateModal } from './components/LoginGateModal';
+import { useAuth } from '@/app/auth/AuthProvider';
+import { CreditsDisplay } from '@/app/components/CreditsDisplay';
+import { InsufficientCreditsModal } from '@/app/components/InsufficientCreditsModal';
+import { LoginGateModal } from '@/app/components/LoginGateModal';
+import { ScreenerSurvey, ScreenerAnswers } from '@/app/components/ScreenerSurvey';
+import { LanguageSwitcher } from '@/app/components/LanguageSwitcher';
 import { canUseGuestTrial, markGuestTrialAsUsed, getGuestTrialStatus } from '@/lib/guest-trial';
 import {
   Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
   Grid, Flame, Layers, Play, Zap, LogOut, LogIn, History
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 // --- Constantes de Encuesta (Onboarding) ---
 const SURVEY_QUESTIONS = [
@@ -134,12 +137,74 @@ export default function Home() {
   const [showLoginGate, setShowLoginGate] = useState(false);
   const [guestTrialAvailable, setGuestTrialAvailable] = useState(false);
 
+  // Estados de Screener Survey (durante generación)
+  const [showScreenerSurvey, setShowScreenerSurvey] = useState(false);
+  const [hasUserProfile, setHasUserProfile] = useState(false);
+  const [isProcessingFaceSwap, setIsProcessingFaceSwap] = useState(false);
+
+  // Estados de templates dinámicos desde Firebase
+  const [dynamicTemplates, setDynamicTemplates] = useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+
+  // Cargar templates dinámicos desde Firebase
+  useEffect(() => {
+    loadTemplates();
+  }, [user, activeCategory]); // Recargar cuando cambie el usuario o la categoría
+
+  const loadTemplates = async () => {
+    try {
+      setLoadingTemplates(true);
+
+      // Determinar el modo según el usuario y la categoría activa
+      let mode = 'all';
+      let occasion = null;
+
+      if (activeCategory === 'trending') {
+        mode = 'trending';
+      } else if (activeCategory === 'all' && user) {
+        mode = 'recommended'; // Recomendaciones personalizadas para usuarios autenticados
+      } else if (activeCategory !== 'all' && activeCategory !== 'trending') {
+        occasion = activeCategory; // Filtrar por ocasión
+      }
+
+      // Construir URL con parámetros
+      const params = new URLSearchParams();
+      params.set('mode', mode);
+      if (occasion) params.set('occasion', occasion);
+
+      const headers: Record<string, string> = {};
+      if (user && mode === 'recommended') {
+        const token = await getUserIdToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+
+      const response = await fetch(`/api/templates?${params.toString()}`, { headers });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDynamicTemplates(data.templates || []);
+        console.log(`✅ Loaded ${data.templates?.length || 0} templates (mode: ${mode})`);
+      } else {
+        console.error('Error loading templates:', response.status);
+        setDynamicTemplates([]); // Fallback a array vacío
+      }
+    } catch (error) {
+      console.error('Error loading templates:', error);
+      setDynamicTemplates([]); // Fallback a array vacío
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
   // Cargar preferencias y créditos al autenticarse
   useEffect(() => {
     if (authLoading) return;
     if (user) {
       loadPreferences();
       loadUserCredits();
+      checkUserProfile();
       setIsGuestMode(false);
     } else {
       // Modo guest - permitir entrar directamente
@@ -195,6 +260,63 @@ export default function Home() {
       console.error('Error cargando créditos:', error);
     } finally {
       setLoadingCredits(false);
+    }
+  };
+
+  const checkUserProfile = async () => {
+    try {
+      const token = await getUserIdToken();
+      if (!token) return;
+
+      const response = await fetch('/api/user/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHasUserProfile(!!data.profile);
+      }
+    } catch (error) {
+      console.error('Error verificando perfil:', error);
+      setHasUserProfile(false);
+    }
+  };
+
+  const saveUserProfile = async (answers: ScreenerAnswers) => {
+    try {
+      const token = await getUserIdToken();
+      if (!token) return;
+
+      const response = await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          preferredBodyType: answers.bodyType,
+          preferredOccasions: answers.occasions,
+          preferredMood: answers.mood,
+          preferredStyle: answers.stylePreference,
+        }),
+      });
+
+      if (response.ok) {
+        setHasUserProfile(true);
+        console.log('✅ Perfil de usuario guardado');
+      }
+    } catch (error) {
+      console.error('Error guardando perfil:', error);
+    }
+  };
+
+  const handleScreenerComplete = async (answers: ScreenerAnswers) => {
+    console.log('📋 Screener completado:', answers);
+    setShowScreenerSurvey(false);
+
+    // Guardar perfil si el usuario está autenticado
+    if (user && !isGuestMode) {
+      await saveUserProfile(answers);
     }
   };
 
@@ -331,7 +453,24 @@ export default function Home() {
   };
 
   const processFaceSwapOnServer = async (isGuest = false) => {
-    setProcessingProgress(45);
+    setIsProcessingFaceSwap(true);
+    setProcessingProgress(10);
+
+    // Mostrar screener survey si el usuario no tiene perfil y no es guest
+    if (!isGuest && !hasUserProfile) {
+      setShowScreenerSurvey(true);
+    }
+
+    // Simular progreso mientras se procesa
+    const progressInterval = setInterval(() => {
+      setProcessingProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 5;
+      });
+    }, 500);
 
     try {
       console.log('🚀 Iniciando Face Swap...');
@@ -383,6 +522,8 @@ export default function Home() {
       console.log('Result image length:', data.resultImage?.substring(0, 50) + '...');
 
       if (data.success) {
+        clearInterval(progressInterval);
+        setProcessingProgress(100);
         setResultImage(data.resultImage);
 
         // Si es guest, marcar trial como usado
@@ -394,15 +535,23 @@ export default function Home() {
           setUserCredits(data.creditsRemaining);
         }
 
-        setProcessingProgress(100);
-        setStep(5);
-        console.log('✅ Face Swap completado - mostrando resultado');
+        // Esperar un poco para que el usuario vea el progreso completo
+        setTimeout(() => {
+          setShowScreenerSurvey(false);
+          setIsProcessingFaceSwap(false);
+          setStep(5);
+          console.log('✅ Face Swap completado - mostrando resultado');
+        }, 1000);
       } else {
         throw new Error('Error en el procesamiento');
       }
     } catch (error: any) {
+      clearInterval(progressInterval);
       console.error('❌ Error en Face Swap:', error);
       alert('Error procesando imagen. Por favor, intenta de nuevo.');
+      setShowScreenerSurvey(false);
+      setIsProcessingFaceSwap(false);
+      setProcessingProgress(0);
       setStep(3);
     }
   };
@@ -430,11 +579,16 @@ export default function Home() {
     await processFaceSwapOnServer(false); // Authenticated
   };
 
-  const filteredTemplates = TEMPLATES.filter(t => {
-    if (activeCategory === 'all') return true;
-    if (activeCategory === 'trending') return t.trending;
-    return t.category === activeCategory;
-  });
+  // Usar templates dinámicos si están disponibles, sino usar fallback hardcodeado
+  const templatesSource = dynamicTemplates.length > 0 ? dynamicTemplates.map(t => ({
+    id: t.id,
+    url: t.imageUrl,
+    title: t.title,
+    category: t.metadata?.occasion?.[0] || 'all',
+    trending: (t.usageCount || 0) > 5
+  })) : TEMPLATES;
+
+  const filteredTemplates = templatesSource;
 
   // Loading state
   if (authLoading) {
@@ -457,6 +611,8 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+
             {isGuestMode ? (
               // Guest mode - mostrar botón de login
               <button
@@ -531,6 +687,14 @@ export default function Home() {
         }}
         resultImage={resultImage || undefined}
       />
+
+      {/* Screener Survey durante generación */}
+      {showScreenerSurvey && (
+        <ScreenerSurvey
+          onComplete={handleScreenerComplete}
+          processingProgress={processingProgress}
+        />
+      )}
 
       <main className={`max-w-md mx-auto px-6 ${step > 0 ? 'pt-20' : 'pt-12'} pb-24 min-h-screen flex flex-col`}>
 

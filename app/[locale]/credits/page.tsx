@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../auth/AuthProvider';
-import { CreditPackageCard } from '../components/CreditPackageCard';
+import { useAuth } from '@/app/auth/AuthProvider';
+import { CreditPackageCard } from '@/app/components/CreditPackageCard';
 import { RefreshCw, ArrowLeft, Receipt } from 'lucide-react';
 import { getStripe } from '@/lib/stripe/client';
 

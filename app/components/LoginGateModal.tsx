@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Gift, Clock, Download, Zap } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface LoginGateModalProps {
   isOpen: boolean;
@@ -11,6 +12,8 @@ interface LoginGateModalProps {
 }
 
 export function LoginGateModal({ isOpen, onClose, onLogin, resultImage }: LoginGateModalProps) {
+  const t = useTranslations('loginGate');
+  const tAuth = useTranslations('auth');
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutos
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -71,8 +74,8 @@ export function LoginGateModal({ isOpen, onClose, onLogin, resultImage }: LoginG
 
           {/* Title */}
           <h2 className="text-4xl font-black tracking-tighter mb-3 uppercase italic">
-            ¡Tu Face Swap<br />
-            <span className="text-pink-500">Está Listo!</span>
+            {t('title')}<br />
+            <span className="text-pink-500">{t('titleHighlight')}</span>
           </h2>
 
           {/* Preview thumbnail if available */}
@@ -87,13 +90,15 @@ export function LoginGateModal({ isOpen, onClose, onLogin, resultImage }: LoginG
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border border-red-500/30 mb-6">
             <Clock size={16} className="text-red-400" />
             <span className="text-red-400 font-bold text-sm">
-              Oferta expira en {formatTime(timeLeft)}
+              {t('offerExpires', { time: formatTime(timeLeft) })}
             </span>
           </div>
 
           {/* Value proposition */}
           <p className="text-gray-300 mb-6 text-lg">
-            Inicia sesión <span className="font-bold text-white">AHORA</span> y obtén:
+            {t.rich('signInNowAndGet', {
+              now: (chunks) => <span className="font-bold text-white">{chunks}</span>
+            })}:
           </p>
 
           {/* Benefits */}
@@ -101,24 +106,24 @@ export function LoginGateModal({ isOpen, onClose, onLogin, resultImage }: LoginG
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20">
               <Gift className="w-6 h-6 text-pink-400 flex-shrink-0" />
               <p className="text-left text-sm">
-                <span className="font-bold text-white">10 créditos GRATIS</span>
-                <span className="text-gray-400"> (valor $1.40 USD)</span>
+                <span className="font-bold text-white">{t('benefit1')}</span>
+                <span className="text-gray-400"> {t('benefit1Desc')}</span>
               </p>
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
               <Download className="w-6 h-6 text-blue-400 flex-shrink-0" />
               <p className="text-left text-sm">
-                <span className="font-bold text-white">Descarga</span>
-                <span className="text-gray-400"> este resultado en alta calidad</span>
+                <span className="font-bold text-white">{t('benefit2')}</span>
+                <span className="text-gray-400"> {t('benefit2Desc')}</span>
               </p>
             </div>
 
             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
               <Zap className="w-6 h-6 text-yellow-400 flex-shrink-0" />
               <p className="text-left text-sm">
-                <span className="font-bold text-white">Crea ilimitados</span>
-                <span className="text-gray-400"> Face Swaps con tus créditos</span>
+                <span className="font-bold text-white">{t('benefit3')}</span>
+                <span className="text-gray-400"> {t('benefit3Desc')}</span>
               </p>
             </div>
           </div>
@@ -132,12 +137,12 @@ export function LoginGateModal({ isOpen, onClose, onLogin, resultImage }: LoginG
             {isLoggingIn ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Iniciando...
+                {tAuth('signingIn')}
               </>
             ) : (
               <>
                 <Sparkles size={24} />
-                Iniciar con Google
+                {tAuth('signInWithGoogle')}
               </>
             )}
           </button>
@@ -149,12 +154,12 @@ export function LoginGateModal({ isOpen, onClose, onLogin, resultImage }: LoginG
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-black" />
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-black" />
             </div>
-            <span>+10,000 usuarios ya crearon su Face Swap</span>
+            <span>{t('socialProof')}</span>
           </div>
 
           {/* Fine print */}
           <p className="text-xs text-gray-600 mt-6">
-            🔒 Sin tarjeta requerida • Gratis para siempre • Cancela cuando quieras
+            {t('finePrint')}
           </p>
         </div>
       </div>

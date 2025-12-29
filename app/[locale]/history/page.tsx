@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '@/app/auth/AuthProvider';
 import { RefreshCw, ArrowLeft, History as HistoryIcon } from 'lucide-react';
-import { HistoryCard } from '../components/HistoryCard';
+import { HistoryCard } from '@/app/components/HistoryCard';
 
 interface FaceSwapHistory {
   faceSwapId: string;

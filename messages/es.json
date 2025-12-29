@@ -1,0 +1,224 @@
+{
+  "common": {
+    "appName": "GLAM",
+    "welcome": "¡Bienvenido a GLAM!",
+    "subtitle": "Transforma tus fotos con IA",
+    "loading": "Cargando...",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "back": "Volver",
+    "next": "Siguiente",
+    "continue": "Continuar",
+    "download": "Descargar",
+    "buyCredits": "Comprar Créditos",
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "enter": "Entrar"
+  },
+  "auth": {
+    "signInWithGoogle": "Iniciar con Google",
+    "signingIn": "Iniciando...",
+    "signInError": "Error al iniciar sesión"
+  },
+  "credits": {
+    "balance": "Tienes {credits} créditos",
+    "insufficient": "Sin Créditos",
+    "insufficientMessage": "Necesitas créditos para crear Face Swaps. Compra un paquete para continuar.",
+    "buyTitle": "Comprar Créditos",
+    "buySubtitle": "Elige el paquete perfecto para ti",
+    "transactionsLink": "Ver historial de transacciones",
+    "noPackages": "No hay paquetes disponibles en este momento.",
+    "tryLater": "Por favor, intenta más tarde.",
+    "securePayment": "Pagos procesados de forma segura por Stripe",
+    "creditsNeverExpire": "Los créditos no caducan y puedes usarlos en cualquier momento"
+  },
+  "loginGate": {
+    "title": "¡Tu Face Swap",
+    "titleHighlight": "Está Listo!",
+    "offerExpires": "Oferta expira en {time}",
+    "signInNowAndGet": "Inicia sesión {now} y obtén:",
+    "now": "AHORA",
+    "benefit1": "80 créditos GRATIS",
+    "benefit1Desc": "(1 Face Swap completo)",
+    "benefit2": "Descarga",
+    "benefit2Desc": "este resultado en alta calidad",
+    "benefit3": "Guarda en tu historial",
+    "benefit3Desc": "tus Face Swaps favoritos",
+    "socialProof": "+10,000 usuarios ya crearon su Face Swap",
+    "finePrint": "🔒 Sin tarjeta para empezar • Los créditos no caducan • Compra solo cuando necesites"
+  },
+  "templates": {
+    "categories": {
+      "all": "Todos",
+      "trending": "Tendencias",
+      "editorial": "Moda",
+      "cinematic": "Cine",
+      "forYou": "Para Ti",
+      "newYear": "Año Nuevo",
+      "party": "Fiesta"
+    },
+    "uploadScene": "SUBIR ESCENA",
+    "uploadSceneDesc": "Usa tu propia foto de fondo",
+    "noTemplates": "No hay templates disponibles",
+    "loading": "Cargando templates..."
+  },
+  "survey": {
+    "initial": {
+      "calibrating": "CALIBRANDO IA...",
+      "title": "Face",
+      "titleHighlight": "Clone",
+      "subtitle": "Nano Banana Pro Engine Enabled.",
+      "questions": {
+        "q1": {
+          "question": "¿Cuál es tu objetivo principal?",
+          "subtitle": "Personalizaremos la IA según tu meta.",
+          "options": {
+            "fun": "Divertirme y reír",
+            "beauty": "Mejorar mis fotos",
+            "content": "Crear contenido",
+            "explore": "Probar estilos nuevos"
+          }
+        },
+        "q2": {
+          "question": "¿Qué estilo te define mejor?",
+          "subtitle": "Para sugerirte los mejores filtros.",
+          "options": {
+            "chic": "Chic & Glamour",
+            "urban": "Urbano & Street",
+            "vintage": "Retro & Vintage",
+            "fantasy": "Fantasía & Cosplay"
+          }
+        },
+        "q3": {
+          "question": "¿Con quién te identificas?",
+          "subtitle": "Ajustaremos los modelos base.",
+          "options": {
+            "female": "Femenino",
+            "male": "Masculino",
+            "nb": "No Binario / Otro"
+          }
+        }
+      }
+    },
+    "screener": {
+      "title": "¡Ayúdanos a mejorar!",
+      "subtitle": "Mientras procesamos tu imagen, responde estas preguntas rápidas",
+      "questions": {
+        "bodyType": {
+          "label": "¿Qué tipo de cuerpo prefieres en los resultados?",
+          "placeholder": "Elige una o más opciones",
+          "options": {
+            "slim": "Delgado",
+            "athletic": "Atlético",
+            "curvy": "Curvy",
+            "average": "Promedio",
+            "plus-size": "Plus Size"
+          }
+        },
+        "occasions": {
+          "label": "¿Para qué ocasiones usarías Face Swaps?",
+          "placeholder": "Elige una o más opciones",
+          "options": {
+            "new-year": "Año Nuevo",
+            "birthday": "Cumpleaños",
+            "wedding": "Boda",
+            "party": "Fiesta",
+            "date": "Cita",
+            "professional": "Profesional",
+            "casual": "Casual"
+          }
+        },
+        "mood": {
+          "label": "¿Qué mood buscas en tus fotos?",
+          "placeholder": "Elige una o más opciones",
+          "options": {
+            "happy": "Feliz",
+            "confident": "Confiado",
+            "mysterious": "Misterioso",
+            "playful": "Juguetón",
+            "romantic": "Romántico",
+            "energetic": "Energético",
+            "relaxed": "Relajado"
+          }
+        },
+        "stylePreference": {
+          "label": "¿Qué estilos te gustan más?",
+          "placeholder": "Elige una o más opciones",
+          "options": {
+            "elegant": "Elegante",
+            "casual": "Casual",
+            "edgy": "Atrevido",
+            "vintage": "Vintage",
+            "modern": "Moderno",
+            "professional": "Profesional",
+            "party": "Fiesta",
+            "romantic": "Romántico"
+          }
+        }
+      },
+      "skip": "Saltar encuesta",
+      "processing": "Procesando tu Face Swap..."
+    }
+  },
+  "faceSwap": {
+    "steps": {
+      "explore": "EXPLORAR",
+      "yourFace": "TU ROSTRO",
+      "yourFaceDesc": "Sube el rostro que quieres usar.",
+      "customizeStyle": "PERSONALIZA",
+      "styleLabel": "Estilo de IA",
+      "processing": "PROCESANDO..."
+    },
+    "styles": {
+      "natural": "Natural",
+      "glam": "Glamour",
+      "cyber": "Cyberpunk",
+      "vintage": "90s Retro",
+      "noir": "Noir"
+    },
+    "buttons": {
+      "generate": "CREAR FACE SWAP",
+      "newSwap": "NUEVO FACE SWAP",
+      "viewHistory": "Ver Historial"
+    },
+    "guestTrial": {
+      "title": "Prueba Gratis",
+      "used": "Ya usaste tu prueba gratis",
+      "usedDesc": "Inicia sesión para continuar creando Face Swaps"
+    },
+    "errors": {
+      "generic": "Error al procesar Face Swap",
+      "tryAgain": "Intenta de nuevo"
+    }
+  },
+  "admin": {
+    "title": "Panel de Administración",
+    "templates": {
+      "title": "Gestión de Templates",
+      "create": "Crear Nuevo Template",
+      "edit": "Editar Template",
+      "list": "Lista de Templates",
+      "noTemplates": "No hay templates creados",
+      "fields": {
+        "title": "Título",
+        "description": "Descripción",
+        "image": "Imagen",
+        "prompt": "Prompt para IA",
+        "active": "Template Activo",
+        "premium": "Premium",
+        "metadata": "Metadata"
+      }
+    },
+    "unauthorized": "Acceso no autorizado",
+    "loading": "Cargando..."
+  },
+  "history": {
+    "title": "Tu Historial",
+    "noHistory": "Aún no tienes Face Swaps guardados",
+    "createFirst": "Crea tu primer Face Swap para verlo aquí"
+  }
+}

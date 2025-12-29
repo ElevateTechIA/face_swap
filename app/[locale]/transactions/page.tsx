@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '@/app/auth/AuthProvider';
 import { RefreshCw, ArrowLeft, Receipt } from 'lucide-react';
-import { TransactionCard } from '../components/TransactionCard';
+import { TransactionCard } from '@/app/components/TransactionCard';
 
 interface Transaction {
   transactionId: string;

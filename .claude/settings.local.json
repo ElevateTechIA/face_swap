@@ -19,7 +19,8 @@
       "Bash(npx tsx:*)",
       "Bash(powershell:*)",
       "Bash(scoop bucket add:*)",
-      "Bash(scoop install:*)"
+      "Bash(scoop install:*)",
+      "Bash(ls:*)"
     ]
   }
 }
