@@ -107,6 +107,10 @@
     "screener": {
       "title": "¡Ayúdanos a mejorar!",
       "subtitle": "Mientras procesamos tu imagen, responde estas preguntas rápidas",
+      "question": "Pregunta",
+      "selectOne": "Selecciona una opción",
+      "selectMultiple": "Selecciona una o más opciones",
+      "selectAtLeastOne": "Por favor, selecciona al menos una opción",
       "questions": {
         "bodyType": {
           "label": "¿Qué tipo de cuerpo prefieres en los resultados?",
@@ -220,5 +224,27 @@
     "title": "Tu Historial",
     "noHistory": "Aún no tienes Face Swaps guardados",
     "createFirst": "Crea tu primer Face Swap para verlo aquí"
+  },
+  "share": {
+    "title": "Compartir",
+    "shareApp": "Compartir App",
+    "shareImage": "Compartir Imagen",
+    "instagram": "Instagram",
+    "whatsapp": "WhatsApp",
+    "facebook": "Facebook",
+    "twitter": "X (Twitter)",
+    "copyLink": "Copiar Link",
+    "qrCode": "Código QR",
+    "qrTitle": "Escanea para crear tu Face Swap",
+    "qrDownload": "Descargar QR",
+    "qrDownloaded": "QR descargado correctamente",
+    "copied": "Enlace copiado al portapapeles",
+    "copyError": "Error al copiar",
+    "appShare": "He creado un Face Swap increíble con GLAM. ¡Pruébalo tú también!",
+    "imageShare": "Mira mi Face Swap creado con GLAM IA",
+    "shared": "Compartido exitosamente",
+    "openedWhatsApp": "WhatsApp abierto",
+    "openedFacebook": "Facebook abierto",
+    "openedTwitter": "Twitter abierto"
   }
 }

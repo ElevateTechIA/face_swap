@@ -7,6 +7,37 @@ import { getTemplatePrompt } from '@/lib/template-prompts';
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Face swap puede tomar tiempo
 
+/**
+ * Convierte una URL de imagen a base64 data URL
+ * @param url URL de la imagen
+ * @returns Data URL en formato base64
+ */
+async function urlToBase64(url: string): Promise<string> {
+  try {
+    console.log('🔄 Server fetching image from URL:', url);
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+    console.log('✅ Image fetched, size:', buffer.length, 'bytes, type:', contentType);
+
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:${contentType};base64,${base64}`;
+
+    console.log('✅ Image converted to base64 on server');
+    return dataUrl;
+  } catch (error: any) {
+    console.error('❌ Server urlToBase64 failed:', error.message);
+    throw new Error(`Failed to fetch image from URL: ${error.message}`);
+  }
+}
+
 export async function POST(request: NextRequest) {
   let faceSwapId: string | null = null;
   let transactionId: string | null = null;
@@ -125,9 +156,25 @@ export async function POST(request: NextRequest) {
     console.log(`🎯 Using prompt for template: ${templateTitle || 'default'}`);
     console.log(`📝 Prompt: ${prompt}`);
 
+    // Convertir URLs a base64 si es necesario
+    let processedTargetImage = targetImage;
+    let processedSourceImage = sourceImage;
+
+    // Si targetImage es una URL, convertirla a base64 en el servidor
+    if (targetImage.startsWith('http://') || targetImage.startsWith('https://')) {
+      console.log('🌐 Target image is a URL, converting on server...');
+      processedTargetImage = await urlToBase64(targetImage);
+    }
+
+    // Si sourceImage es una URL, convertirla a base64 en el servidor
+    if (sourceImage.startsWith('http://') || sourceImage.startsWith('https://')) {
+      console.log('🌐 Source image is a URL, converting on server...');
+      processedSourceImage = await urlToBase64(sourceImage);
+    }
+
     // Extraer y validar las imágenes base64
-    const targetBase64 = targetImage.split(',')[1];
-    const sourceBase64 = sourceImage.split(',')[1];
+    const targetBase64 = processedTargetImage.split(',')[1];
+    const sourceBase64 = processedSourceImage.split(',')[1];
 
     if (!targetBase64 || !sourceBase64) {
       throw new Error('Invalid image format');
@@ -137,8 +184,8 @@ export async function POST(request: NextRequest) {
     console.log(`📸 Source image size: ${sourceBase64.length} bytes`);
 
     // Detectar el mimeType de las imágenes
-    const targetMime = targetImage.split(';')[0].split(':')[1] || 'image/jpeg';
-    const sourceMime = sourceImage.split(';')[0].split(':')[1] || 'image/jpeg';
+    const targetMime = processedTargetImage.split(';')[0].split(':')[1] || 'image/jpeg';
+    const sourceMime = processedSourceImage.split(';')[0].split(':')[1] || 'image/jpeg';
 
     console.log(`🖼️ Target mime: ${targetMime}`);
     console.log(`🖼️ Source mime: ${sourceMime}`);

@@ -20,7 +20,8 @@
       "Bash(powershell:*)",
       "Bash(scoop bucket add:*)",
       "Bash(scoop install:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

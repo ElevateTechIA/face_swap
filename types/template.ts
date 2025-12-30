@@ -80,6 +80,9 @@ export interface UserProfile {
   usedTemplates: { templateId: string; timestamp: Date }[];
   favoriteTemplates?: string[];
 
+  // Answered screener questions tracking
+  answeredQuestions?: string[]; // Question IDs already answered
+
   // Demographics (optional)
   ageRange?: string;
   gender?: string;
@@ -88,74 +91,37 @@ export interface UserProfile {
   updatedAt: Date;
 }
 
-// Screener survey structure
-export interface ScreenerQuestion {
-  id: string;
-  question: string;
-  options: {
-    value: string;
-    label: string;
-    icon?: string; // Lucide icon name
-  }[];
-  multiSelect: boolean;
+// Screener Question Translation
+export interface QuestionTranslation {
+  label: string; // Texto de la pregunta
+  options: { [key: string]: string }; // { "athletic": "Atlético", "slim": "Delgado" }
 }
 
-export const SCREENER_QUESTIONS: ScreenerQuestion[] = [
-  {
-    id: 'bodyType',
-    question: '¿Qué tipo de cuerpo prefieres ver en las fotos?',
-    multiSelect: true,
-    options: [
-      { value: 'athletic', label: 'Atlético', icon: 'Dumbbell' },
-      { value: 'slim', label: 'Delgado', icon: 'User' },
-      { value: 'curvy', label: 'Curvilíneo', icon: 'Heart' },
-      { value: 'plus-size', label: 'Grande', icon: 'Users' },
-      { value: 'average', label: 'Promedio', icon: 'UserCircle' },
-    ],
-  },
-  {
-    id: 'occasions',
-    question: '¿Para qué ocasiones quieres crear Face Swaps?',
-    multiSelect: true,
-    options: [
-      { value: 'new-year', label: 'Año Nuevo', icon: 'Sparkles' },
-      { value: 'birthday', label: 'Cumpleaños', icon: 'Cake' },
-      { value: 'wedding', label: 'Boda', icon: 'Heart' },
-      { value: 'casual', label: 'Casual', icon: 'Coffee' },
-      { value: 'professional', label: 'Profesional', icon: 'Briefcase' },
-      { value: 'date', label: 'Cita', icon: 'Wine' },
-      { value: 'party', label: 'Fiesta', icon: 'Music' },
-    ],
-  },
-  {
-    id: 'mood',
-    question: '¿Qué tipo de vibe buscas?',
-    multiSelect: true,
-    options: [
-      { value: 'happy', label: 'Feliz', icon: 'Smile' },
-      { value: 'confident', label: 'Confiado', icon: 'Zap' },
-      { value: 'relaxed', label: 'Relajado', icon: 'Coffee' },
-      { value: 'energetic', label: 'Energético', icon: 'Bolt' },
-      { value: 'mysterious', label: 'Misterioso', icon: 'Eye' },
-      { value: 'playful', label: 'Juguetón', icon: 'PartyPopper' },
-    ],
-  },
-  {
-    id: 'stylePreference',
-    question: '¿Qué estilo te gusta más?',
-    multiSelect: true,
-    options: [
-      { value: 'elegant', label: 'Elegante', icon: 'Crown' },
-      { value: 'casual', label: 'Casual', icon: 'Shirt' },
-      { value: 'professional', label: 'Profesional', icon: 'Briefcase' },
-      { value: 'party', label: 'Fiesta', icon: 'Music' },
-      { value: 'romantic', label: 'Romántico', icon: 'Heart' },
-      { value: 'edgy', label: 'Atrevido', icon: 'Flame' },
-      { value: 'vintage', label: 'Vintage', icon: 'Camera' },
-      { value: 'modern', label: 'Moderno', icon: 'Sparkles' },
-    ],
-  },
-];
+// Screener Question (dynamic from database - COMPLETAMENTE DINÁMICO)
+export interface ScreenerQuestion {
+  id: string;
+  isActive: boolean;
+  order: number; // For sorting questions
+  multiSelect: boolean;
+  category?: 'preferences' | 'style' | 'occasions' | 'mood'; // Optional categorization
+
+  // Option keys (language-neutral identifiers)
+  optionKeys: string[]; // e.g., ['athletic', 'slim', 'curvy']
+
+  // Translations for all supported languages
+  translations: {
+    es: QuestionTranslation; // Español
+    en: QuestionTranslation; // English
+  };
+
+  // Metadata for targeting
+  targetGender?: ('male' | 'female' | 'neutral')[];
+  minUsageCount?: number; // Show only after N face swaps
+
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string; // Admin user ID
+}
 
 // Recommendation scoring weights
 export const RECOMMENDATION_WEIGHTS = {

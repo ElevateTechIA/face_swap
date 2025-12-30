@@ -6,14 +6,18 @@ import { useAuth } from '@/app/auth/AuthProvider';
 import { CreditsDisplay } from '@/app/components/CreditsDisplay';
 import { InsufficientCreditsModal } from '@/app/components/InsufficientCreditsModal';
 import { LoginGateModal } from '@/app/components/LoginGateModal';
-import { ScreenerSurvey, ScreenerAnswers } from '@/app/components/ScreenerSurvey';
+// import { DynamicScreenerSurvey } from '@/app/components/DynamicScreenerSurvey'; // TEMPORALMENTE DESHABILITADO
 import { LanguageSwitcher } from '@/app/components/LanguageSwitcher';
+import { ShareButton } from '@/app/components/ShareButton';
+import { ShareModal } from '@/app/components/modals/ShareModal';
+import { MobileMenu } from '@/app/components/MobileMenu';
 import { canUseGuestTrial, markGuestTrialAsUsed, getGuestTrialStatus } from '@/lib/guest-trial';
 import {
   Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
-  Grid, Flame, Layers, Play, Zap, LogOut, LogIn, History
+  Grid, Flame, Layers, Play, Zap, LogOut, LogIn, History, Menu
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { usePathname } from 'next/navigation';
 
 // --- Constantes de Encuesta (Onboarding) ---
 const SURVEY_QUESTIONS = [
@@ -107,6 +111,8 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, variant = 'primary',
 
 export default function Home() {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = useLocale();
   const { user, loading: authLoading, signInWithGoogle, signOutUser, getUserIdToken } = useAuth();
   const t = useTranslations();
   const [step, setStep] = useState(-1); // -1 = login, 0 = encuesta, 1+ = app
@@ -137,6 +143,10 @@ export default function Home() {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [showLoginGate, setShowLoginGate] = useState(false);
   const [guestTrialAvailable, setGuestTrialAvailable] = useState(false);
+
+  // Estados de UI
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Estados de Screener Survey (durante generación)
   const [showScreenerSurvey, setShowScreenerSurvey] = useState(false);
@@ -208,10 +218,17 @@ export default function Home() {
       checkUserProfile();
       setIsGuestMode(false);
     } else {
-      // Modo guest - permitir entrar directamente
+      // Modo guest - verificar si es primera visita
       setIsGuestMode(true);
       setGuestTrialAvailable(canUseGuestTrial());
-      setStep(1); // Ir directamente a templates
+
+      // Verificar si el guest ya completó la encuesta inicial
+      const hasCompletedSurvey = localStorage.getItem('guestSurveyCompleted');
+      if (!hasCompletedSurvey) {
+        setStep(0); // Mostrar encuesta inicial
+      } else {
+        setStep(1); // Ir directamente a templates
+      }
       setLoadingCredits(false);
     }
   }, [user, authLoading]);
@@ -283,42 +300,10 @@ export default function Home() {
     }
   };
 
-  const saveUserProfile = async (answers: ScreenerAnswers) => {
-    try {
-      const token = await getUserIdToken();
-      if (!token) return;
-
-      const response = await fetch('/api/user/profile', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          preferredBodyType: answers.bodyType,
-          preferredOccasions: answers.occasions,
-          preferredMood: answers.mood,
-          preferredStyle: answers.stylePreference,
-        }),
-      });
-
-      if (response.ok) {
-        setHasUserProfile(true);
-        console.log('✅ Perfil de usuario guardado');
-      }
-    } catch (error) {
-      console.error('Error guardando perfil:', error);
-    }
-  };
-
-  const handleScreenerComplete = async (answers: ScreenerAnswers) => {
-    console.log('📋 Screener completado:', answers);
+  const handleScreenerComplete = () => {
+    console.log('📋 Screener survey completado');
     setShowScreenerSurvey(false);
-
-    // Guardar perfil si el usuario está autenticado
-    if (user && !isGuestMode) {
-      await saveUserProfile(answers);
-    }
+    // El componente DynamicScreenerSurvey ya guarda las respuestas internamente
   };
 
   const savePreferences = async (preferences: Record<number, string>) => {
@@ -396,14 +381,35 @@ export default function Home() {
   };
 
   const urlToBase64 = async (url: string): Promise<string> => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    try {
+      console.log('🔄 Fetching image from URL:', url);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      console.log('✅ Image fetched, size:', blob.size, 'bytes, type:', blob.type);
+
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          if (!result || !result.includes(',')) {
+            reject(new Error('FileReader produced invalid data URL'));
+            return;
+          }
+          console.log('✅ Image converted to base64, format:', result.substring(0, 30) + '...');
+          resolve(result);
+        };
+        reader.onerror = () => reject(new Error('FileReader failed: ' + reader.error?.message));
+        reader.readAsDataURL(blob);
+      });
+    } catch (error: any) {
+      console.error('❌ urlToBase64 failed:', error.message);
+      throw error;
+    }
   };
 
   const handleSurveyOption = (optionId: string) => {
@@ -414,7 +420,16 @@ export default function Home() {
       setSurveyIndex(prev => prev + 1);
     } else {
       setIsSurveyLoading(true);
-      savePreferences(newAnswers);
+
+      // Guardar preferencias si es usuario autenticado
+      if (!isGuestMode) {
+        savePreferences(newAnswers);
+      } else {
+        // Para guests, guardar en localStorage que completaron la encuesta
+        localStorage.setItem('guestSurveyCompleted', 'true');
+        localStorage.setItem('guestSurveyAnswers', JSON.stringify(newAnswers));
+      }
+
       setTimeout(() => {
         setIsSurveyLoading(false);
         setStep(1);
@@ -425,13 +440,28 @@ export default function Home() {
   const selectTemplate = async (template: typeof TEMPLATES[0]) => {
     setProcessingProgress(10);
     setSelectedTemplate(template);
+
+    // Si es una URL de Firebase Storage (https://), enviarla directamente al servidor
+    // El servidor se encargará de convertirla a base64 sin problemas de CORS
+    if (template.url.startsWith('http://') || template.url.startsWith('https://')) {
+      console.log('🌐 Template is a URL, will be processed on server:', template.url);
+      setTargetImg(template.url); // Guardar la URL directamente
+      setStep(2);
+      setProcessingProgress(0);
+      return;
+    }
+
+    // Si es una ruta local (/templates/...), convertir a base64 en el navegador
     try {
       const base64 = await urlToBase64(template.url);
+      console.log('✅ Template converted to base64:', base64.substring(0, 50) + '...');
       setTargetImg(base64);
       setStep(2);
     } catch (e) {
-      setTargetImg(template.url);
-      setStep(2);
+      console.error('❌ Error converting template to base64:', e);
+      alert('Error al cargar la imagen del template. Por favor, intenta de nuevo.');
+      setProcessingProgress(0);
+      return; // No avanzar si falló la conversión
     }
     setProcessingProgress(0);
   };
@@ -439,16 +469,41 @@ export default function Home() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'source' | 'target') => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecciona un archivo de imagen válido.');
+        return;
+      }
+
+      console.log(`📤 Uploading ${type} image:`, file.name, file.type, file.size, 'bytes');
+
       const reader = new FileReader();
       reader.onload = (event) => {
+        const result = event.target?.result as string;
+
+        // Validar que el resultado sea un data URL válido
+        if (!result || !result.includes(',')) {
+          console.error('❌ FileReader produced invalid result');
+          alert('Error al cargar la imagen. Por favor, intenta con otra imagen.');
+          return;
+        }
+
+        console.log(`✅ ${type} image loaded:`, result.substring(0, 50) + '...');
+
         if (type === 'source') {
-          setSourceImg(event.target?.result as string);
+          setSourceImg(result);
           setAiAnalysis(null);
         } else {
-          setTargetImg(event.target?.result as string);
+          setTargetImg(result);
           setStep(2);
         }
       };
+
+      reader.onerror = () => {
+        console.error('❌ FileReader error:', reader.error);
+        alert('Error al leer la imagen. Por favor, intenta de nuevo.');
+      };
+
       reader.readAsDataURL(file);
     }
   };
@@ -461,6 +516,33 @@ export default function Home() {
     if (!isGuest && !hasUserProfile) {
       setShowScreenerSurvey(true);
     }
+
+    // Validar que las imágenes estén presentes
+    if (!sourceImg || !targetImg) {
+      alert('Error: Imágenes no cargadas correctamente');
+      setIsProcessingFaceSwap(false);
+      setProcessingProgress(0);
+      return;
+    }
+
+    // Validar formato: debe ser base64 (data:...) o URL (http...)
+    const isSourceValid = sourceImg.includes(',') || sourceImg.startsWith('http://') || sourceImg.startsWith('https://');
+    const isTargetValid = targetImg.includes(',') || targetImg.startsWith('http://') || targetImg.startsWith('https://');
+
+    if (!isSourceValid || !isTargetValid) {
+      console.error('❌ Invalid image format detected');
+      console.error('sourceImg starts with:', sourceImg.substring(0, 50));
+      console.error('targetImg starts with:', targetImg.substring(0, 50));
+      alert('Error: Formato de imagen inválido. Por favor, intenta subir las imágenes de nuevo.');
+      setIsProcessingFaceSwap(false);
+      setProcessingProgress(0);
+      setShowScreenerSurvey(false);
+      return;
+    }
+
+    console.log('✅ Image validation passed');
+    console.log('Source type:', sourceImg.startsWith('http') ? 'URL' : 'Base64');
+    console.log('Target type:', targetImg.startsWith('http') ? 'URL' : 'Base64');
 
     // Simular progreso mientras se procesa
     const progressInterval = setInterval(() => {
@@ -478,6 +560,8 @@ export default function Home() {
       console.log('Modo:', isGuest ? 'GUEST TRIAL' : 'AUTHENTICATED');
       console.log('Template seleccionado:', selectedTemplate?.title || 'Ninguno (imagen personalizada)');
       console.log('Style:', selectedStyle.id);
+      console.log('📸 Source image format:', sourceImg.substring(0, 50) + '...');
+      console.log('📸 Target image format:', targetImg.substring(0, 50) + '...');
 
       // Preparar headers
       const headers: Record<string, string> = {
@@ -612,55 +696,50 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
-
             {isGuestMode ? (
-              // Guest mode - mostrar botón de login
-              <button
-                onClick={async () => {
-                  setIsSigningIn(true);
-                  try {
-                    await signInWithGoogle();
-                  } catch (error) {
-                    console.error('Error al iniciar sesión:', error);
-                  } finally {
-                    setIsSigningIn(false);
-                  }
-                }}
-                disabled={isSigningIn}
-                className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white text-sm font-bold active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
-              >
-                {isSigningIn ? (
-                  <RefreshCw className="animate-spin" size={14} />
-                ) : (
-                  <>
-                    <LogIn size={14} />
-                    <span>{t('common.enter')}</span>
-                  </>
-                )}
-              </button>
+              // Guest mode - solo botón de login y menu
+              <>
+                <button
+                  onClick={async () => {
+                    setIsSigningIn(true);
+                    try {
+                      await signInWithGoogle();
+                    } catch (error) {
+                      console.error('Error al iniciar sesión:', error);
+                    } finally {
+                      setIsSigningIn(false);
+                    }
+                  }}
+                  disabled={isSigningIn}
+                  className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white text-sm font-bold active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSigningIn ? (
+                    <RefreshCw className="animate-spin" size={14} />
+                  ) : (
+                    <>
+                      <LogIn size={14} />
+                      <span>{t('common.enter')}</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowMobileMenu(true)}
+                  className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                  aria-label="Menú"
+                >
+                  <Menu size={18} />
+                </button>
+              </>
             ) : (
-              // Usuario autenticado - mostrar controles normales
+              // Usuario autenticado - mostrar créditos y menú
               <>
                 <CreditsDisplay credits={userCredits} loading={loadingCredits} />
-
                 <button
-                  onClick={() => router.push('/history')}
+                  onClick={() => setShowMobileMenu(true)}
                   className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-                  title="Ver historial"
+                  aria-label="Menú"
                 >
-                  <History size={16} />
-                </button>
-
-                {user?.photoURL && (
-                  <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full border border-white/20" />
-                )}
-                <button
-                  onClick={() => signOutUser()}
-                  className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-                  title="Cerrar sesión"
-                >
-                  <LogOut size={16} />
+                  <Menu size={18} />
                 </button>
               </>
             )}
@@ -689,13 +768,14 @@ export default function Home() {
         resultImage={resultImage || undefined}
       />
 
-      {/* Screener Survey durante generación */}
-      {showScreenerSurvey && (
-        <ScreenerSurvey
+      {/* Screener Survey durante generación - Dinámico */}
+      {/* TEMPORALMENTE DESHABILITADO */}
+      {/* {showScreenerSurvey && (
+        <DynamicScreenerSurvey
           onComplete={handleScreenerComplete}
-          processingProgress={processingProgress}
+          isGuest={isGuestMode}
         />
-      )}
+      )} */}
 
       <main className={`max-w-md mx-auto px-6 ${step > 0 ? 'pt-20' : 'pt-12'} pb-24 min-h-screen flex flex-col`}>
 
@@ -704,22 +784,25 @@ export default function Home() {
             {isSurveyLoading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center">
                 <Sparkles className="w-12 h-12 text-pink-500 animate-pulse mb-4" />
-                <h2 className="text-2xl font-black italic">CALIBRANDO IA...</h2>
+                <h2 className="text-2xl font-black italic">{t('survey.initial.calibrating')}</h2>
               </div>
             ) : (
               <>
                 <div className="mb-12">
-                  <h1 className="text-5xl font-black tracking-tighter leading-none mb-4 uppercase italic">Face<br/><span className="text-pink-600">Clone</span></h1>
-                  <p className="text-gray-400 font-medium">Nano Banana Pro Engine Enabled.</p>
+                  <h1 className="text-5xl font-black tracking-tighter leading-none mb-4 uppercase italic">
+                    {t('survey.initial.title')}<br/>
+                    <span className="text-pink-600">{t('survey.initial.titleHighlight')}</span>
+                  </h1>
+                  <p className="text-gray-400 font-medium">{t('survey.initial.subtitle')}</p>
                 </div>
                 <div className="space-y-4">
-                  <h2 className="text-2xl font-bold mb-6">{SURVEY_QUESTIONS[surveyIndex].question}</h2>
-                  <p className="text-gray-500 text-sm mb-4">{SURVEY_QUESTIONS[surveyIndex].subtitle}</p>
+                  <h2 className="text-2xl font-bold mb-6">{t(`survey.initial.questions.q${surveyIndex + 1}.question`)}</h2>
+                  <p className="text-gray-500 text-sm mb-4">{t(`survey.initial.questions.q${surveyIndex + 1}.subtitle`)}</p>
                   <div className="grid gap-3">
                     {SURVEY_QUESTIONS[surveyIndex].options.map((opt) => (
                       <Button key={opt.id} variant="survey" onClick={() => handleSurveyOption(opt.id)}>
                         <span className="text-2xl mr-4">{opt.icon}</span>
-                        <span className="font-bold text-lg">{opt.text}</span>
+                        <span className="font-bold text-lg">{t(`survey.initial.questions.q${surveyIndex + 1}.options.${opt.id}`)}</span>
                       </Button>
                     ))}
                   </div>
@@ -839,7 +922,7 @@ export default function Home() {
               </div>
             </div>
             <h3 className="text-3xl font-black italic uppercase">{t('faceSwap.steps.processing')}</h3>
-            <p className="text-gray-500 text-sm mt-2">{t('screener.processing')}</p>
+            <p className="text-gray-500 text-sm mt-2">{t('survey.screener.processing')}</p>
           </div>
         )}
 
@@ -870,32 +953,64 @@ export default function Home() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-auto">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  if (isGuestMode) {
-                    setShowLoginGate(true);
-                  } else {
-                    setStep(1);
-                  }
-                }}
-              >
-                {t('faceSwap.buttons.newSwap')}
-              </Button>
-              {isGuestMode ? (
-                <Button onClick={() => setShowLoginGate(true)}>
-                  <Download size={20} /> {t('common.download')}
+            <div className="space-y-4 mt-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    if (isGuestMode) {
+                      setShowLoginGate(true);
+                    } else {
+                      setStep(1);
+                    }
+                  }}
+                >
+                  {t('faceSwap.buttons.newSwap')}
                 </Button>
-              ) : (
-                <a href={resultImage || ''} download="swap_result.png">
-                  <Button><Download size={20} /> {t('common.download')}</Button>
-                </a>
-              )}
+                {isGuestMode ? (
+                  <Button onClick={() => setShowLoginGate(true)}>
+                    <Download size={20} /> {t('common.download')}
+                  </Button>
+                ) : (
+                  <a href={resultImage || ''} download="swap_result.png">
+                    <Button><Download size={20} /> {t('common.download')}</Button>
+                  </a>
+                )}
+              </div>
+              <div className="flex justify-center">
+                <ShareButton
+                  type="image"
+                  resultImage={resultImage || undefined}
+                  caption={aiCaption || undefined}
+                />
+              </div>
             </div>
           </div>
         )}
       </main>
+
+      {/* Mobile Menu */}
+      <MobileMenu
+        isOpen={showMobileMenu}
+        onClose={() => setShowMobileMenu(false)}
+        user={user}
+        onSignOut={signOutUser}
+        onShareApp={() => {
+          setShowMobileMenu(false);
+          setShowShareModal(true);
+        }}
+        currentLocale={locale}
+        onChangeLocale={(newLocale) => {
+          router.push(pathname.replace(`/${locale}`, `/${newLocale}`));
+        }}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        type="app"
+      />
 
       {/* Version badge */}
       <div className="fixed bottom-4 right-4 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-xs text-gray-400 z-50">

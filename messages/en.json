@@ -220,5 +220,27 @@
     "title": "Your History",
     "noHistory": "You don't have any saved Face Swaps yet",
     "createFirst": "Create your first Face Swap to see it here"
+  },
+  "share": {
+    "title": "Share",
+    "shareApp": "Share App",
+    "shareImage": "Share Image",
+    "instagram": "Instagram",
+    "whatsapp": "WhatsApp",
+    "facebook": "Facebook",
+    "twitter": "X (Twitter)",
+    "copyLink": "Copy Link",
+    "qrCode": "QR Code",
+    "qrTitle": "Scan to create your Face Swap",
+    "qrDownload": "Download QR",
+    "qrDownloaded": "QR downloaded successfully",
+    "copied": "Link copied to clipboard",
+    "copyError": "Error copying",
+    "appShare": "I created an amazing Face Swap with GLAM. Try it yourself!",
+    "imageShare": "Check out my Face Swap created with GLAM AI",
+    "shared": "Shared successfully",
+    "openedWhatsApp": "WhatsApp opened",
+    "openedFacebook": "Facebook opened",
+    "openedTwitter": "Twitter opened"
   }
 }
