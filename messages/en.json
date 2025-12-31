@@ -242,5 +242,78 @@
     "openedWhatsApp": "WhatsApp opened",
     "openedFacebook": "Facebook opened",
     "openedTwitter": "Twitter opened"
+  },
+  "landing": {
+    "hero": {
+      "title": "New Year Photos",
+      "titleHighlight": "That Look Expensive.",
+      "subtitle": "Upload a selfie — pick a New Year template — get your perfect photo in",
+      "subtitleHighlight": "seconds",
+      "cta": "Create my New Year photo",
+      "noCreditCard": "No credit card needed",
+      "highQuality": "High-quality results",
+      "endlessPresets": "Endless Presets",
+      "perfectFinishes": "Perfect Finishes",
+      "premiumQuality": "Premium Quality",
+      "year": "2026"
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Upload your selfie",
+        "description": "Start with a close-up photo where your face is clearly visible."
+      },
+      "step2": {
+        "title": "Pick a New Year template",
+        "description": "Choose your favorite glamorous New Year's Eve style."
+      },
+      "step3": {
+        "title": "Unlock your perfect photo",
+        "description": "Get your stunning New Year's portrait in seconds."
+      },
+      "footer": "No subscriptions. Just buy credits to unlock photos when you want them."
+    },
+    "templates": {
+      "title": "Choose Your New Year Look",
+      "cta": "Create my New Year photo"
+    },
+    "pricing": {
+      "title": "Get Stunning Photos,",
+      "titleHighlight": "Instantly",
+      "subtitle": "Choose your credit package and start creating",
+      "credits": "CREDITS",
+      "generates": "Generates {count} photos",
+      "cta": "Buy Credits"
+    },
+    "features": {
+      "title": "Why Choose Our AI Photo Generator?",
+      "realistic": {
+        "title": "Realistic AI Technology",
+        "description": "Advanced AI creates natural, professional-looking face swaps that blend seamlessly with your chosen template."
+      },
+      "instant": {
+        "title": "Instant Results",
+        "description": "Get your stunning photos in seconds. No waiting, no complicated editing required."
+      },
+      "privacy": {
+        "title": "Privacy Protected",
+        "description": "Your photos are secure and private. We never share or sell your personal images."
+      },
+      "premium": {
+        "title": "Premium Quality",
+        "description": "High-resolution outputs perfect for social media, printing, or sharing with friends and family."
+      }
+    },
+    "finalCta": {
+      "title": "Ready to Transform Your Photos?",
+      "subtitle": "Join thousands creating stunning AI-powered portraits for every occasion",
+      "cta": "Get Started Now"
+    },
+    "footer": {
+      "copyright": "© 2026 AI Photo Studio. All rights reserved.",
+      "getStarted": "Get Started",
+      "createPhotos": "Create Photos",
+      "tryNow": "Try Now"
+    }
   }
 }

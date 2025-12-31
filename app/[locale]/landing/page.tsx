@@ -1,6 +1,9 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { CTAButton } from './cta-button';
+import { LanguageSwitcher } from './language-switcher';
 import { CheckCircle2, Sparkles, Zap, Shield } from 'lucide-react';
 import heroImage from './assets/hero-image.png';
 import uploadSelfieImage from './assets/Upload your selfie.png';
@@ -12,47 +15,6 @@ import confettiParty from './assets/Confetti Party.jpg';
 import elegantCountdown from './assets/Elegant Countdown.jpg';
 import midnightCelebration from './assets/Midnight Celebration.jpg';
 import redVelvet from './assets/Red Velvet Euphoria.jpg';
-
-export const metadata: Metadata = {
-  title: 'AI New Year Photo Generator - Create Stunning Face Swap Portraits Instantly',
-  description: 'Transform your selfies into stunning New Year photos with AI-powered face swap technology. Choose from glamorous templates and get professional results in seconds. No subscription needed.',
-  keywords: [
-    'AI face swap',
-    'New Year photos',
-    'face swap app',
-    'AI photo generator',
-    'portrait generator',
-    'photo template',
-    'birthday photos',
-    'social media photos',
-    'AI portraits',
-    'realistic face swap'
-  ],
-  authors: [{ name: 'AI Photo Studio' }],
-  openGraph: {
-    title: 'New Year Photos That Look Expensive - AI Face Swap',
-    description: 'Upload a selfie, pick a New Year template, get your perfect photo in seconds.',
-    type: 'website',
-    images: [
-      {
-        url: '/og-image.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'AI New Year Photo Generator Preview',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'New Year Photos That Look Expensive',
-    description: 'Create stunning AI-powered portraits instantly',
-    images: ['/twitter-image.jpg'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
 
 const templates = [
   { name: 'The Champagne Toast', image: champagneToast },
@@ -70,33 +32,40 @@ const pricingPlans = [
   { name: 'Ultra', credits: 8000, photos: 100, price: 45 },
 ];
 
-const steps = [
-  {
-    number: 1,
-    title: 'Upload your selfie',
-    description: 'Start with a close-up photo where your face is clearly visible.',
-    icon: '📸',
-    image: uploadSelfieImage,
-  },
-  {
-    number: 2,
-    title: 'Pick a New Year template',
-    description: "Choose your favorite glamorous New Year's Eve style.",
-    icon: '🎨',
-    image: pickTemplateImage,
-  },
-  {
-    number: 3,
-    title: 'Unlock your perfect photo',
-    description: "Get your stunning New Year's portrait in seconds.",
-    icon: '✨',
-    image: unlockPhotoImage,
-  },
-];
+const stepImages = [uploadSelfieImage, pickTemplateImage, unlockPhotoImage];
 
 export default function LandingPage() {
+  const t = useTranslations('landing');
+
+  const steps = [
+    {
+      number: 1,
+      title: t('howItWorks.step1.title'),
+      description: t('howItWorks.step1.description'),
+      icon: '📸',
+      image: stepImages[0],
+    },
+    {
+      number: 2,
+      title: t('howItWorks.step2.title'),
+      description: t('howItWorks.step2.description'),
+      icon: '🎨',
+      image: stepImages[1],
+    },
+    {
+      number: 3,
+      title: t('howItWorks.step3.title'),
+      description: t('howItWorks.step3.description'),
+      icon: '✨',
+      image: stepImages[2],
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+      {/* Language Switcher */}
+      <LanguageSwitcher />
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-900/20 via-transparent to-yellow-800/20" />
@@ -105,46 +74,46 @@ export default function LandingPage() {
             {/* Left Content */}
             <div className="relative z-10 text-center lg:text-left">
               <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-6 leading-tight">
-                New Year Photos
+                {t('hero.title')}
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">
-                  That Look Expensive.
+                  {t('hero.titleHighlight')}
                 </span>
               </h1>
-              
+
               <p className="text-lg md:text-xl text-gray-300 mb-6 md:mb-8 max-w-2xl mx-auto lg:mx-0">
-                Upload a selfie — pick a New Year template —<br className="hidden sm:block" />
-                get your perfect photo in <span className="text-yellow-400 font-semibold">seconds</span>.
+                {t('hero.subtitle')}<br className="hidden sm:block" />
+                <span className="text-yellow-400 font-semibold">{t('hero.subtitleHighlight')}</span>.
               </p>
 
               <CTAButton className="w-full sm:w-auto">
-                Create my New Year photo
+                {t('hero.cta')}
               </CTAButton>
 
               {/* Features */}
               <div className="flex flex-wrap gap-4 md:gap-6 mt-6 md:mt-8 justify-center lg:justify-start">
                 <div className="flex items-center gap-2 text-sm text-gray-300">
                   <Shield className="w-4 h-4 text-yellow-400" />
-                  <span>No credit card needed</span>
+                  <span>{t('hero.noCreditCard')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-300">
                   <CheckCircle2 className="w-4 h-4 text-yellow-400" />
-                  <span>High-quality results</span>
+                  <span>{t('hero.highQuality')}</span>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-4 md:gap-6 mt-6 justify-center lg:justify-start">
                 <div className="flex items-center gap-2 text-xs md:text-sm text-gray-400 bg-gray-800/50 px-3 md:px-4 py-2 rounded-full">
                   <Sparkles className="w-4 h-4" />
-                  <span>Endless Presets</span>
+                  <span>{t('hero.endlessPresets')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm text-gray-400 bg-gray-800/50 px-3 md:px-4 py-2 rounded-full">
                   <Zap className="w-4 h-4" />
-                  <span>Perfect Finishes</span>
+                  <span>{t('hero.perfectFinishes')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm text-gray-400 bg-gray-800/50 px-3 md:px-4 py-2 rounded-full">
                   <Shield className="w-4 h-4" />
-                  <span>Premium Quality</span>
+                  <span>{t('hero.premiumQuality')}</span>
                 </div>
               </div>
             </div>
@@ -166,7 +135,7 @@ export default function LandingPage() {
                   </div>
                   {/* Year Badge */}
                   <div className="absolute top-4 right-4 bg-yellow-500 text-black px-4 py-2 rounded-full text-2xl font-bold shadow-lg">
-                    2026
+                    {t('hero.year')}
                   </div>
                 </div>
               </div>
@@ -179,7 +148,7 @@ export default function LandingPage() {
       <section className="py-16 md:py-24 bg-gradient-to-b from-gray-100 to-white text-gray-900">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-12 md:mb-16">
-            How It Works
+            {t('howItWorks.title')}
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8 md:gap-12 max-w-6xl mx-auto">
@@ -218,7 +187,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-center mt-12 text-gray-600 max-w-2xl mx-auto">
-            No subscriptions. Just buy credits to unlock photos when you want them.
+            {t('howItWorks.footer')}
           </p>
         </div>
       </section>
@@ -227,7 +196,7 @@ export default function LandingPage() {
       <section className="py-16 md:py-24 bg-gradient-to-b from-gray-900 to-black">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-12 md:mb-16">
-            Choose Your New Year Look
+            {t('templates.title')}
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 max-w-7xl mx-auto">
@@ -253,7 +222,7 @@ export default function LandingPage() {
           </div>
 
           <div className="text-center mt-12">
-            <CTAButton>Create my New Year photo</CTAButton>
+            <CTAButton>{t('templates.cta')}</CTAButton>
           </div>
         </div>
       </section>
@@ -262,10 +231,10 @@ export default function LandingPage() {
       <section className="py-16 md:py-24 bg-gradient-to-b from-gray-100 to-white text-gray-900">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-4">
-            Get Stunning Photos, <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-yellow-800">Instantly</span>
+            {t('pricing.title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-yellow-800">{t('pricing.titleHighlight')}</span>
           </h2>
           <p className="text-center text-gray-600 mb-12 md:mb-16">
-            Choose your credit package and start creating
+            {t('pricing.subtitle')}
           </p>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto">
@@ -281,22 +250,22 @@ export default function LandingPage() {
                     POPULAR
                   </div>
                 )}
-                
+
                 <div className="text-center">
                   <div className="inline-flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-sm font-medium text-gray-700 mb-4">
-                    {plan.credits.toLocaleString()} <span className="text-xs">CREDITS</span>
+                    {plan.credits.toLocaleString()} <span className="text-xs">{t('pricing.credits')}</span>
                   </div>
-                  
+
                   <div className="mb-4">
                     <span className="text-5xl font-bold text-gray-900">${plan.price}</span>
                   </div>
-                  
+
                   <p className="text-gray-600 mb-6">
-                    Generates {plan.photos} photos
+                    {t('pricing.generates', { count: plan.photos })}
                   </p>
-                  
+
                   <CTAButton className="w-full">
-                    Buy Credits
+                    {t('pricing.cta')}
                   </CTAButton>
                 </div>
               </div>
@@ -310,7 +279,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-              Why Choose Our AI Photo Generator?
+              {t('features.title')}
             </h2>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -321,9 +290,9 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Realistic AI Technology</h3>
+                  <h3 className="text-xl font-semibold mb-2">{t('features.realistic.title')}</h3>
                   <p className="text-gray-400">
-                    Advanced AI creates natural, professional-looking face swaps that blend seamlessly with your chosen template.
+                    {t('features.realistic.description')}
                   </p>
                 </div>
               </div>
@@ -335,9 +304,9 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Instant Results</h3>
+                  <h3 className="text-xl font-semibold mb-2">{t('features.instant.title')}</h3>
                   <p className="text-gray-400">
-                    Get your stunning photos in seconds. No waiting, no complicated editing required.
+                    {t('features.instant.description')}
                   </p>
                 </div>
               </div>
@@ -349,9 +318,9 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Privacy Protected</h3>
+                  <h3 className="text-xl font-semibold mb-2">{t('features.privacy.title')}</h3>
                   <p className="text-gray-400">
-                    Your photos are secure and private. We never share or sell your personal images.
+                    {t('features.privacy.description')}
                   </p>
                 </div>
               </div>
@@ -363,9 +332,9 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Premium Quality</h3>
+                  <h3 className="text-xl font-semibold mb-2">{t('features.premium.title')}</h3>
                   <p className="text-gray-400">
-                    High-resolution outputs perfect for social media, printing, or sharing with friends and family.
+                    {t('features.premium.description')}
                   </p>
                 </div>
               </div>
@@ -378,13 +347,13 @@ export default function LandingPage() {
       <section className="py-16 md:py-24 bg-gradient-to-br from-yellow-900/20 via-gray-900 to-gray-900">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
-            Ready to Transform Your Photos?
+            {t('finalCta.title')}
           </h2>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join thousands creating stunning AI-powered portraits for every occasion
+            {t('finalCta.subtitle')}
           </p>
           <CTAButton className="text-xl px-12 py-8">
-            Get Started Now
+            {t('finalCta.cta')}
           </CTAButton>
         </div>
       </section>
@@ -393,11 +362,11 @@ export default function LandingPage() {
       <footer className="py-8 border-t border-gray-800">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-            <p>© 2026 AI Photo Studio. All rights reserved.</p>
+            <p>{t('footer.copyright')}</p>
             <div className="flex gap-6">
-              <a href="/en" className="hover:text-white transition-colors">Get Started</a>
-              <a href="/en" className="hover:text-white transition-colors">Create Photos</a>
-              <a href="/en" className="hover:text-white transition-colors">Try Now</a>
+              <a href="/en" className="hover:text-white transition-colors">{t('footer.getStarted')}</a>
+              <a href="/en" className="hover:text-white transition-colors">{t('footer.createPhotos')}</a>
+              <a href="/en" className="hover:text-white transition-colors">{t('footer.tryNow')}</a>
             </div>
           </div>
         </div>

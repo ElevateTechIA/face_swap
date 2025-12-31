@@ -170,12 +170,19 @@ export default function Home() {
       let mode = 'all';
       let occasion = null;
 
+      // Mapeo de categorías UI a valores de occasion en Firebase
+      const categoryToOccasionMap: Record<string, string> = {
+        'editorial': 'new-year',  // NEW YEAR category
+        'cinematic': 'cinematic',
+        'party': 'party',
+      };
+
       if (activeCategory === 'trending') {
         mode = 'trending';
       } else if (activeCategory === 'all' && user) {
         mode = 'recommended'; // Recomendaciones personalizadas para usuarios autenticados
       } else if (activeCategory !== 'all' && activeCategory !== 'trending') {
-        occasion = activeCategory; // Filtrar por ocasión
+        occasion = categoryToOccasionMap[activeCategory] || activeCategory; // Filtrar por ocasión
       }
 
       // Construir URL con parámetros

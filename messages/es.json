@@ -246,5 +246,78 @@
     "openedWhatsApp": "WhatsApp abierto",
     "openedFacebook": "Facebook abierto",
     "openedTwitter": "Twitter abierto"
+  },
+  "landing": {
+    "hero": {
+      "title": "Fotos de Año Nuevo",
+      "titleHighlight": "Que Se Ven Caras.",
+      "subtitle": "Sube un selfie — elige una plantilla de Año Nuevo — obtén tu foto perfecta en",
+      "subtitleHighlight": "segundos",
+      "cta": "Crear mi foto de Año Nuevo",
+      "noCreditCard": "No se necesita tarjeta",
+      "highQuality": "Resultados de alta calidad",
+      "endlessPresets": "Presets Infinitos",
+      "perfectFinishes": "Acabados Perfectos",
+      "premiumQuality": "Calidad Premium",
+      "year": "2026"
+    },
+    "howItWorks": {
+      "title": "Cómo Funciona",
+      "step1": {
+        "title": "Sube tu selfie",
+        "description": "Comienza con una foto de cerca donde tu rostro sea claramente visible."
+      },
+      "step2": {
+        "title": "Elige una plantilla de Año Nuevo",
+        "description": "Selecciona tu estilo glamuroso favorito de Nochevieja."
+      },
+      "step3": {
+        "title": "Desbloquea tu foto perfecta",
+        "description": "Obtén tu retrato de Año Nuevo impresionante en segundos."
+      },
+      "footer": "Sin suscripciones. Solo compra créditos para desbloquear fotos cuando quieras."
+    },
+    "templates": {
+      "title": "Elige Tu Look de Año Nuevo",
+      "cta": "Crear mi foto de Año Nuevo"
+    },
+    "pricing": {
+      "title": "Obtén Fotos Increíbles,",
+      "titleHighlight": "Al Instante",
+      "subtitle": "Elige tu paquete de créditos y comienza a crear",
+      "credits": "CRÉDITOS",
+      "generates": "Genera {count} fotos",
+      "cta": "Comprar Créditos"
+    },
+    "features": {
+      "title": "¿Por Qué Elegir Nuestro Generador de Fotos IA?",
+      "realistic": {
+        "title": "Tecnología IA Realista",
+        "description": "IA avanzada crea intercambios de rostros naturales y de aspecto profesional que se mezclan perfectamente con tu plantilla elegida."
+      },
+      "instant": {
+        "title": "Resultados Instantáneos",
+        "description": "Obtén tus fotos increíbles en segundos. Sin esperas, sin edición complicada requerida."
+      },
+      "privacy": {
+        "title": "Privacidad Protegida",
+        "description": "Tus fotos están seguras y son privadas. Nunca compartimos ni vendemos tus imágenes personales."
+      },
+      "premium": {
+        "title": "Calidad Premium",
+        "description": "Resultados en alta resolución perfectos para redes sociales, impresión o compartir con amigos y familia."
+      }
+    },
+    "finalCta": {
+      "title": "¿Listo Para Transformar Tus Fotos?",
+      "subtitle": "Únete a miles creando retratos increíbles con IA para cada ocasión",
+      "cta": "Comenzar Ahora"
+    },
+    "footer": {
+      "copyright": "© 2026 AI Photo Studio. Todos los derechos reservados.",
+      "getStarted": "Comenzar",
+      "createPhotos": "Crear Fotos",
+      "tryNow": "Probar Ahora"
+    }
   }
 }
