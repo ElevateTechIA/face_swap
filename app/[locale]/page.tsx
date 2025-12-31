@@ -119,7 +119,7 @@ export default function Home() {
   const [sourceImg, setSourceImg] = useState<string | null>(null);
   const [targetImg, setTargetImg] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<typeof TEMPLATES[0] | null>(null);
-  const [activeCategory, setActiveCategory] = useState('trending');
+  const [activeCategory, setActiveCategory] = useState('editorial');
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0]);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [resultImage, setResultImage] = useState<string | null>(null);
@@ -692,7 +692,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-gradient-to-tr from-pink-500 to-indigo-600 rounded-xl flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="font-black text-lg tracking-tighter italic uppercase">GLAM</span>
+            <span className="font-black text-lg tracking-tighter italic uppercase">GLAMOUR</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1014,7 +1014,7 @@ export default function Home() {
 
       {/* Version badge */}
       <div className="fixed bottom-4 right-4 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-xs text-gray-400 z-50">
-        v2.1.0
+        v2.2.0
       </div>
 
       <style jsx>{`
