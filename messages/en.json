@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "GLAM",
-    "welcome": "Welcome to GLAM!",
+    "appName": "GLAMOUR",
+    "welcome": "Welcome to GLAMOUR!",
     "subtitle": "Transform your photos with AI",
     "loading": "Loading...",
     "cancel": "Cancel",
@@ -236,8 +236,8 @@
     "qrDownloaded": "QR downloaded successfully",
     "copied": "Link copied to clipboard",
     "copyError": "Error copying",
-    "appShare": "I created an amazing Face Swap with GLAM. Try it yourself!",
-    "imageShare": "Check out my Face Swap created with GLAM AI",
+    "appShare": "I created an amazing Face Swap with GLAMOUR. Try it yourself!",
+    "imageShare": "Check out my Face Swap created with GLAMOUR AI",
     "shared": "Shared successfully",
     "openedWhatsApp": "WhatsApp opened",
     "openedFacebook": "Facebook opened",

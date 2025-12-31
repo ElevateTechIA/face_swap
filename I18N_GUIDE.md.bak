@@ -236,7 +236,7 @@ const languages = [
 ```json
 {
   "common": {
-    "appName": "GLAMOUR",
+    "appName": "GLAM",
     "loading": "Cargando...",
     "cancel": "Cancelar",
     // ... botones y acciones comunes

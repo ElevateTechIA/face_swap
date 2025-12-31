@@ -66,7 +66,7 @@ export function ShareModal({ isOpen, onClose, type, resultImage, caption }: Shar
   const handleInstagramShare = async () => {
     if (hasWebShareAPI()) {
       const shareData: any = {
-        title: 'GLAM Face Swap',
+        title: 'GLAMOUR Face Swap',
         text: shareCaption,
         url: shareUrl,
       };

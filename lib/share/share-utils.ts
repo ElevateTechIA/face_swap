@@ -46,7 +46,7 @@ export function getFacebookShareUrl(url: string): string {
 export function getTwitterShareUrl(url: string, caption: string): string {
   const text = encodeURIComponent(caption);
   const urlEncoded = encodeURIComponent(url);
-  return `https://twitter.com/intent/tweet?text=${text}&url=${urlEncoded}&hashtags=GLAM,FaceSwapAI`;
+  return `https://twitter.com/intent/tweet?text=${text}&url=${urlEncoded}&hashtags=GLAMOUR,FaceSwapAI`;
 }
 
 /**
