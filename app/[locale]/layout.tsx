@@ -4,9 +4,8 @@ import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { Providers } from '../providers';
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
+// Force dynamic rendering - do not pre-render during build
+export const dynamic = 'force-dynamic';
 
 export default async function LocaleLayout({
   children,

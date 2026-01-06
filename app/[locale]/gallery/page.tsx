@@ -8,8 +8,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Force dynamic rendering - no pre-rendering during build
-export const dynamic = 'force-dynamic';
 
 interface GalleryItem {
   id: string;
