@@ -31,8 +31,22 @@ export default function PublicGalleryPage() {
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
 
   const ITEMS_PER_PAGE = 20;
+
+  // Load liked items from localStorage on mount
+  useEffect(() => {
+    const savedLikes = localStorage.getItem('gallery_liked_items');
+    if (savedLikes) {
+      try {
+        const parsed = JSON.parse(savedLikes);
+        setLikedItems(new Set(parsed));
+      } catch (error) {
+        console.error('Error loading liked items:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     loadGallery(true); // Reset on mount or sort change
@@ -72,7 +86,9 @@ export default function PublicGalleryPage() {
     }
   };
 
-  const handleLike = async (itemId: string, currentlyLiked: boolean) => {
+  const handleLike = async (itemId: string) => {
+    const currentlyLiked = likedItems.has(itemId);
+
     try {
       const response = await fetch('/api/gallery/like', {
         method: 'POST',
@@ -87,7 +103,19 @@ export default function PublicGalleryPage() {
         throw new Error('Failed to like');
       }
 
-      // Update local state
+      // Update liked items state
+      const newLikedItems = new Set(likedItems);
+      if (currentlyLiked) {
+        newLikedItems.delete(itemId);
+      } else {
+        newLikedItems.add(itemId);
+      }
+      setLikedItems(newLikedItems);
+
+      // Save to localStorage
+      localStorage.setItem('gallery_liked_items', JSON.stringify(Array.from(newLikedItems)));
+
+      // Update local items state
       setItems(prev => prev.map(item => {
         if (item.id === itemId) {
           return {
@@ -200,10 +228,17 @@ export default function PublicGalleryPage() {
 
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => handleLike(item.id, false)}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-pink-500 transition-colors active:scale-95"
+                        onClick={() => handleLike(item.id)}
+                        className={`flex items-center gap-1 text-xs transition-colors active:scale-95 ${
+                          likedItems.has(item.id)
+                            ? 'text-pink-500'
+                            : 'text-gray-400 hover:text-pink-500'
+                        }`}
                       >
-                        <Heart size={14} />
+                        <Heart
+                          size={14}
+                          className={likedItems.has(item.id) ? 'fill-pink-500' : ''}
+                        />
                         {item.likes}
                       </button>
                     </div>
