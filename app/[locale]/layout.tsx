@@ -1,16 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { Providers } from '../providers';
-
-// Force dynamic rendering - do not pre-render during build
-export const dynamic = 'force-dynamic';
-
-// Define which locale params are valid
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
+import { notFound } from 'next/navigation';
 
 export default async function LocaleLayout({
   children,
