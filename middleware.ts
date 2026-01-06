@@ -16,9 +16,12 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Aplicar el middleware a todas las rutas excepto:
-  // - API routes
-  // - _next (archivos estáticos de Next.js)
-  // - Archivos estáticos (imágenes, fuentes, etc.)
-  matcher: ['/', '/(es|en)/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
+  // Matcher recomendado por next-intl
+  // Aplica el middleware a todas las rutas excepto API, _next, _vercel y archivos estáticos
+  matcher: [
+    // Match all pathnames except for
+    // - … if they start with `/api`, `/_next` or `/_vercel`
+    // - … the ones containing a dot (e.g. `favicon.ico`)
+    '/((?!api|_next|_vercel|.*\\..*).*)'
+  ],
 };

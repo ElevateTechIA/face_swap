@@ -134,32 +134,24 @@ export default function PublicGalleryPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-black/70 backdrop-blur-2xl border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-black italic uppercase">
-                {t('gallery.title')}
-              </h1>
-              <p className="text-sm text-gray-400 mt-1">
-                {t('gallery.subtitle')}
-              </p>
-            </div>
+      {/* Header - Mobile Only */}
+      <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-14 bg-black/70 backdrop-blur-2xl border-b border-white/10 z-50 flex items-center justify-between px-4">
+        <h1 className="text-base font-black italic uppercase tracking-tight">
+          {t('gallery.title')}
+        </h1>
 
-            <a
-              href="/"
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 font-bold text-sm active:scale-95 transition-all"
-            >
-              {t('gallery.createYours')}
-            </a>
-          </div>
-        </div>
+        <a
+          href="/"
+          className="px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 font-bold text-xs active:scale-95 transition-all whitespace-nowrap"
+        >
+          {t('gallery.createYours')}
+        </a>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Main Content - Mobile Centered */}
+      <main className="flex flex-col min-h-screen max-w-md mx-auto pt-14 pb-4 px-4">
         {/* Filters */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+        <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-2">
           {[
             { id: 'recent', icon: Clock, label: t('gallery.filters.recent') },
             { id: 'trending', icon: TrendingUp, label: t('gallery.filters.trending') },
@@ -169,13 +161,13 @@ export default function PublicGalleryPage() {
             <button
               key={filter.id}
               onClick={() => setSortBy(filter.id as SortOption)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium whitespace-nowrap transition-all active:scale-95 ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
                 sortBy === filter.id
                   ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white'
-                  : 'bg-white/5 border border-white/10 text-gray-300 hover:border-pink-500/50'
+                  : 'bg-white/5 border border-white/10 text-gray-300'
               }`}
             >
-              <filter.icon size={16} />
+              <filter.icon size={14} />
               {filter.label}
             </button>
           ))}
@@ -183,17 +175,17 @@ export default function PublicGalleryPage() {
 
         {/* Gallery Grid */}
         {loading && offset === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-8 h-8 animate-spin text-pink-500" />
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="w-6 h-6 animate-spin text-pink-500" />
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-20">
-            <GridIcon size={48} className="mx-auto text-gray-600 mb-4" />
-            <p className="text-gray-400">{t('gallery.empty')}</p>
+          <div className="text-center py-12">
+            <GridIcon size={40} className="mx-auto text-gray-600 mb-3" />
+            <p className="text-sm text-gray-400">{t('gallery.empty')}</p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {items.map(item => (
                 <div
                   key={item.id}
@@ -206,37 +198,32 @@ export default function PublicGalleryPage() {
                     className="w-full h-full object-cover"
                   />
 
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {/* Gradient Overlay - Always visible on mobile */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
 
-                  {/* Info Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-full group-hover:translate-y-0 transition-transform">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-gray-300">
-                        {item.displayName}
-                      </span>
-                      {item.isFeatured && (
-                        <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                      )}
-                    </div>
-
+                  {/* Info Overlay - Always visible on mobile */}
+                  <div className="absolute bottom-0 left-0 right-0 p-2.5">
                     {item.caption && (
-                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">
+                      <p className="text-[10px] text-gray-300 mb-1.5 line-clamp-2 leading-tight">
                         {item.caption}
                       </p>
                     )}
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-gray-400">
+                        {item.displayName}
+                      </span>
+
                       <button
                         onClick={() => handleLike(item.id)}
-                        className={`flex items-center gap-1 text-xs transition-colors active:scale-95 ${
+                        className={`flex items-center gap-1 text-[10px] transition-colors active:scale-95 ${
                           likedItems.has(item.id)
                             ? 'text-pink-500'
-                            : 'text-gray-400 hover:text-pink-500'
+                            : 'text-gray-400'
                         }`}
                       >
                         <Heart
-                          size={14}
+                          size={12}
                           className={likedItems.has(item.id) ? 'fill-pink-500' : ''}
                         />
                         {item.likes}
@@ -244,11 +231,11 @@ export default function PublicGalleryPage() {
                     </div>
                   </div>
 
-                  {/* Featured Badge */}
+                  {/* Featured Badge - Mobile Optimized */}
                   {item.isFeatured && (
-                    <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-yellow-500/20 backdrop-blur-sm border border-yellow-500/50">
-                      <span className="text-xs font-bold text-yellow-300">
-                        {t('gallery.featured')}
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-yellow-500/20 backdrop-blur-sm border border-yellow-500/50">
+                      <span className="text-[10px] font-bold text-yellow-300">
+                        ⭐ {t('gallery.featured')}
                       </span>
                     </div>
                   )}
@@ -256,16 +243,19 @@ export default function PublicGalleryPage() {
               ))}
             </div>
 
-            {/* Load More */}
+            {/* Load More - Mobile Optimized */}
             {hasMore && (
-              <div className="flex justify-center mt-8">
+              <div className="flex justify-center mt-6">
                 <button
                   onClick={() => loadGallery(false)}
                   disabled={loading}
-                  className="px-6 py-3 rounded-full bg-white/5 border border-white/10 font-medium hover:border-pink-500/50 transition-all active:scale-95 disabled:opacity-50"
+                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 font-bold text-sm hover:border-pink-500/50 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (
-                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>{t('common.loading')}</span>
+                    </>
                   ) : (
                     t('gallery.loadMore')
                   )}
@@ -274,7 +264,7 @@ export default function PublicGalleryPage() {
             )}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

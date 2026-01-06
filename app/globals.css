@@ -17,4 +17,14 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Hide scrollbar for mobile horizontal scrolling */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
