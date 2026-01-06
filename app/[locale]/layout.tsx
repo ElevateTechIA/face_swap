@@ -7,6 +7,11 @@ import { Providers } from '../providers';
 // Force dynamic rendering - do not pre-render during build
 export const dynamic = 'force-dynamic';
 
+// Define which locale params are valid
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
+
 export default async function LocaleLayout({
   children,
   params
