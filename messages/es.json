@@ -225,6 +225,65 @@
     "noHistory": "Aún no tienes Face Swaps guardados",
     "createFirst": "Crea tu primer Face Swap para verlo aquí"
   },
+  "styles": {
+    "categories": {
+      "realistic": "Realista",
+      "artistic": "Artístico",
+      "cinematic": "Cinematográfico",
+      "fantasy": "Fantasía",
+      "seasonal": "Temporal",
+      "effects": "Efectos"
+    },
+    "selectStyle": "Selecciona un Estilo",
+    "allStyles": "Todos los Estilos",
+    "premium": "Premium",
+    "new": "Nuevo"
+  },
+  "prompts": {
+    "title": "Describe Tu Visión",
+    "subtitle": "Dile a la IA qué tipo de foto quieres crear",
+    "placeholder": "Ej: Quiero verme en una fiesta de año nuevo glamurosa con luces doradas...",
+    "quickIdeas": "Ideas rápidas:",
+    "quick": {
+      "nyeParty": "Fiesta Año Nuevo",
+      "beachSunset": "Playa al Atardecer",
+      "cityNight": "Ciudad Nocturna",
+      "vintageGlam": "Glamour Vintage",
+      "cyberpunk": "Cyberpunk Futurista",
+      "nature": "Naturaleza Serena"
+    },
+    "send": "Enviar",
+    "hint": "Presiona Enter para enviar, Shift+Enter para nueva línea",
+    "interpreting": "Interpretando tu visión con IA...",
+    "examples": {
+      "title": "Ejemplos:",
+      "ex1": "Una fiesta elegante de año nuevo con champagne y luces doradas",
+      "ex2": "Playa tropical al atardecer con vestido rojo y palmeras",
+      "ex3": "Ciudad futurista de noche con luces de neón azules y rosas"
+    },
+    "interpretation": {
+      "title": "La IA interpretó tu visión:",
+      "scenario": "Escenario",
+      "mood": "Ambiente",
+      "lighting": "Iluminación"
+    },
+    "suggestions": {
+      "templates": "Templates Recomendados",
+      "styles": "Estilos Sugeridos",
+      "continue": "Continuar con Selección"
+    },
+    "modes": {
+      "browse": "Explorar Templates",
+      "prompt": "Describir Visión"
+    },
+    "errors": {
+      "empty": "Por favor describe tu visión",
+      "failed": "Error al interpretar. Intenta de nuevo."
+    },
+    "success": {
+      "interpreted": "¡Visión interpretada! Revisa las sugerencias"
+    }
+  },
   "share": {
     "title": "Compartir",
     "shareApp": "Compartir App",
@@ -318,6 +377,73 @@
       "getStarted": "Comenzar",
       "createPhotos": "Crear Fotos",
       "tryNow": "Probar Ahora"
+    }
+  },
+  "upload": {
+    "tapToUpload": "Toca para subir",
+    "remove": "Eliminar",
+    "errors": {
+      "invalidType": "Tipo de archivo no válido",
+      "tooLarge": "La imagen es demasiado grande (máx. 10MB)"
+    }
+  },
+  "groupPhotos": {
+    "title": "Foto Grupal",
+    "subtitle": "Sube {count} fotos para crear tu foto grupal",
+    "templatePreview": "Plantilla seleccionada",
+    "progress": "{uploaded} de {total} fotos",
+    "person": "Persona {number}",
+    "continue": "Continuar",
+    "hint": "Asegúrate de que cada foto muestre claramente el rostro de la persona",
+    "processing": {
+      "title": "Creando tu foto grupal...",
+      "swapping": "Intercambiando rostro {current} de {total}",
+      "almostDone": "¡Casi listo!",
+      "completed": "¡Foto grupal completada!"
+    },
+    "errors": {
+      "notAllUploaded": "Por favor sube las {count} fotos",
+      "processingFailed": "Error al procesar la foto grupal",
+      "faceNotDetected": "No se detectó rostro en la imagen {number}"
+    }
+  },
+  "security": {
+    "rateLimit": {
+      "exceeded": "Has alcanzado el límite de solicitudes. Por favor, intenta más tarde.",
+      "retryAfter": "Intenta nuevamente en {minutes} minutos"
+    },
+    "validation": {
+      "imageTooLarge": "La imagen es demasiado grande. Máximo {maxMB}MB",
+      "invalidDimensions": "Dimensiones de imagen no válidas. Máximo {maxWidth}x{maxHeight}px",
+      "invalidFormat": "Formato de imagen no válido. Solo se permiten JPG, PNG y WebP",
+      "suspiciousImage": "La imagen tiene características sospechosas"
+    }
+  },
+  "gallery": {
+    "title": "Galería Pública",
+    "subtitle": "Descubre creaciones increíbles de nuestra comunidad",
+    "createYours": "Crear la Tuya",
+    "public": "Público",
+    "private": "Privado",
+    "publicDesc": "Visible en la galería pública",
+    "privateDesc": "Solo tú puedes verla",
+    "published": "¡Publicado en la galería!",
+    "unpublished": "Removido de la galería",
+    "error": "Error al actualizar galería",
+    "captionHint": "Agrega un caption opcional para tu creación (máx. 150 caracteres)",
+    "captionPlaceholder": "Ej: Mi look favorito de año nuevo ✨",
+    "publishNow": "Publicar Ahora",
+    "visibleInGallery": "Visible en galería pública",
+    "loadError": "Error al cargar galería",
+    "likeError": "Error al dar like",
+    "empty": "No hay fotos en la galería aún",
+    "featured": "Destacado",
+    "loadMore": "Cargar Más",
+    "filters": {
+      "recent": "Recientes",
+      "trending": "Tendencia",
+      "popular": "Populares",
+      "featured": "Destacados"
     }
   }
 }

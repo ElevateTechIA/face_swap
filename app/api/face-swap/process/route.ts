@@ -3,6 +3,8 @@ import { getAdminFirestore } from '@/lib/firebase/admin';
 import { verifyUserAuth } from '@/lib/api/auth-middleware';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getTemplatePrompt } from '@/lib/template-prompts';
+import { getStyleById } from '@/lib/styles/style-configs';
+import { withRateLimit, RATE_LIMITS, getClientIp } from '@/lib/security/rate-limiter';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Face swap puede tomar tiempo
@@ -47,11 +49,25 @@ export async function POST(request: NextRequest) {
   try {
     // Obtener body del request primero
     const body = await request.json();
-    const { sourceImage, targetImage, style, templateTitle, isGuestTrial: requestIsGuest } = body;
+    const {
+      sourceImage,
+      targetImage,
+      style,
+      templateTitle,
+      isGuestTrial: requestIsGuest,
+      isGroupSwap,
+      faceIndex,
+      totalFaces
+    } = body;
 
     // Detectar si es guest trial
     const guestHeader = request.headers.get('X-Guest-Trial');
     isGuestTrial = guestHeader === 'true' || requestIsGuest === true;
+
+    // Log group swap info
+    if (isGroupSwap) {
+      console.log(`👥 GROUP SWAP: Processing face ${faceIndex + 1} of ${totalFaces}`);
+    }
 
     // Verificar autenticación solo si NO es guest trial
     if (!isGuestTrial) {
@@ -63,6 +79,39 @@ export async function POST(request: NextRequest) {
       userId = `guest_${ip}_${Date.now()}`;
       console.log('🎁 Processing GUEST TRIAL for:', userId);
     }
+
+    // 🔒 SECURITY: Rate limiting
+    console.log('🔒 Checking rate limit...');
+    const { allowed, result } = await withRateLimit(
+      request,
+      RATE_LIMITS.FACE_SWAP,
+      userId || undefined
+    );
+
+    if (!allowed) {
+      const clientIp = getClientIp(request);
+      console.warn(`⚠️ Rate limit exceeded for ${userId || clientIp}`);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Por favor, intenta más tarde.',
+          code: 'RATE_LIMIT_EXCEEDED',
+          retryAfter: result.retryAfter
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(result.retryAfter || 3600),
+            'X-RateLimit-Limit': String(RATE_LIMITS.FACE_SWAP.maxRequests),
+            'X-RateLimit-Remaining': String(result.remaining),
+            'X-RateLimit-Reset': String(result.resetTime)
+          }
+        }
+      );
+    }
+
+    console.log(`✅ Rate limit OK: ${result.remaining}/${RATE_LIMITS.FACE_SWAP.maxRequests} remaining`);
 
     if (!sourceImage || !targetImage) {
       return NextResponse.json(
@@ -152,9 +201,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener el prompt específico del template (o usar el default)
-    const prompt = getTemplatePrompt(templateTitle);
+    let prompt = getTemplatePrompt(templateTitle);
+
+    // Si hay un estilo seleccionado, agregar sus instrucciones al prompt
+    if (style) {
+      const styleConfig = getStyleById(style);
+      if (styleConfig) {
+        prompt = `${prompt}\n\nAdditional style instructions: ${styleConfig.prompt}`;
+        console.log(`🎨 Applying style: ${styleConfig.name} (${styleConfig.category})`);
+      }
+    }
+
     console.log(`🎯 Using prompt for template: ${templateTitle || 'default'}`);
-    console.log(`📝 Prompt: ${prompt}`);
+    console.log(`📝 Full prompt: ${prompt}`);
 
     // Convertir URLs a base64 si es necesario
     let processedTargetImage = targetImage;
@@ -322,8 +381,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       resultImage,
+      resultUrl: resultImageUrl || resultImage, // For group swaps to use in next iteration
       faceSwapId,
       creditsRemaining: isGuestTrial ? 0 : newCredits,
+      isGroupSwap: isGroupSwap || false,
+      faceIndex: faceIndex ?? 0,
+      totalFaces: totalFaces ?? 1,
     });
 
   } catch (error: any) {

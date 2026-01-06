@@ -48,6 +48,11 @@ export interface Template {
   // AI generation
   prompt: string; // Template-specific Gemini prompt
 
+  // Group photo support
+  faceCount?: number; // Number of people in template (1 for solo, 2+ for group)
+  isGroup?: boolean; // True if template supports multiple faces
+  maxFaces?: number; // Maximum faces supported (default: faceCount)
+
   // Metadata for recommendations
   metadata: TemplateMetadata;
 

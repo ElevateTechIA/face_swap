@@ -11,10 +11,17 @@ import { LanguageSwitcher } from '@/app/components/LanguageSwitcher';
 import { ShareButton } from '@/app/components/ShareButton';
 import { ShareModal } from '@/app/components/modals/ShareModal';
 import { MobileMenu } from '@/app/components/MobileMenu';
+import { PublicGalleryToggle } from '@/app/components/PublicGalleryToggle';
+import { StyleSelector } from '@/app/components/StyleSelector';
+import { PromptStudio, type PromptInterpretation } from '@/app/components/PromptStudio';
+import { PromptSuggestions } from '@/app/components/PromptSuggestions';
+import { MultiFaceUpload } from '@/app/components/MultiFaceUpload';
+import { AI_STYLES, type StyleConfig, getStyleById } from '@/lib/styles/style-configs';
+import { processGroupSwap, type GroupSwapProgress } from '@/lib/group-photos/processor';
 import { canUseGuestTrial, markGuestTrialAsUsed, getGuestTrialStatus } from '@/lib/guest-trial';
 import {
   Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
-  Grid, Flame, Layers, Play, Zap, LogOut, LogIn, History, Menu
+  Grid, Flame, Layers, Play, Zap, LogOut, LogIn, History, Menu, Image
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
@@ -73,15 +80,6 @@ const TEMPLATES = [
   { id: 't6', url: '/templates/Elegant Countdown.jpg', title: 'Elegant Countdown', category: 'editorial', trending: false },
 ];
 
-// --- Estilos de IA ---
-const STYLES = [
-  { id: 'natural', name: 'Natural', color: 'from-green-400 to-emerald-600', filter: 'none' },
-  { id: 'glam', name: 'Glamour', color: 'from-pink-500 to-rose-500', filter: 'contrast(1.1) saturate(1.3) brightness(1.1)' },
-  { id: 'cyber', name: 'Cyberpunk', color: 'from-blue-500 to-cyan-500', filter: 'hue-rotate(180deg) contrast(1.2)' },
-  { id: 'vintage', name: '90s Retro', color: 'from-yellow-400 to-orange-500', filter: 'sepia(0.4) contrast(0.9) brightness(0.9)' },
-  { id: 'bw', name: 'Noir', color: 'from-gray-400 to-gray-600', filter: 'grayscale(1) contrast(1.2)' },
-];
-
 interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
@@ -118,11 +116,12 @@ export default function Home() {
   const [step, setStep] = useState(-1); // -1 = login, 0 = encuesta, 1+ = app
   const [sourceImg, setSourceImg] = useState<string | null>(null);
   const [targetImg, setTargetImg] = useState<string | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<typeof TEMPLATES[0] | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState('editorial');
-  const [selectedStyle, setSelectedStyle] = useState(STYLES[0]);
+  const [selectedStyle, setSelectedStyle] = useState<StyleConfig>(AI_STYLES[0]);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [resultImage, setResultImage] = useState<string | null>(null);
+  const [currentFaceSwapId, setCurrentFaceSwapId] = useState<string | null>(null);
   const [showComparison, setShowComparison] = useState(false);
 
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
@@ -156,6 +155,16 @@ export default function Home() {
   // Estados de templates dinámicos desde Firebase
   const [dynamicTemplates, setDynamicTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
+
+  // Estados de Prompt Studio
+  const [selectionMode, setSelectionMode] = useState<'browse' | 'prompt'>('browse');
+  const [promptInterpretation, setPromptInterpretation] = useState<PromptInterpretation | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Group photos state
+  const [groupImages, setGroupImages] = useState<string[]>([]);
+  const [isGroupPhoto, setIsGroupPhoto] = useState(false);
+  const [groupSwapProgress, setGroupSwapProgress] = useState<GroupSwapProgress | null>(null);
 
   // Cargar templates dinámicos desde Firebase
   useEffect(() => {
@@ -444,9 +453,17 @@ export default function Home() {
     }
   };
 
-  const selectTemplate = async (template: typeof TEMPLATES[0]) => {
+  const selectTemplate = async (template: any) => {
     setProcessingProgress(10);
     setSelectedTemplate(template);
+
+    // Check if this is a group photo template
+    const isGroup = template.isGroup || (template.faceCount && template.faceCount > 1);
+    setIsGroupPhoto(isGroup || false);
+
+    if (isGroup) {
+      console.log(`👥 Group template selected: ${template.faceCount || 2} faces required`);
+    }
 
     // Si es una URL de Firebase Storage (https://), enviarla directamente al servidor
     // El servidor se encargará de convertirla a base64 sin problemas de CORS
@@ -617,6 +634,7 @@ export default function Home() {
         clearInterval(progressInterval);
         setProcessingProgress(100);
         setResultImage(data.resultImage);
+        setCurrentFaceSwapId(data.faceSwapId || null);
 
         // Si es guest, marcar trial como usado
         if (isGuest) {
@@ -648,7 +666,81 @@ export default function Home() {
     }
   };
 
+  const processGroupFaceSwap = async (isGuest = false) => {
+    setIsProcessingFaceSwap(true);
+    setProcessingProgress(0);
+    setStep(4);
+
+    try {
+      console.log('👥 Starting group face swap with', groupImages.length, 'faces');
+
+      const result = await processGroupSwap({
+        templateUrl: targetImg!,
+        userImages: groupImages,
+        style: selectedStyle.id,
+        onProgress: (progress) => {
+          console.log('Group swap progress:', progress);
+          setGroupSwapProgress(progress);
+
+          // Update processing progress percentage
+          const percentage = Math.round((progress.currentFace / progress.totalFaces) * 100);
+          setProcessingProgress(percentage);
+        }
+      });
+
+      console.log('✅ Group face swap completed!');
+      setResultImage(result);
+      setProcessingProgress(100);
+      setStep(5);
+
+      // Mark guest trial as used if applicable
+      if (isGuest) {
+        markGuestTrialAsUsed();
+        setGuestTrialAvailable(false);
+      }
+
+      // Update credits if authenticated
+      if (!isGuest) {
+        const newCredits = userCredits - (groupImages.length * parseInt(process.env.NEXT_PUBLIC_CREDITS_PER_FACE_SWAP || '1'));
+        setUserCredits(Math.max(0, newCredits));
+      }
+
+    } catch (error: any) {
+      console.error('❌ Group face swap error:', error);
+      alert('Error procesando foto grupal: ' + error.message);
+      setStep(3);
+    } finally {
+      setIsProcessingFaceSwap(false);
+      setGroupSwapProgress(null);
+    }
+  };
+
   const startProcessing = async () => {
+    // Check if this is a group photo
+    if (isGroupPhoto && groupImages.length > 0) {
+      // Si es guest mode
+      if (isGuestMode) {
+        if (guestTrialAvailable) {
+          await processGroupFaceSwap(true); // Guest trial
+        } else {
+          // Ya usó su trial - mostrar modal de login
+          setShowLoginGate(true);
+        }
+        return;
+      }
+
+      // Usuario autenticado - validar créditos antes de iniciar
+      const creditsNeeded = groupImages.length * parseInt(process.env.NEXT_PUBLIC_CREDITS_PER_FACE_SWAP || '1');
+      if (userCredits < creditsNeeded) {
+        setShowInsufficientCreditsModal(true);
+        return;
+      }
+
+      await processGroupFaceSwap(false); // Authenticated
+      return;
+    }
+
+    // Regular single face swap
     // Si es guest mode
     if (isGuestMode) {
       if (guestTrialAvailable) {
@@ -677,7 +769,9 @@ export default function Home() {
     url: t.imageUrl,
     title: t.title,
     category: t.metadata?.occasion?.[0] || 'all',
-    trending: (t.usageCount || 0) > 5
+    trending: (t.usageCount || 0) > 5,
+    faceCount: t.faceCount || 1,
+    isGroup: t.isGroup || false
   })) : TEMPLATES;
 
   const filteredTemplates = templatesSource;
@@ -702,7 +796,16 @@ export default function Home() {
             <span className="font-black text-lg tracking-tighter italic uppercase">GLAMOUR</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Botón de Galería Pública */}
+            <button
+              onClick={() => router.push('/gallery')}
+              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-pink-500 transition-colors"
+              aria-label={t('gallery.title')}
+            >
+              <Image size={16} />
+            </button>
+
             {isGuestMode ? (
               // Guest mode - solo botón de login y menu
               <>
@@ -821,96 +924,169 @@ export default function Home() {
 
         {step === 1 && (
           <div className="flex flex-col gap-6">
-            <h2 className="text-3xl font-black italic">{t('faceSwap.steps.explore')}</h2>
-            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-              {CATEGORY_IDS.map(cat => (
-                <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold border ${activeCategory === cat.id ? 'bg-white text-black border-white' : 'bg-white/5 text-gray-400 border-white/10'}`}>
-                  {t(`templates.categories.${cat.id}`)}
-                </button>
-              ))}
+            {/* Toggle entre Browse y Prompt Studio */}
+            <div className="flex gap-2 p-1 rounded-2xl bg-white/5 border border-white/10">
+              <button
+                onClick={() => {
+                  setSelectionMode('browse');
+                  setShowSuggestions(false);
+                }}
+                className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all ${
+                  selectionMode === 'browse'
+                    ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <Grid size={16} className="inline mr-2" />
+                {t('prompts.modes.browse')}
+              </button>
+              <button
+                onClick={() => {
+                  setSelectionMode('prompt');
+                  setShowSuggestions(false);
+                }}
+                className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all ${
+                  selectionMode === 'prompt'
+                    ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <Sparkles size={16} className="inline mr-2" />
+                {t('prompts.modes.prompt')}
+              </button>
             </div>
 
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black border border-white/10 p-6 flex items-center justify-between group active:scale-95 transition-all">
-              <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'target')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
-              <div className="flex flex-col gap-1">
-                <p className="text-lg font-black italic uppercase">{t('templates.uploadScene')}</p>
-                <p className="text-xs text-gray-500">{t('templates.uploadSceneDesc')}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-pink-600 flex items-center justify-center">
-                <Upload size={20} className="text-white" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {filteredTemplates.map((template) => (
-                <div key={template.id} onClick={() => selectTemplate(template)} className="relative aspect-[3/4.5] rounded-3xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer">
-                  <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
-                  <p className="absolute bottom-4 left-4 text-[10px] font-black uppercase tracking-widest">{template.title}</p>
+            {/* Modo Browse Templates (Original) */}
+            {selectionMode === 'browse' && !showSuggestions && (
+              <>
+                <h2 className="text-3xl font-black italic">{t('faceSwap.steps.explore')}</h2>
+                <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                  {CATEGORY_IDS.map(cat => (
+                    <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold border ${activeCategory === cat.id ? 'bg-white text-black border-white' : 'bg-white/5 text-gray-400 border-white/10'}`}>
+                      {t(`templates.categories.${cat.id}`)}
+                    </button>
+                  ))}
                 </div>
-              ))}
-            </div>
+
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black border border-white/10 p-6 flex items-center justify-between group active:scale-95 transition-all">
+                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'target')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
+                  <div className="flex flex-col gap-1">
+                    <p className="text-lg font-black italic uppercase">{t('templates.uploadScene')}</p>
+                    <p className="text-xs text-gray-500">{t('templates.uploadSceneDesc')}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-pink-600 flex items-center justify-center">
+                    <Upload size={20} className="text-white" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {filteredTemplates.map((template) => (
+                    <div key={template.id} onClick={() => selectTemplate(template)} className="relative aspect-[3/4.5] rounded-3xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer">
+                      <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                      <p className="absolute bottom-4 left-4 text-[10px] font-black uppercase tracking-widest">{template.title}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Modo Prompt Studio */}
+            {selectionMode === 'prompt' && !showSuggestions && (
+              <PromptStudio
+                onInterpretation={(interpretation) => {
+                  setPromptInterpretation(interpretation);
+                  setShowSuggestions(true);
+                }}
+              />
+            )}
+
+            {/* Sugerencias de IA */}
+            {showSuggestions && promptInterpretation && (
+              <PromptSuggestions
+                interpretation={promptInterpretation}
+                availableTemplates={filteredTemplates}
+                onSelectTemplate={(template) => {
+                  selectTemplate(template);
+                }}
+                onSelectStyle={(styleId) => {
+                  const style = getStyleById(styleId);
+                  if (style) {
+                    setSelectedStyle(style);
+                  }
+                }}
+                onContinue={() => {
+                  // Continuar al siguiente paso si ya hay template seleccionado
+                  if (targetImg) {
+                    setStep(2);
+                  }
+                }}
+              />
+            )}
           </div>
         )}
 
         {step === 2 && (
           <div className="flex flex-col flex-1 gap-6">
-            <div className="text-center">
-              <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.yourFace')}</h2>
-              <p className="text-gray-500 font-medium">{t('faceSwap.steps.yourFaceDesc')}</p>
-            </div>
+            {isGroupPhoto ? (
+              // Group photo upload - multiple faces
+              <MultiFaceUpload
+                faceCount={selectedTemplate?.faceCount || 2}
+                onImagesSelected={(images) => {
+                  setGroupImages(images);
+                  setStep(3);
+                }}
+                templatePreview={targetImg || undefined}
+              />
+            ) : (
+              // Single face upload - regular flow
+              <>
+                <div className="text-center">
+                  <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.yourFace')}</h2>
+                  <p className="text-gray-500 font-medium">{t('faceSwap.steps.yourFaceDesc')}</p>
+                </div>
 
-            <div className="relative mx-auto w-full aspect-square max-w-[280px]">
-              <div className={`w-full h-full rounded-[60px] border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
-                <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'source')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
-                {sourceImg ? (
-                  <img src={sourceImg} className="w-full h-full object-cover" alt="Selfie" />
-                ) : (
-                  <Camera size={64} className="text-white/10" />
-                )}
-              </div>
-            </div>
+                <div className="relative mx-auto w-full aspect-square max-w-[280px]">
+                  <div className={`w-full h-full rounded-[60px] border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'source')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
+                    {sourceImg ? (
+                      <img src={sourceImg} className="w-full h-full object-cover" alt="Selfie" />
+                    ) : (
+                      <Camera size={64} className="text-white/10" />
+                    )}
+                  </div>
+                </div>
 
-            {sourceImg && (
-              <div className="animate-fade-in">
-                {!aiAnalysis ? (
-                  <Button variant="ai" onClick={analyzeStyle} isLoading={isAiLoading}>
-                    ✨ Analizar Rasgos
-                  </Button>
-                ) : (
-                  <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4 text-sm text-indigo-200 italic">
-                    <Sparkles size={14} className="inline mr-2" />
-                    &quot;{aiAnalysis}&quot;
+                {sourceImg && (
+                  <div className="animate-fade-in">
+                    {!aiAnalysis ? (
+                      <Button variant="ai" onClick={analyzeStyle} isLoading={isAiLoading}>
+                        ✨ Analizar Rasgos
+                      </Button>
+                    ) : (
+                      <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4 text-sm text-indigo-200 italic">
+                        <Sparkles size={14} className="inline mr-2" />
+                        &quot;{aiAnalysis}&quot;
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            <Button onClick={() => setStep(3)} disabled={!sourceImg} className="mt-auto h-16 text-xl italic uppercase font-black">
-              {t('common.next')} <ChevronRight size={24} />
-            </Button>
+                <Button onClick={() => setStep(3)} disabled={!sourceImg} className="mt-auto h-16 text-xl italic uppercase font-black">
+                  {t('common.next')} <ChevronRight size={24} />
+                </Button>
+              </>
+            )}
           </div>
         )}
 
         {step === 3 && (
           <div className="flex flex-col flex-1 gap-6">
-            <h2 className="text-2xl font-black text-center italic uppercase">{t('faceSwap.steps.customizeStyle')}</h2>
-
-            <div className="relative aspect-[3/4] w-full rounded-[40px] overflow-hidden bg-black border border-white/10">
-              <img src={targetImg || ''} className="w-full h-full object-cover" style={{ filter: selectedStyle.filter }} alt="Preview" />
-              <div className="absolute bottom-6 left-6 right-6 p-4 bg-black/60 backdrop-blur-xl rounded-2xl border border-white/10">
-                <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">PROMPT ACTIVO</p>
-                <p className="text-[9px] italic text-pink-500 line-clamp-2 leading-relaxed">&quot;A high-quality face swap where the face from the second image replaces...&quot;</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto py-4 no-scrollbar">
-              {STYLES.map((s) => (
-                <button key={s.id} onClick={() => setSelectedStyle(s)} className={`flex-shrink-0 transition-all ${selectedStyle.id === s.id ? 'scale-110 opacity-100' : 'opacity-40'}`}>
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${s.color} border-2 ${selectedStyle.id === s.id ? 'border-white' : 'border-transparent'}`} />
-                </button>
-              ))}
-            </div>
+            <StyleSelector
+              selectedStyle={selectedStyle}
+              onSelectStyle={setSelectedStyle}
+              previewImage={targetImg}
+            />
 
             <Button onClick={startProcessing} className="mt-auto h-16 bg-white text-black text-xl italic font-black uppercase">
               {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
@@ -928,8 +1104,28 @@ export default function Home() {
                 <span className="text-5xl font-black italic tracking-tighter">{processingProgress}%</span>
               </div>
             </div>
-            <h3 className="text-3xl font-black italic uppercase">{t('faceSwap.steps.processing')}</h3>
-            <p className="text-gray-500 text-sm mt-2">{t('survey.screener.processing')}</p>
+
+            {isGroupPhoto && groupSwapProgress ? (
+              <>
+                <h3 className="text-3xl font-black italic uppercase">{t('groupPhotos.processing.title')}</h3>
+                <p className="text-gray-500 text-sm mt-2">
+                  {t('groupPhotos.processing.swapping', {
+                    current: groupSwapProgress.currentFace,
+                    total: groupSwapProgress.totalFaces
+                  })}
+                </p>
+                {groupSwapProgress.currentFace === groupSwapProgress.totalFaces && (
+                  <p className="text-pink-500 text-sm mt-1 font-bold">
+                    {t('groupPhotos.processing.almostDone')}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <h3 className="text-3xl font-black italic uppercase">{t('faceSwap.steps.processing')}</h3>
+                <p className="text-gray-500 text-sm mt-2">{t('survey.screener.processing')}</p>
+              </>
+            )}
           </div>
         )}
 
@@ -959,6 +1155,16 @@ export default function Home() {
                 </div>
               )}
             </div>
+
+            {/* Public Gallery Toggle - Solo para usuarios autenticados */}
+            {!isGuestMode && currentFaceSwapId && (
+              <div className="mb-6">
+                <PublicGalleryToggle
+                  faceSwapId={currentFaceSwapId}
+                  initialIsPublic={false}
+                />
+              </div>
+            )}
 
             <div className="space-y-4 mt-auto">
               <div className="grid grid-cols-2 gap-4">
@@ -1021,7 +1227,7 @@ export default function Home() {
 
       {/* Version badge */}
       <div className="fixed bottom-4 right-4 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-xs text-gray-400 z-50">
-        v2.2.0
+        v2.3.0
       </div>
 
       <style jsx>{`

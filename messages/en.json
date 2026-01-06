@@ -221,6 +221,65 @@
     "noHistory": "You don't have any saved Face Swaps yet",
     "createFirst": "Create your first Face Swap to see it here"
   },
+  "styles": {
+    "categories": {
+      "realistic": "Realistic",
+      "artistic": "Artistic",
+      "cinematic": "Cinematic",
+      "fantasy": "Fantasy",
+      "seasonal": "Seasonal",
+      "effects": "Effects"
+    },
+    "selectStyle": "Select a Style",
+    "allStyles": "All Styles",
+    "premium": "Premium",
+    "new": "New"
+  },
+  "prompts": {
+    "title": "Describe Your Vision",
+    "subtitle": "Tell the AI what kind of photo you want to create",
+    "placeholder": "Ex: I want to see myself at a glamorous New Year's party with golden lights...",
+    "quickIdeas": "Quick ideas:",
+    "quick": {
+      "nyeParty": "New Year Party",
+      "beachSunset": "Beach Sunset",
+      "cityNight": "City Night",
+      "vintageGlam": "Vintage Glam",
+      "cyberpunk": "Cyberpunk Future",
+      "nature": "Serene Nature"
+    },
+    "send": "Send",
+    "hint": "Press Enter to send, Shift+Enter for new line",
+    "interpreting": "Interpreting your vision with AI...",
+    "examples": {
+      "title": "Examples:",
+      "ex1": "An elegant New Year's party with champagne and golden lights",
+      "ex2": "Tropical beach at sunset with red dress and palm trees",
+      "ex3": "Futuristic city at night with blue and pink neon lights"
+    },
+    "interpretation": {
+      "title": "AI interpreted your vision:",
+      "scenario": "Scenario",
+      "mood": "Mood",
+      "lighting": "Lighting"
+    },
+    "suggestions": {
+      "templates": "Recommended Templates",
+      "styles": "Suggested Styles",
+      "continue": "Continue with Selection"
+    },
+    "modes": {
+      "browse": "Browse Templates",
+      "prompt": "Describe Vision"
+    },
+    "errors": {
+      "empty": "Please describe your vision",
+      "failed": "Error interpreting. Try again."
+    },
+    "success": {
+      "interpreted": "Vision interpreted! Check the suggestions"
+    }
+  },
   "share": {
     "title": "Share",
     "shareApp": "Share App",
@@ -314,6 +373,73 @@
       "getStarted": "Get Started",
       "createPhotos": "Create Photos",
       "tryNow": "Try Now"
+    }
+  },
+  "upload": {
+    "tapToUpload": "Tap to upload",
+    "remove": "Remove",
+    "errors": {
+      "invalidType": "Invalid file type",
+      "tooLarge": "Image is too large (max 10MB)"
+    }
+  },
+  "groupPhotos": {
+    "title": "Group Photo",
+    "subtitle": "Upload {count} photos to create your group photo",
+    "templatePreview": "Selected template",
+    "progress": "{uploaded} of {total} photos",
+    "person": "Person {number}",
+    "continue": "Continue",
+    "hint": "Make sure each photo clearly shows the person's face",
+    "processing": {
+      "title": "Creating your group photo...",
+      "swapping": "Swapping face {current} of {total}",
+      "almostDone": "Almost done!",
+      "completed": "Group photo completed!"
+    },
+    "errors": {
+      "notAllUploaded": "Please upload all {count} photos",
+      "processingFailed": "Failed to process group photo",
+      "faceNotDetected": "Face not detected in image {number}"
+    }
+  },
+  "security": {
+    "rateLimit": {
+      "exceeded": "You've reached the request limit. Please try again later.",
+      "retryAfter": "Try again in {minutes} minutes"
+    },
+    "validation": {
+      "imageTooLarge": "Image is too large. Maximum {maxMB}MB",
+      "invalidDimensions": "Invalid image dimensions. Maximum {maxWidth}x{maxHeight}px",
+      "invalidFormat": "Invalid image format. Only JPG, PNG and WebP allowed",
+      "suspiciousImage": "Image has suspicious characteristics"
+    }
+  },
+  "gallery": {
+    "title": "Public Gallery",
+    "subtitle": "Discover amazing creations from our community",
+    "createYours": "Create Yours",
+    "public": "Public",
+    "private": "Private",
+    "publicDesc": "Visible in public gallery",
+    "privateDesc": "Only you can see it",
+    "published": "Published to gallery!",
+    "unpublished": "Removed from gallery",
+    "error": "Error updating gallery",
+    "captionHint": "Add an optional caption for your creation (max. 150 characters)",
+    "captionPlaceholder": "Ex: My favorite New Year's look ✨",
+    "publishNow": "Publish Now",
+    "visibleInGallery": "Visible in public gallery",
+    "loadError": "Error loading gallery",
+    "likeError": "Error liking post",
+    "empty": "No photos in gallery yet",
+    "featured": "Featured",
+    "loadMore": "Load More",
+    "filters": {
+      "recent": "Recent",
+      "trending": "Trending",
+      "popular": "Popular",
+      "featured": "Featured"
     }
   }
 }

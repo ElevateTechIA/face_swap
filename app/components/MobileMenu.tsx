@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, History, Share2, LogOut, User, Globe } from 'lucide-react';
+import { X, History, Share2, LogOut, User, Globe, Image } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -30,6 +30,15 @@ export function MobileMenu({
   if (!isOpen) return null;
 
   const menuItems = [
+    {
+      icon: Image,
+      label: t('gallery.title') || 'Galería Pública',
+      onClick: () => {
+        router.push('/gallery');
+        onClose();
+      },
+      show: true,
+    },
     {
       icon: History,
       label: t('history.title') || 'Historial',
