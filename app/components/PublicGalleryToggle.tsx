@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Globe, Lock, Users, Sparkles } from 'lucide-react';
+import { Globe, Lock, Users, Sparkles, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/auth/AuthProvider';
 
@@ -25,12 +25,6 @@ export function PublicGalleryToggle({
   const [caption, setCaption] = useState('');
 
   const handleToggle = async (makePublic: boolean) => {
-    if (makePublic && !showCaptionInput) {
-      // Show caption input first
-      setShowCaptionInput(true);
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -61,6 +55,7 @@ export function PublicGalleryToggle({
 
       setIsPublic(makePublic);
       setShowCaptionInput(false);
+      setCaption(''); // Clear caption after publishing
       onToggle?.(makePublic);
 
       if (makePublic) {
@@ -81,11 +76,21 @@ export function PublicGalleryToggle({
     <div className="space-y-3">
       {/* Toggle Button */}
       <button
-        onClick={() => handleToggle(!isPublic)}
-        disabled={isLoading}
+        onClick={() => {
+          if (isPublic) {
+            // Unpublish directly, no caption needed
+            handleToggle(false);
+          } else {
+            // Show caption input for publishing
+            setShowCaptionInput(true);
+          }
+        }}
+        disabled={isLoading || showCaptionInput}
         className={`w-full p-4 rounded-2xl border-2 transition-all active:scale-95 disabled:opacity-50 ${
           isPublic
             ? 'border-pink-500 bg-pink-500/10'
+            : showCaptionInput
+            ? 'border-indigo-500/50 bg-indigo-500/5'
             : 'border-white/10 bg-white/5 hover:border-pink-500/50'
         }`}
       >
@@ -93,15 +98,25 @@ export function PublicGalleryToggle({
           <div className="flex items-center gap-3">
             {isPublic ? (
               <Globe size={20} className="text-pink-500" />
+            ) : showCaptionInput ? (
+              <Edit3 size={20} className="text-indigo-400" />
             ) : (
               <Lock size={20} className="text-gray-400" />
             )}
             <div className="text-left">
               <p className="font-bold text-sm">
-                {isPublic ? t('gallery.public') : t('gallery.private')}
+                {isPublic
+                  ? t('gallery.public')
+                  : showCaptionInput
+                  ? 'Add Caption...'
+                  : t('gallery.private')}
               </p>
               <p className="text-xs text-gray-500">
-                {isPublic ? t('gallery.publicDesc') : t('gallery.privateDesc')}
+                {isPublic
+                  ? t('gallery.publicDesc')
+                  : showCaptionInput
+                  ? 'Fill caption below to publish'
+                  : t('gallery.privateDesc')}
               </p>
             </div>
           </div>
@@ -145,7 +160,10 @@ export function PublicGalleryToggle({
 
           <div className="flex gap-2">
             <button
-              onClick={() => setShowCaptionInput(false)}
+              onClick={() => {
+                setShowCaptionInput(false);
+                setCaption('');
+              }}
               className="flex-1 h-12 rounded-xl bg-white/5 border border-white/10 font-medium hover:bg-white/10 transition-all active:scale-95"
             >
               {t('common.cancel')}
