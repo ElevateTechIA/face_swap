@@ -1,4 +1,6 @@
 'use client';
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';

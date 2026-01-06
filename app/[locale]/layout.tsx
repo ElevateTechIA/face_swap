@@ -4,6 +4,10 @@ import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { Providers } from '../providers';
 
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
+
 export default async function LocaleLayout({
   children,
   params

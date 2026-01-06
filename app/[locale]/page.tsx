@@ -26,6 +26,9 @@ import {
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 
+// Force dynamic rendering - no pre-rendering during build
+export const dynamic = 'force-dynamic';
+
 // --- Constantes de Encuesta (Onboarding) ---
 const SURVEY_QUESTIONS = [
   {
