@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Face Clone - AI Face Swap",
@@ -11,5 +12,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <html suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
 }

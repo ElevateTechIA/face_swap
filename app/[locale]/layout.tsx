@@ -1,34 +1,32 @@
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import { locales } from '@/i18n';
-import { Providers } from '../providers';
-import { notFound } from 'next/navigation';
+import {NextIntlClientProvider} from 'next-intl';
+import {notFound} from 'next/navigation';
+import {locales} from '@/i18n';
+
+type Props = {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+};
+
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
 
 export default async function LocaleLayout({
   children,
-  params
-}: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
-}) {
-  // Await params en Next.js 15
-  const { locale } = await params;
-  
-  // Validar que el locale es válido
+  params,
+}: Props) {
+  const {locale} = await params;
+
   if (!locales.includes(locale as any)) {
     notFound();
   }
 
-  // Cargar los mensajes del locale
-  const messages = await getMessages();
+  // Load messages for this locale
+  const messages = (await import(`@/messages/${locale}.json`)).default;
 
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <body className="antialiased" suppressHydrationWarning>
-        <NextIntlClientProvider messages={messages}>
-          <Providers>{children}</Providers>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      {children}
+    </NextIntlClientProvider>
   );
 }
