@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   Heart, TrendingUp, Clock, Star, Grid as GridIcon,
   Filter, RefreshCw
@@ -27,6 +27,7 @@ type SortOption = 'recent' | 'trending' | 'popular' | 'featured';
 
 export default function PublicGalleryPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>('recent');
@@ -142,7 +143,7 @@ export default function PublicGalleryPage() {
         </h1>
 
         <a
-          href="/"
+          href={`/${locale}`}
           className="px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 font-bold text-xs active:scale-95 transition-all whitespace-nowrap"
         >
           {t('gallery.createYours')}
