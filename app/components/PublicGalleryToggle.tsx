@@ -106,11 +106,11 @@ export function PublicGalleryToggle({
             </div>
           </div>
 
-          <div className={`w-12 h-6 rounded-full transition-colors ${
-            isPublic ? 'bg-pink-500' : 'bg-gray-600'
+          <div className={`relative w-14 h-7 rounded-full transition-all duration-300 ${
+            isPublic ? 'bg-gradient-to-r from-pink-500 to-pink-600' : 'bg-gray-700'
           }`}>
-            <div className={`w-5 h-5 bg-white rounded-full mt-0.5 transition-transform ${
-              isPublic ? 'ml-6' : 'ml-0.5'
+            <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ${
+              isPublic ? 'left-7' : 'left-0.5'
             }`} />
           </div>
         </div>
