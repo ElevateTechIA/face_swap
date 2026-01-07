@@ -55,11 +55,19 @@
     "categories": {
       "all": "Todos",
       "trending": "Tendencias",
-      "editorial": "NEW YEAR",
+      "editorial": "Editorial",
       "cinematic": "Cine",
       "forYou": "Para Ti",
       "newYear": "Año Nuevo",
-      "party": "Fiesta"
+      "new-year": "Año Nuevo",
+      "party": "Fiesta",
+      "birthday": "Cumpleaños",
+      "casual": "Casual",
+      "professional": "Profesional",
+      "date": "Cita Romántica",
+      "wedding": "Boda",
+      "graduation": "Graduación",
+      "vacation": "Vacaciones"
     },
     "uploadScene": "SUBIR ESCENA",
     "uploadSceneDesc": "Usa tu propia foto de fondo",

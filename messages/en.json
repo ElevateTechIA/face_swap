@@ -55,11 +55,19 @@
     "categories": {
       "all": "All",
       "trending": "Trending",
-      "editorial": "NEW YEAR",
+      "editorial": "Editorial",
       "cinematic": "Cinema",
       "forYou": "For You",
       "newYear": "New Year",
-      "party": "Party"
+      "new-year": "New Year",
+      "party": "Party",
+      "birthday": "Birthday",
+      "casual": "Casual",
+      "professional": "Professional",
+      "date": "Date Night",
+      "wedding": "Wedding",
+      "graduation": "Graduation",
+      "vacation": "Vacation"
     },
     "uploadScene": "UPLOAD SCENE",
     "uploadSceneDesc": "Use your own background photo",
