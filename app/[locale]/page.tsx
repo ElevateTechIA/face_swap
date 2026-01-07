@@ -749,13 +749,31 @@ export default function Home() {
     isGroup: t.isGroup || false
   })) : TEMPLATES;
 
-  // Agrupar templates por categoría para carruseles
-  const templatesByCategory = {
-    trending: templatesSource.filter(t => t.trending),
-    editorial: templatesSource.filter(t => t.category === 'editorial' || t.category === 'new-year'),
-    cinematic: templatesSource.filter(t => t.category === 'cinematic'),
-    all: templatesSource
+  // Agrupar templates por categoría para carruseles (dinámico)
+  // Extraer todas las categorías únicas
+  const uniqueCategories = Array.from(new Set(templatesSource.map(t => t.category).filter(Boolean)));
+
+  // Mapeo de categorías a íconos y colores
+  const categoryConfig: Record<string, { icon: any; color: string }> = {
+    trending: { icon: Flame, color: 'text-pink-500' },
+    editorial: { icon: Layers, color: 'text-purple-500' },
+    'new-year': { icon: Sparkles, color: 'text-yellow-500' },
+    cinematic: { icon: Play, color: 'text-blue-500' },
+    party: { icon: Zap, color: 'text-green-500' },
+    default: { icon: Grid, color: 'text-gray-400' }
   };
+
+  // Crear objeto dinámico con todas las categorías
+  const templatesByCategory: Record<string, any[]> = {
+    trending: templatesSource.filter(t => t.trending),
+  };
+
+  // Agregar carruseles para cada categoría única encontrada
+  uniqueCategories.forEach(category => {
+    templatesByCategory[category] = templatesSource.filter(t => t.category === category);
+  });
+
+  templatesByCategory.all = templatesSource;
 
   const filteredTemplates = templatesSource;
 
@@ -956,10 +974,10 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Carruseles por Categoría */}
+                {/* Carruseles por Categoría (Dinámicos) */}
                 <div className="flex flex-col gap-6">
-                  {/* Trending */}
-                  {templatesByCategory.trending.length > 0 && (
+                  {/* Trending (siempre primero) */}
+                  {templatesByCategory.trending?.length > 0 && (
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2">
                         <Flame size={18} className="text-pink-500" />
@@ -981,51 +999,38 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Editorial */}
-                  {templatesByCategory.editorial.length > 0 && (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <Layers size={18} className="text-purple-500" />
-                        <h3 className="text-lg font-black italic uppercase">{t('templates.categories.editorial')}</h3>
-                      </div>
-                      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                        {templatesByCategory.editorial.map((template) => (
-                          <div
-                            key={template.id}
-                            onClick={() => selectTemplate(template)}
-                            className="relative flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer"
-                          >
-                            <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
-                            <p className="absolute bottom-3 left-3 right-3 text-[9px] font-black uppercase tracking-widest line-clamp-2">{template.title}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Resto de categorías dinámicamente */}
+                  {uniqueCategories.map((category) => {
+                    const templates = templatesByCategory[category];
+                    if (!templates || templates.length === 0) return null;
 
-                  {/* Cinematic */}
-                  {templatesByCategory.cinematic.length > 0 && (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <Play size={18} className="text-blue-500" />
-                        <h3 className="text-lg font-black italic uppercase">{t('templates.categories.cinematic')}</h3>
+                    const config = categoryConfig[category] || categoryConfig.default;
+                    const Icon = config.icon;
+
+                    return (
+                      <div key={category} className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                          <Icon size={18} className={config.color} />
+                          <h3 className="text-lg font-black italic uppercase">
+                            {t(`templates.categories.${category}`) || category}
+                          </h3>
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                          {templates.map((template) => (
+                            <div
+                              key={template.id}
+                              onClick={() => selectTemplate(template)}
+                              className="relative flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer"
+                            >
+                              <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                              <p className="absolute bottom-3 left-3 right-3 text-[9px] font-black uppercase tracking-widest line-clamp-2">{template.title}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                        {templatesByCategory.cinematic.map((template) => (
-                          <div
-                            key={template.id}
-                            onClick={() => selectTemplate(template)}
-                            className="relative flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer"
-                          >
-                            <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
-                            <p className="absolute bottom-3 left-3 right-3 text-[9px] font-black uppercase tracking-widest line-clamp-2">{template.title}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               </>
             )}
