@@ -63,15 +63,7 @@ const SURVEY_QUESTIONS = [
   }
 ];
 
-// --- Categorías de Contenido (las traducciones se obtienen dinámicamente) ---
-const CATEGORY_IDS = [
-  { id: 'all', icon: <Grid size={14}/> },
-  { id: 'trending', icon: <Flame size={14}/> },
-  { id: 'editorial', icon: <Layers size={14}/> },
-  { id: 'cinematic', icon: <Play size={14}/> },
-];
-
-// --- Plantillas ---
+// --- Plantillas Fallback (se usan si no hay templates dinámicos de Firebase) ---
 const TEMPLATES = [
   { id: 't1', url: '/templates/Midnight Celebration.jpg', title: 'Midnight Celebration', category: 'cinematic', trending: true },
   { id: 't2', url: '/templates/The Champagne Toast.jpg', title: 'The Champagne Toast', category: 'editorial', trending: true },
@@ -118,7 +110,6 @@ export default function Home() {
   const [sourceImg, setSourceImg] = useState<string | null>(null);
   const [targetImg, setTargetImg] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [activeCategory, setActiveCategory] = useState('editorial');
   const [selectedStyle, setSelectedStyle] = useState<StyleConfig>(AI_STYLES[0]);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [resultImage, setResultImage] = useState<string | null>(null);
@@ -170,35 +161,18 @@ export default function Home() {
   // Cargar templates dinámicos desde Firebase
   useEffect(() => {
     loadTemplates();
-  }, [user, activeCategory]); // Recargar cuando cambie el usuario o la categoría
+  }, [user]); // Recargar cuando cambie el usuario
 
   const loadTemplates = async () => {
     try {
       setLoadingTemplates(true);
 
-      // Determinar el modo según el usuario y la categoría activa
-      let mode = 'all';
-      let occasion = null;
-
-      // Mapeo de categorías UI a valores de occasion en Firebase
-      const categoryToOccasionMap: Record<string, string> = {
-        'editorial': 'new-year',  // NEW YEAR category
-        'cinematic': 'cinematic',
-        'party': 'party',
-      };
-
-      if (activeCategory === 'trending') {
-        mode = 'trending';
-      } else if (activeCategory === 'all' && user) {
-        mode = 'recommended'; // Recomendaciones personalizadas para usuarios autenticados
-      } else if (activeCategory !== 'all' && activeCategory !== 'trending') {
-        occasion = categoryToOccasionMap[activeCategory] || activeCategory; // Filtrar por ocasión
-      }
+      // Cargar todos los templates (se agruparán en carruseles por categoría)
+      const mode = user ? 'recommended' : 'all';
 
       // Construir URL con parámetros
       const params = new URLSearchParams();
       params.set('mode', mode);
-      if (occasion) params.set('occasion', occasion);
 
       const headers: Record<string, string> = {};
       if (user && mode === 'recommended') {
@@ -775,6 +749,14 @@ export default function Home() {
     isGroup: t.isGroup || false
   })) : TEMPLATES;
 
+  // Agrupar templates por categoría para carruseles
+  const templatesByCategory = {
+    trending: templatesSource.filter(t => t.trending),
+    editorial: templatesSource.filter(t => t.category === 'editorial' || t.category === 'new-year'),
+    cinematic: templatesSource.filter(t => t.category === 'cinematic'),
+    all: templatesSource
+  };
+
   const filteredTemplates = templatesSource;
 
   // Loading state
@@ -957,18 +939,12 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Modo Browse Templates (Original) */}
+            {/* Modo Browse Templates (Carruseles por Categoría) */}
             {selectionMode === 'browse' && !showSuggestions && (
               <>
                 <h2 className="text-3xl font-black italic">{t('faceSwap.steps.explore')}</h2>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-                  {CATEGORY_IDS.map(cat => (
-                    <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold border ${activeCategory === cat.id ? 'bg-white text-black border-white' : 'bg-white/5 text-gray-400 border-white/10'}`}>
-                      {t(`templates.categories.${cat.id}`)}
-                    </button>
-                  ))}
-                </div>
 
+                {/* Upload Scene Card */}
                 <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black border border-white/10 p-6 flex items-center justify-between group active:scale-95 transition-all">
                   <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'target')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
                   <div className="flex flex-col gap-1">
@@ -980,14 +956,76 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {filteredTemplates.map((template) => (
-                    <div key={template.id} onClick={() => selectTemplate(template)} className="relative aspect-[3/4.5] rounded-3xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer">
-                      <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
-                      <p className="absolute bottom-4 left-4 text-[10px] font-black uppercase tracking-widest">{template.title}</p>
+                {/* Carruseles por Categoría */}
+                <div className="flex flex-col gap-6">
+                  {/* Trending */}
+                  {templatesByCategory.trending.length > 0 && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2">
+                        <Flame size={18} className="text-pink-500" />
+                        <h3 className="text-lg font-black italic uppercase">{t('templates.categories.trending')}</h3>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                        {templatesByCategory.trending.map((template) => (
+                          <div
+                            key={template.id}
+                            onClick={() => selectTemplate(template)}
+                            className="relative flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer"
+                          >
+                            <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                            <p className="absolute bottom-3 left-3 right-3 text-[9px] font-black uppercase tracking-widest line-clamp-2">{template.title}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Editorial */}
+                  {templatesByCategory.editorial.length > 0 && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2">
+                        <Layers size={18} className="text-purple-500" />
+                        <h3 className="text-lg font-black italic uppercase">{t('templates.categories.editorial')}</h3>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                        {templatesByCategory.editorial.map((template) => (
+                          <div
+                            key={template.id}
+                            onClick={() => selectTemplate(template)}
+                            className="relative flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer"
+                          >
+                            <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                            <p className="absolute bottom-3 left-3 right-3 text-[9px] font-black uppercase tracking-widest line-clamp-2">{template.title}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cinematic */}
+                  {templatesByCategory.cinematic.length > 0 && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2">
+                        <Play size={18} className="text-blue-500" />
+                        <h3 className="text-lg font-black italic uppercase">{t('templates.categories.cinematic')}</h3>
+                      </div>
+                      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                        {templatesByCategory.cinematic.map((template) => (
+                          <div
+                            key={template.id}
+                            onClick={() => selectTemplate(template)}
+                            className="relative flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer"
+                          >
+                            <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                            <p className="absolute bottom-3 left-3 right-3 text-[9px] font-black uppercase tracking-widest line-clamp-2">{template.title}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}

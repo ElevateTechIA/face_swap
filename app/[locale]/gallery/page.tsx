@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import {
-  Heart, TrendingUp, Clock, Star, Grid as GridIcon,
-  Filter, RefreshCw
+  Heart, Grid as GridIcon, RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,14 +22,12 @@ interface GalleryItem {
   style?: string;
 }
 
-type SortOption = 'recent' | 'trending' | 'popular' | 'featured';
-
 export default function PublicGalleryPage() {
   const t = useTranslations();
   const locale = useLocale();
+
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
@@ -51,8 +48,8 @@ export default function PublicGalleryPage() {
   }, []);
 
   useEffect(() => {
-    loadGallery(true); // Reset on mount or sort change
-  }, [sortBy]);
+    loadGallery(true); // Load on mount
+  }, []);
 
   const loadGallery = async (reset = false) => {
     setLoading(true);
@@ -60,8 +57,9 @@ export default function PublicGalleryPage() {
     try {
       const currentOffset = reset ? 0 : offset;
 
+      // Sin filtros - solo cargar las más recientes
       const response = await fetch(
-        `/api/gallery/public?sortBy=${sortBy}&limit=${ITEMS_PER_PAGE}&offset=${currentOffset}`
+        `/api/gallery/public?sortBy=recent&limit=${ITEMS_PER_PAGE}&offset=${currentOffset}`
       );
 
       if (!response.ok) {
@@ -152,29 +150,6 @@ export default function PublicGalleryPage() {
 
       {/* Main Content - Mobile Centered */}
       <main className="flex flex-col min-h-screen max-w-md mx-auto pt-14 pb-4 px-4">
-        {/* Filters */}
-        <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-2">
-          {[
-            { id: 'recent', icon: Clock, label: t('gallery.filters.recent') },
-            { id: 'trending', icon: TrendingUp, label: t('gallery.filters.trending') },
-            { id: 'popular', icon: Heart, label: t('gallery.filters.popular') },
-            { id: 'featured', icon: Star, label: t('gallery.filters.featured') }
-          ].map(filter => (
-            <button
-              key={filter.id}
-              onClick={() => setSortBy(filter.id as SortOption)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
-                sortBy === filter.id
-                  ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white'
-                  : 'bg-white/5 border border-white/10 text-gray-300'
-              }`}
-            >
-              <filter.icon size={14} />
-              {filter.label}
-            </button>
-          ))}
-        </div>
-
         {/* Gallery Grid */}
         {loading && offset === 0 ? (
           <div className="flex items-center justify-center py-12">
