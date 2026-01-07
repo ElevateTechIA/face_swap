@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
               img-src 'self' blob: data: https: http:;
               font-src 'self' data: https://fonts.gstatic.com;
               connect-src 'self' https://generativelanguage.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com;
-              frame-src 'self' https://accounts.google.com;
+              frame-src 'self' https://accounts.google.com https://*.firebaseapp.com;
               object-src 'none';
               base-uri 'self';
               form-action 'self';
