@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "app/api/admin/templates/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/face-swap/process/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
+}

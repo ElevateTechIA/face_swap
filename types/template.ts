@@ -44,6 +44,7 @@ export interface Template {
   // Assets
   imageUrl: string; // Firebase Storage URL
   thumbnailUrl?: string; // Optional optimized thumbnail
+  variants?: string[]; // Array of variant image URLs for carousel (max 3)
 
   // AI generation
   prompt: string; // Template-specific Gemini prompt

@@ -107,28 +107,28 @@ export default function CreditsPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans">
-      <div className="max-w-md mx-auto px-6 py-12">
+      <div className="max-w-md mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <button
           onClick={() => router.push('/')}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 sm:mb-8 active:scale-95"
         >
           <ArrowLeft size={20} />
-          Volver
+          <span className="text-sm">Volver</span>
         </button>
 
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-black tracking-tighter mb-4 uppercase italic">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tighter mb-3 sm:mb-4 uppercase italic">
             Comprar <span className="text-pink-600">Créditos</span>
           </h1>
-          <p className="text-gray-400 text-lg mb-6">
+          <p className="text-gray-400 text-base sm:text-lg mb-4 sm:mb-6 px-4">
             Elige el paquete perfecto para ti
           </p>
 
           {/* Current balance */}
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-pink-600/20 to-purple-600/20 border border-pink-500/30 mb-4">
-            <span className="text-2xl">🪙</span>
-            <span className="text-lg">
+          <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-pink-600/20 to-purple-600/20 border border-pink-500/30 mb-3 sm:mb-4">
+            <span className="text-xl sm:text-2xl">🪙</span>
+            <span className="text-sm sm:text-lg">
               Tienes <span className="font-bold">{currentCredits}</span> créditos
             </span>
           </div>
@@ -137,10 +137,10 @@ export default function CreditsPage() {
           <div>
             <button
               onClick={() => router.push('/transactions')}
-              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-400 hover:text-white transition-colors active:scale-95"
             >
-              <Receipt size={16} />
-              Ver historial de transacciones
+              <Receipt size={14} className="sm:w-4 sm:h-4" />
+              <span>Ver historial de transacciones</span>
             </button>
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function CreditsPage() {
         )}
 
         {/* Footer note */}
-        <div className="text-center mt-12 text-sm text-gray-500">
+        <div className="text-center mt-8 sm:mt-12 text-xs sm:text-sm text-gray-500 px-4">
           <p>Pagos procesados de forma segura por Stripe</p>
           <p className="mt-1">Los créditos no caducan y puedes usarlos en cualquier momento</p>
         </div>

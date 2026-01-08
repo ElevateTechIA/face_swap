@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { User, getIdToken, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase/client';
+import { FirebaseErrorHandler, setupIndexedDBErrorMonitoring } from '@/lib/firebase/error-handler';
 
 type AuthContextValue = {
   user: User | null;
@@ -20,11 +21,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-      setSigningIn(false);
-    });
+    // Setup error monitoring for IndexedDB issues
+    setupIndexedDBErrorMonitoring();
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (firebaseUser) => {
+        setUser(firebaseUser);
+        setLoading(false);
+        setSigningIn(false);
+      },
+      (error) => {
+        // Handle auth state change errors
+        console.error('❌ Auth state change error:', error);
+        FirebaseErrorHandler.handleIndexedDBError(error);
+        setLoading(false);
+        setSigningIn(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
@@ -47,20 +61,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('ℹ️ Popup cerrado por el usuario');
       } else if (error.code === 'auth/cancelled-popup-request') {
         console.log('ℹ️ Solicitud de popup cancelada');
+      } else if (error.name === 'AbortError') {
+        console.warn('⚠️ AbortError detectado, ignorando...');
+        FirebaseErrorHandler.handleIndexedDBError(error);
       } else {
-        console.error('❌ Error al iniciar sesión:', error.message);
-        throw error;
+        console.error('❌ Error al iniciar sesión:', error);
+        const errorMessage = FirebaseErrorHandler.handleAuthError(error);
+        throw new Error(errorMessage);
       }
     }
   };
 
   const signOutUser = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (error: any) {
+      console.error('❌ Error al cerrar sesión:', error);
+      FirebaseErrorHandler.handleIndexedDBError(error);
+    }
   };
 
   const getUserIdToken = async () => {
-    if (!auth.currentUser) return null;
-    return getIdToken(auth.currentUser, true);
+    try {
+      if (!auth.currentUser) return null;
+      return await getIdToken(auth.currentUser, true);
+    } catch (error: any) {
+      console.error('❌ Error al obtener token:', error);
+      FirebaseErrorHandler.handleIndexedDBError(error);
+      return null;
+    }
   };
 
   const value = useMemo(

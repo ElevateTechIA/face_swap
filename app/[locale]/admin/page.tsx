@@ -146,31 +146,31 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
-      {/* Header */}
+      {/* Header - Mobile Optimized */}
       <div className="border-b border-white/10 bg-black/40 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-black tracking-tight uppercase italic">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight uppercase italic">
                 Admin Panel
               </h1>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">
                 Gestiona los templates de Face Swap
               </p>
             </div>
             <button
               onClick={handleCreateTemplate}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-pink-500/30 transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-pink-500/30 transition-all active:scale-95 w-full sm:w-auto"
             >
               <Plus size={20} />
-              Nuevo Template
+              <span className="text-sm">Nuevo Template</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
@@ -180,13 +180,13 @@ export default function AdminPanel() {
             <p className="text-gray-400 mb-4">No hay templates creados</p>
             <button
               onClick={handleCreateTemplate}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold active:scale-95 transition-all"
             >
               Crear el primero
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {templates.map((template) => (
               <div
                 key={template.id}
@@ -210,8 +210,8 @@ export default function AdminPanel() {
 
                 {/* Info */}
                 <div className="p-4">
-                  <h3 className="font-bold text-lg mb-1">{template.title}</h3>
-                  <p className="text-sm text-gray-400 line-clamp-2 mb-3">
+                  <h3 className="font-bold text-base sm:text-lg mb-1">{template.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-400 line-clamp-2 mb-3">
                     {template.description}
                   </p>
 
@@ -225,33 +225,35 @@ export default function AdminPanel() {
                     )}
                   </div>
 
-                  {/* Actions */}
+                  {/* Actions - Mobile Optimized */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggleActive(template)}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-xs sm:text-sm active:scale-95 touch-manipulation"
                     >
                       {template.isActive ? (
                         <>
                           <Eye size={14} />
-                          Activo
+                          <span className="hidden sm:inline">Activo</span>
                         </>
                       ) : (
                         <>
                           <EyeOff size={14} />
-                          Inactivo
+                          <span className="hidden sm:inline">Inactivo</span>
                         </>
                       )}
                     </button>
                     <button
                       onClick={() => handleEditTemplate(template)}
-                      className="p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-all"
+                      className="p-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-all active:scale-95 touch-manipulation"
+                      aria-label="Editar template"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template.id)}
-                      className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                      className="p-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all active:scale-95 touch-manipulation"
+                      aria-label="Eliminar template"
                     >
                       <Trash2 size={16} />
                     </button>

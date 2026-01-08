@@ -71,6 +71,8 @@
     },
     "uploadScene": "UPLOAD SCENE",
     "uploadSceneDesc": "Use your own background photo",
+    "selectVariant": "Choose a Version",
+    "selectVariantDesc": "Select the variant you like most",
     "noTemplates": "No templates available",
     "loading": "Loading templates..."
   },
@@ -179,6 +181,8 @@
       "yourFaceDesc": "Upload the face you want to use.",
       "customizeStyle": "CUSTOMIZE",
       "styleLabel": "AI Style",
+      "readyToGenerate": "ALL SET!",
+      "readyToGenerateDesc": "Press the button to create your Face Swap",
       "processing": "PROCESSING..."
     },
     "styles": {

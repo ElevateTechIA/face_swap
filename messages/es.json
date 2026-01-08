@@ -71,6 +71,8 @@
     },
     "uploadScene": "SUBIR ESCENA",
     "uploadSceneDesc": "Usa tu propia foto de fondo",
+    "selectVariant": "Elige una Versión",
+    "selectVariantDesc": "Selecciona la variante que más te guste",
     "noTemplates": "No hay templates disponibles",
     "loading": "Cargando templates..."
   },
@@ -183,6 +185,8 @@
       "yourFaceDesc": "Sube el rostro que quieres usar.",
       "customizeStyle": "PERSONALIZA",
       "styleLabel": "Estilo de IA",
+      "readyToGenerate": "¡TODO LISTO!",
+      "readyToGenerateDesc": "Presiona el botón para crear tu Face Swap",
       "processing": "PROCESANDO..."
     },
     "styles": {

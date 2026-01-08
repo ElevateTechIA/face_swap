@@ -12,11 +12,12 @@ import { ShareButton } from '@/app/components/ShareButton';
 import { ShareModal } from '@/app/components/modals/ShareModal';
 import { MobileMenu } from '@/app/components/MobileMenu';
 import { PublicGalleryToggle } from '@/app/components/PublicGalleryToggle';
-import { StyleSelector } from '@/app/components/StyleSelector';
+// StyleSelector removed - using default style only
 import { PromptStudio, type PromptInterpretation } from '@/app/components/PromptStudio';
 import { PromptSuggestions } from '@/app/components/PromptSuggestions';
 import { MultiFaceUpload } from '@/app/components/MultiFaceUpload';
-import { AI_STYLES, type StyleConfig, getStyleById } from '@/lib/styles/style-configs';
+import { TemplateCarousel } from '@/app/components/TemplateCarousel';
+import { AI_STYLES } from '@/lib/styles/style-configs';
 import { processGroupSwap, type GroupSwapProgress } from '@/lib/group-photos/processor';
 import { canUseGuestTrial, markGuestTrialAsUsed, getGuestTrialStatus } from '@/lib/guest-trial';
 import {
@@ -106,11 +107,13 @@ export default function Home() {
   const locale = useLocale();
   const { user, loading: authLoading, signInWithGoogle, signOutUser, getUserIdToken } = useAuth();
   const t = useTranslations();
-  const [step, setStep] = useState(-1); // -1 = login, 0 = encuesta, 1+ = app
+  const [step, setStep] = useState(-1); // -1 = login, 0 = encuesta, 1 = templates, 1.5 = variant selection, 2+ = app
   const [sourceImg, setSourceImg] = useState<string | null>(null);
   const [targetImg, setTargetImg] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [selectedStyle, setSelectedStyle] = useState<StyleConfig>(AI_STYLES[0]);
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
+  // Fixed style - no user selection needed
+  const selectedStyle = AI_STYLES[0]; // Always use first style (Artistic)
   const [processingProgress, setProcessingProgress] = useState(0);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [currentFaceSwapId, setCurrentFaceSwapId] = useState<string | null>(null);
@@ -440,11 +443,24 @@ export default function Home() {
       console.log(`👥 Group template selected: ${template.faceCount || 2} faces required`);
     }
 
+    // Verificar si el template tiene variantes (más de 1)
+    const variants = getTemplateVariants(template);
+    if (variants.length > 1) {
+      console.log(`🎨 Template has ${variants.length} variants - showing selection screen`);
+      setSelectedVariantIndex(0); // Reset selección
+      setStep(1.5); // Ir a pantalla de selección de variante
+      setProcessingProgress(0);
+      return;
+    }
+
+    // Si no tiene variantes o solo tiene 1, continuar con el flujo normal
+    const imageUrl = template.url;
+
     // Si es una URL de Firebase Storage (https://), enviarla directamente al servidor
     // El servidor se encargará de convertirla a base64 sin problemas de CORS
-    if (template.url.startsWith('http://') || template.url.startsWith('https://')) {
-      console.log('🌐 Template is a URL, will be processed on server:', template.url);
-      setTargetImg(template.url); // Guardar la URL directamente
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      console.log('🌐 Template is a URL, will be processed on server:', imageUrl);
+      setTargetImg(imageUrl); // Guardar la URL directamente
       setStep(2);
       setProcessingProgress(0);
       return;
@@ -452,7 +468,7 @@ export default function Home() {
 
     // Si es una ruta local (/templates/...), convertir a base64 en el navegador
     try {
-      const base64 = await urlToBase64(template.url);
+      const base64 = await urlToBase64(imageUrl);
       console.log('✅ Template converted to base64:', base64.substring(0, 50) + '...');
       setTargetImg(base64);
       setStep(2);
@@ -461,6 +477,34 @@ export default function Home() {
       alert('Error al cargar la imagen del template. Por favor, intenta de nuevo.');
       setProcessingProgress(0);
       return; // No avanzar si falló la conversión
+    }
+    setProcessingProgress(0);
+  };
+
+  const selectVariant = async (variantUrl: string, index: number) => {
+    setProcessingProgress(10);
+    setSelectedVariantIndex(index);
+
+    // Si es una URL de Firebase Storage (https://), enviarla directamente
+    if (variantUrl.startsWith('http://') || variantUrl.startsWith('https://')) {
+      console.log(`✅ Variant ${index + 1} selected:`, variantUrl);
+      setTargetImg(variantUrl);
+      setStep(2);
+      setProcessingProgress(0);
+      return;
+    }
+
+    // Si es una ruta local, convertir a base64
+    try {
+      const base64 = await urlToBase64(variantUrl);
+      console.log(`✅ Variant ${index + 1} converted to base64`);
+      setTargetImg(base64);
+      setStep(2);
+    } catch (e) {
+      console.error('❌ Error converting variant to base64:', e);
+      alert('Error al cargar la variante. Por favor, intenta de nuevo.');
+      setProcessingProgress(0);
+      return;
     }
     setProcessingProgress(0);
   };
@@ -746,8 +790,31 @@ export default function Home() {
     category: t.metadata?.occasion?.[0] || 'all',
     trending: (t.usageCount || 0) > 5,
     faceCount: t.faceCount || 1,
-    isGroup: t.isGroup || false
+    isGroup: t.isGroup || false,
+    variants: t.variants || [] // Array de URLs de variantes del template
   })) : TEMPLATES;
+
+  // Función helper para generar variantes de un template
+  const getTemplateVariants = (template: any): string[] => {
+    // Si el template tiene variantes definidas en Firebase, usarlas
+    if (template.variants && template.variants.length > 0) {
+      return template.variants;
+    }
+
+    // Si es una URL de Firebase Storage con parámetros de transformación, generar variantes
+    if (template.url.includes('firebasestorage.googleapis.com')) {
+      // Firebase Storage permite transformaciones de imagen con parámetros
+      return [
+        template.url,
+        template.url, // Variante 2 (cuando implementes transformaciones en Firebase)
+        template.url  // Variante 3 (cuando implementes transformaciones en Firebase)
+      ];
+    }
+
+    // Por ahora, usar la misma imagen para todas las variantes
+    // TODO: Cuando subas templates a Firebase, añade un campo 'variants' con URLs de diferentes ángulos/versiones
+    return [template.url];
+  };
 
   // Agrupar templates por categoría para carruseles (dinámico)
   // Extraer todas las categorías únicas
@@ -985,15 +1052,14 @@ export default function Home() {
                       </div>
                       <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
                         {templatesByCategory.trending.map((template) => (
-                          <div
+                          <TemplateCarousel
                             key={template.id}
+                            images={getTemplateVariants(template)}
+                            title={template.title}
                             onClick={() => selectTemplate(template)}
-                            className="relative flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer"
-                          >
-                            <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
-                            <p className="absolute bottom-3 left-3 right-3 text-[9px] font-black uppercase tracking-widest line-clamp-2">{template.title}</p>
-                          </div>
+                            className="flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl border border-white/5"
+                            interval={3000}
+                          />
                         ))}
                       </div>
                     </div>
@@ -1017,15 +1083,14 @@ export default function Home() {
                         </div>
                         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
                           {templates.map((template) => (
-                            <div
+                            <TemplateCarousel
                               key={template.id}
+                              images={getTemplateVariants(template)}
+                              title={template.title}
                               onClick={() => selectTemplate(template)}
-                              className="relative flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-all cursor-pointer"
-                            >
-                              <img src={template.url} className="w-full h-full object-cover" alt={template.title} />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
-                              <p className="absolute bottom-3 left-3 right-3 text-[9px] font-black uppercase tracking-widest line-clamp-2">{template.title}</p>
-                            </div>
+                              className="flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl border border-white/5"
+                              interval={3000}
+                            />
                           ))}
                         </div>
                       </div>
@@ -1053,11 +1118,9 @@ export default function Home() {
                 onSelectTemplate={(template) => {
                   selectTemplate(template);
                 }}
-                onSelectStyle={(styleId) => {
-                  const style = getStyleById(styleId);
-                  if (style) {
-                    setSelectedStyle(style);
-                  }
+                onSelectStyle={() => {
+                  // Style selection removed - using default style only
+                  console.log('Style selection ignored, using default style:', selectedStyle.id);
                 }}
                 onContinue={() => {
                   // Continuar al siguiente paso si ya hay template seleccionado
@@ -1067,6 +1130,84 @@ export default function Home() {
                 }}
               />
             )}
+          </div>
+        )}
+
+        {step === 1.5 && selectedTemplate && (
+          <div className="flex flex-col flex-1 gap-6">
+            {/* Header */}
+            <div className="text-center">
+              <h2 className="text-4xl font-black mb-2 italic uppercase">
+                {t('templates.selectVariant') || 'Elige una Versión'}
+              </h2>
+              <p className="text-gray-500 font-medium">
+                {selectedTemplate.title}
+              </p>
+            </div>
+
+            {/* Variantes Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {getTemplateVariants(selectedTemplate).map((variantUrl, index) => (
+                <div
+                  key={index}
+                  onClick={() => selectVariant(variantUrl, index)}
+                  className={`relative aspect-[3/4.5] rounded-2xl overflow-hidden border-2 cursor-pointer active:scale-95 transition-all ${
+                    selectedVariantIndex === index
+                      ? 'border-pink-500 shadow-xl shadow-pink-500/30'
+                      : 'border-white/10 hover:border-pink-500/50'
+                  }`}
+                >
+                  {/* Imagen de la variante */}
+                  <img
+                    src={variantUrl}
+                    alt={`Variante ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+                  {/* Badge de número */}
+                  <div className="absolute top-3 left-3 w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center">
+                    <span className="text-white font-black text-sm">{index + 1}</span>
+                  </div>
+
+                  {/* Checkmark si está seleccionada */}
+                  {selectedVariantIndex === index && (
+                    <div className="absolute inset-0 bg-pink-500/20 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-pink-500 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={3}
+                          stroke="currentColor"
+                          className="w-10 h-10 text-white"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.5 12.75l6 6 9-13.5"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Botón para volver */}
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setStep(1);
+                setSelectedTemplate(null);
+              }}
+              className="mt-auto"
+            >
+              <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+            </Button>
           </div>
         )}
 
@@ -1126,11 +1267,36 @@ export default function Home() {
 
         {step === 3 && (
           <div className="flex flex-col flex-1 gap-6">
-            <StyleSelector
-              selectedStyle={selectedStyle}
-              onSelectStyle={setSelectedStyle}
-              previewImage={targetImg}
-            />
+            <div className="text-center">
+              <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.readyToGenerate')}</h2>
+              <p className="text-gray-500 font-medium">{t('faceSwap.steps.readyToGenerateDesc')}</p>
+            </div>
+
+            {/* Preview de imágenes */}
+            <div className="flex gap-4 items-center justify-center">
+              {/* Tu rostro */}
+              {sourceImg && (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-32 h-32 rounded-2xl overflow-hidden border-2 border-white/10">
+                    <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
+                  </div>
+                  <p className="text-xs text-gray-500 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
+                </div>
+              )}
+
+              {/* Icono de flecha */}
+              <ChevronRight className="text-pink-500" size={32} />
+
+              {/* Template */}
+              {targetImg && (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-32 h-32 rounded-2xl overflow-hidden border-2 border-pink-500/50">
+                    <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
+                  </div>
+                  <p className="text-xs text-gray-500 font-bold uppercase">{selectedTemplate?.title || 'Template'}</p>
+                </div>
+              )}
+            </div>
 
             <Button onClick={startProcessing} className="mt-auto h-16 bg-white text-black text-xl italic font-black uppercase">
               {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />

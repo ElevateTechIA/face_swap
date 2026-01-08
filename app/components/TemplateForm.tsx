@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { X, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Template, TemplateMetadata, BodyType, StyleTag, Mood, Occasion, Framing, Lighting, ColorPalette } from '@/types/template';
 import { User } from 'firebase/auth';
+import { compressImage, compressImages, validatePayloadSize } from '@/lib/utils/image-compression';
 
 interface TemplateFormProps {
   template?: Template | null;
@@ -14,9 +15,15 @@ interface TemplateFormProps {
 
 export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFormProps) {
   const [loading, setLoading] = useState(false);
+  const [compressionStatus, setCompressionStatus] = useState<string>('');
   const [imagePreview, setImagePreview] = useState<string>(template?.imageUrl || '');
   const [imageData, setImageData] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Variants state
+  const [variantPreviews, setVariantPreviews] = useState<string[]>(template?.variants || []);
+  const [variantDataList, setVariantDataList] = useState<string[]>([]);
+  const variantInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null]);
 
   // Form state
   const [title, setTitle] = useState(template?.title || '');
@@ -46,6 +53,37 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
       setImageData(dataUrl);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleVariantUpload = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+
+      // Actualizar preview
+      const newPreviews = [...variantPreviews];
+      newPreviews[index] = dataUrl;
+      setVariantPreviews(newPreviews);
+
+      // Actualizar data
+      const newDataList = [...variantDataList];
+      newDataList[index] = dataUrl;
+      setVariantDataList(newDataList);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveVariant = (index: number) => {
+    const newPreviews = [...variantPreviews];
+    newPreviews.splice(index, 1);
+    setVariantPreviews(newPreviews);
+
+    const newDataList = [...variantDataList];
+    newDataList.splice(index, 1);
+    setVariantDataList(newDataList);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,9 +132,50 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
         isPremium,
       };
 
-      // Solo incluir imageData si hay una nueva imagen
+      // Comprimir y agregar imagen principal si es nueva
       if (imageData) {
-        body.imageData = imageData;
+        setCompressionStatus('Comprimiendo imagen principal...');
+        console.log('🔄 Comprimiendo imagen principal...');
+        const compressedImage = await compressImage(imageData, 800); // Max 800KB
+        body.imageData = compressedImage;
+      }
+
+      // Incluir variantes (combinar las existentes que no cambiaron con las nuevas)
+      const finalVariants: string[] = [];
+      const newVariantsToCompress: string[] = [];
+
+      for (let i = 0; i < 3; i++) {
+        if (variantDataList[i]) {
+          // Nueva variante que necesita compresión
+          newVariantsToCompress.push(variantDataList[i]);
+        } else if (variantPreviews[i]) {
+          // Variante existente (URL de Firebase) - no comprimir
+          finalVariants.push(variantPreviews[i]);
+        }
+      }
+
+      // Comprimir las nuevas variantes en paralelo
+      if (newVariantsToCompress.length > 0) {
+        setCompressionStatus(`Comprimiendo ${newVariantsToCompress.length} variantes...`);
+        console.log(`🔄 Comprimiendo ${newVariantsToCompress.length} variantes...`);
+        const compressedVariants = await compressImages(newVariantsToCompress, 600); // Max 600KB por variante
+        finalVariants.push(...compressedVariants);
+      }
+
+      setCompressionStatus('Subiendo al servidor...');
+
+      if (finalVariants.length > 0) {
+        body.variants = finalVariants;
+      }
+
+      // Validar tamaño total del payload
+      const validation = validatePayloadSize(body.imageData || null, finalVariants);
+      console.log(`📦 Payload size: ${validation.sizeKB.toFixed(0)}KB / ${validation.maxKB}KB`);
+
+      if (!validation.valid) {
+        alert(`Error: El tamaño total (${validation.sizeKB.toFixed(0)}KB) excede el límite de ${validation.maxKB}KB. Reduce el número de variantes o la calidad de las imágenes.`);
+        setLoading(false);
+        return;
       }
 
       // Si estamos editando, incluir el templateId
@@ -118,12 +197,14 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
         throw new Error(error.error || 'Error al guardar template');
       }
 
+      setCompressionStatus('');
       onSuccess();
     } catch (error: any) {
       console.error('Error saving template:', error);
       alert(error.message || 'Error al guardar template');
     } finally {
       setLoading(false);
+      setCompressionStatus('');
     }
   };
 
@@ -136,30 +217,30 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
-      <div className="relative max-w-4xl w-full max-h-[90vh] bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-3xl border border-pink-500/30 shadow-2xl shadow-pink-500/20 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4">
+      <div className="relative max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-2xl sm:rounded-3xl border border-pink-500/30 shadow-2xl shadow-pink-500/20 flex flex-col">
         {/* Close button */}
         <button
           onClick={onClose}
           disabled={loading}
-          className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors touch-manipulation"
         >
-          <X size={20} />
+          <X size={18} className="sm:w-5 sm:h-5" />
         </button>
 
-        <div className="overflow-y-auto p-8">
+        <div className="overflow-y-auto p-4 sm:p-6 md:p-8">
           <form onSubmit={handleSubmit}>
-          <h2 className="text-3xl font-black tracking-tight uppercase italic mb-6">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase italic mb-4 sm:mb-6 pr-8">
             {template ? 'Editar Template' : 'Nuevo Template'}
           </h2>
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Image Upload */}
             <div>
-              <label className="block text-sm font-bold mb-2">Imagen del Template *</label>
-              <div className="flex gap-4">
+              <label className="block text-xs sm:text-sm font-bold mb-2">Imagen del Template *</label>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 {imagePreview && (
-                  <div className="w-32 h-40 rounded-xl overflow-hidden border-2 border-pink-500/30">
+                  <div className="w-full sm:w-32 h-40 rounded-xl overflow-hidden border-2 border-pink-500/30">
                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 )}
@@ -174,10 +255,10 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-full min-h-[160px] rounded-xl border-2 border-dashed border-white/20 bg-white/5 hover:bg-white/10 flex flex-col items-center justify-center gap-2 transition-all"
+                    className="w-full h-full min-h-[140px] sm:min-h-[160px] rounded-xl border-2 border-dashed border-white/20 bg-white/5 hover:bg-white/10 active:bg-white/15 flex flex-col items-center justify-center gap-2 transition-all touch-manipulation"
                   >
-                    <Upload size={32} className="text-gray-400" />
-                    <span className="text-sm text-gray-400">
+                    <Upload size={28} className="text-gray-400 sm:w-8 sm:h-8" />
+                    <span className="text-xs sm:text-sm text-gray-400">
                       {imagePreview ? 'Cambiar imagen' : 'Subir imagen'}
                     </span>
                   </button>
@@ -185,49 +266,112 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
               </div>
             </div>
 
+            {/* Variants Section */}
+            <div>
+              <label className="block text-xs sm:text-sm font-bold mb-2">
+                Variantes del Template (Opcional)
+                <span className="text-gray-500 font-normal ml-2">Hasta 3 versiones para el carousel</span>
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="relative">
+                    <input
+                      ref={(el) => { variantInputRefs.current[index] = el; }}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleVariantUpload(index)}
+                      className="hidden"
+                    />
+                    {variantPreviews[index] ? (
+                      <div className="relative w-full aspect-[3/4.5] rounded-xl overflow-hidden border-2 border-pink-500/30 group">
+                        <img
+                          src={variantPreviews[index]}
+                          alt={`Variant ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => variantInputRefs.current[index]?.click()}
+                            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center"
+                          >
+                            <Upload size={14} className="text-white" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveVariant(index)}
+                            className="w-8 h-8 rounded-full bg-red-500/80 hover:bg-red-500 flex items-center justify-center"
+                          >
+                            <X size={14} className="text-white" />
+                          </button>
+                        </div>
+                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-pink-500 text-white text-[10px] font-bold">
+                          #{index + 1}
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => variantInputRefs.current[index]?.click()}
+                        className="w-full aspect-[3/4.5] rounded-xl border-2 border-dashed border-white/20 bg-white/5 hover:bg-white/10 active:bg-white/15 flex flex-col items-center justify-center gap-1 transition-all touch-manipulation"
+                      >
+                        <ImageIcon size={20} className="text-gray-400" />
+                        <span className="text-[10px] text-gray-500">
+                          Variante {index + 1}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                💡 Las variantes se mostrarán en un carousel automático que rota cada 3 segundos
+              </p>
+            </div>
+
             {/* Title */}
             <div>
-              <label className="block text-sm font-bold mb-2">Título *</label>
+              <label className="block text-xs sm:text-sm font-bold mb-2">Título *</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none text-sm sm:text-base"
                 placeholder="Ej: Midnight Celebration"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-bold mb-2">Descripción *</label>
+              <label className="block text-xs sm:text-sm font-bold mb-2">Descripción *</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none resize-none"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none resize-none text-sm sm:text-base"
                 placeholder="Describe el template..."
               />
             </div>
 
             {/* Prompt */}
             <div>
-              <label className="block text-sm font-bold mb-2">Prompt de Gemini *</label>
+              <label className="block text-xs sm:text-sm font-bold mb-2">Prompt de Gemini *</label>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none resize-none font-mono text-sm"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none resize-none font-mono text-xs sm:text-sm"
                 placeholder="Instrucciones para Gemini..."
               />
             </div>
 
             {/* Metadata Section */}
-            <div className="border-t border-white/10 pt-6">
-              <h3 className="text-xl font-black mb-4">Metadata</h3>
+            <div className="border-t border-white/10 pt-4 sm:pt-6">
+              <h3 className="text-lg sm:text-xl font-black mb-3 sm:mb-4">Metadata</h3>
 
               {/* Body Type */}
               <div className="mb-4">
-                <label className="block text-sm font-bold mb-2">Tipo de Cuerpo *</label>
+                <label className="block text-xs sm:text-sm font-bold mb-2">Tipo de Cuerpo *</label>
                 <div className="flex flex-wrap gap-2">
                   {(['athletic', 'slim', 'curvy', 'plus-size', 'average'] as BodyType[]).map((type) => (
                     <button
@@ -421,6 +565,14 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
               </label>
             </div>
 
+            {/* Compression Status */}
+            {compressionStatus && (
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 flex items-center gap-3">
+                <Loader2 size={16} className="animate-spin text-blue-400" />
+                <span className="text-sm text-blue-300">{compressionStatus}</span>
+              </div>
+            )}
+
             {/* Submit */}
             <button
               type="submit"
@@ -430,7 +582,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
               {loading ? (
                 <>
                   <Loader2 size={20} className="animate-spin" />
-                  Guardando...
+                  {compressionStatus || 'Guardando...'}
                 </>
               ) : (
                 <>

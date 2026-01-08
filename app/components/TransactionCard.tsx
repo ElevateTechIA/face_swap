@@ -55,19 +55,19 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
-      <div className="flex items-start justify-between gap-4">
+    <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
         {/* Icon and info */}
-        <div className="flex items-start gap-3 flex-1">
-          <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
+        <div className="flex items-start gap-2 sm:gap-3 flex-1">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0">
             {getIcon()}
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-bold">{getTypeLabel()}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
+              <span className="text-xs sm:text-sm font-bold">{getTypeLabel()}</span>
               <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
+                className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap ${
                   isPositive
                     ? 'bg-green-500/20 text-green-400'
                     : 'bg-red-500/20 text-red-400'
@@ -78,16 +78,16 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
               </span>
             </div>
 
-            <p className="text-sm text-gray-400 truncate">{transaction.description}</p>
+            <p className="text-xs sm:text-sm text-gray-400 truncate">{transaction.description}</p>
 
-            <p className="text-xs text-gray-500 mt-1">{formatDate(transaction.createdAt)}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">{formatDate(transaction.createdAt)}</p>
           </div>
         </div>
 
         {/* Balance */}
         <div className="text-right flex-shrink-0">
-          <p className="text-xs text-gray-500">Balance</p>
-          <p className="text-sm font-bold">
+          <p className="text-[10px] sm:text-xs text-gray-500">Balance</p>
+          <p className="text-xs sm:text-sm font-bold whitespace-nowrap">
             {transaction.balanceAfter} <span className="text-gray-500">🪙</span>
           </p>
         </div>

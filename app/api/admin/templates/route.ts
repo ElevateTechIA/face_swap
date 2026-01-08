@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { verifyAdminAuth } from '@/lib/api/auth-middleware';
-import { uploadTemplateImage, deleteTemplateImage } from '@/lib/firebase/storage';
+import { uploadTemplateImage, deleteTemplateImage, uploadTemplateVariants, deleteTemplateVariants } from '@/lib/firebase/storage';
 import { Template } from '@/types/template';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       imageData, // Base64 image
+      variants, // Array of base64 images (optional, max 3)
       prompt,
       metadata,
       isActive = true,
@@ -92,6 +93,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Subir variantes si se proporcionan
+    let variantUrls: string[] = [];
+    if (variants && Array.isArray(variants) && variants.length > 0) {
+      try {
+        // Filtrar solo las variantes que son URLs nuevas (base64)
+        const newVariants = variants.filter(v =>
+          typeof v === 'string' && v.startsWith('data:')
+        );
+
+        if (newVariants.length > 0) {
+          variantUrls = await uploadTemplateVariants(newVariants, templateId);
+          console.log(`✅ ${variantUrls.length} variantes subidas`);
+        }
+      } catch (uploadError: any) {
+        console.error('Error uploading template variants:', uploadError);
+        // No fallar si las variantes no se pueden subir - son opcionales
+      }
+    }
+
     // Crear el template
     const newTemplate: Omit<Template, 'id'> = {
       title,
@@ -107,6 +127,11 @@ export async function POST(request: NextRequest) {
       updatedAt: FieldValue.serverTimestamp() as any,
       createdBy: adminUserId,
     };
+
+    // Agregar variantes si existen
+    if (variantUrls.length > 0) {
+      (newTemplate as any).variants = variantUrls;
+    }
 
     await newTemplateRef.set(newTemplate);
 
@@ -147,6 +172,7 @@ export async function PUT(request: NextRequest) {
       title,
       description,
       imageData, // Optional - solo si se actualiza la imagen
+      variants, // Optional - array of base64 images or URLs
       prompt,
       metadata,
       isActive,
@@ -194,6 +220,35 @@ export async function PUT(request: NextRequest) {
           { error: 'Error al subir la nueva imagen' },
           { status: 500 }
         );
+      }
+    }
+
+    // Si se proporcionan variantes, procesarlas
+    if (variants !== undefined) {
+      try {
+        // Separar variantes nuevas (base64) de existentes (URLs)
+        const newVariants = variants.filter((v: string) =>
+          typeof v === 'string' && v.startsWith('data:')
+        );
+        const existingVariants = variants.filter((v: string) =>
+          typeof v === 'string' && v.startsWith('http')
+        );
+
+        let variantUrls = [...existingVariants];
+
+        // Subir nuevas variantes si hay
+        if (newVariants.length > 0) {
+          const uploadedUrls = await uploadTemplateVariants(newVariants, templateId);
+          variantUrls.push(...uploadedUrls);
+          console.log(`✅ ${uploadedUrls.length} nuevas variantes subidas`);
+        }
+
+        // Actualizar el campo variants
+        updates.variants = variantUrls.length > 0 ? variantUrls : [];
+
+      } catch (uploadError: any) {
+        console.error('Error uploading template variants:', uploadError);
+        // No fallar si las variantes no se pueden subir - son opcionales
       }
     }
 

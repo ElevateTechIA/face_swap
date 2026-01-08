@@ -61,38 +61,38 @@ export function MobileMenu({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="absolute top-0 right-0 w-64 h-full bg-gradient-to-b from-gray-900 to-black border-l border-white/10 p-6 flex flex-col"
+        className="absolute top-0 right-0 w-72 sm:w-80 h-full bg-gradient-to-b from-gray-900 to-black border-l border-white/10 p-5 sm:p-6 flex flex-col shadow-2xl animate-slide-in-right"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header del menú */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-black italic uppercase">Menu</h2>
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-black italic uppercase">Menu</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+            className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors touch-manipulation"
             aria-label="Cerrar"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Usuario info */}
         {user && (
-          <div className="flex items-center gap-3 mb-6 pb-6 border-b border-white/10">
+          <div className="flex items-center gap-3 mb-5 sm:mb-6 pb-5 sm:pb-6 border-b border-white/10">
             {user.photoURL && (
               <img
                 src={user.photoURL}
                 alt="Profile"
-                className="w-12 h-12 rounded-full border-2 border-pink-500/50"
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border-2 border-pink-500/50"
               />
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate">{user.displayName || 'Usuario'}</p>
-              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              <p className="text-xs sm:text-sm font-bold truncate">{user.displayName || 'Usuario'}</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 truncate">{user.email}</p>
             </div>
           </div>
         )}
@@ -105,17 +105,17 @@ export function MobileMenu({
                 <button
                   key={index}
                   onClick={item.onClick}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 transition-all active:scale-95"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 transition-all active:scale-95 touch-manipulation"
                 >
-                  <item.icon size={20} className="text-pink-500" />
-                  <span className="font-medium">{item.label}</span>
+                  <item.icon size={18} className="text-pink-500 sm:w-5 sm:h-5" />
+                  <span className="font-medium text-sm sm:text-base">{item.label}</span>
                 </button>
               )
           )}
 
           {/* Selector de idioma */}
-          <div className="pt-2">
-            <p className="text-xs text-gray-400 uppercase font-bold mb-2 px-4">
+          <div className="pt-3">
+            <p className="text-[10px] sm:text-xs text-gray-400 uppercase font-bold mb-2 px-4">
               <Globe size={12} className="inline mr-1" />
               Idioma
             </p>
@@ -125,7 +125,7 @@ export function MobileMenu({
                   onChangeLocale('es');
                   onClose();
                 }}
-                className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                className={`px-3 sm:px-4 py-2.5 rounded-xl font-medium text-sm transition-all active:scale-95 touch-manipulation ${
                   currentLocale === 'es'
                     ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white'
                     : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'
@@ -138,7 +138,7 @@ export function MobileMenu({
                   onChangeLocale('en');
                   onClose();
                 }}
-                className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                className={`px-3 sm:px-4 py-2.5 rounded-xl font-medium text-sm transition-all active:scale-95 touch-manipulation ${
                   currentLocale === 'en'
                     ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white'
                     : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'
@@ -157,10 +157,10 @@ export function MobileMenu({
               onSignOut();
               onClose();
             }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 transition-all active:scale-95 touch-manipulation mt-4"
           >
-            <LogOut size={20} />
-            <span className="font-bold">{t('common.signOut')}</span>
+            <LogOut size={18} className="sm:w-5 sm:h-5" />
+            <span className="font-bold text-sm sm:text-base">{t('common.signOut')}</span>
           </button>
         )}
       </div>
