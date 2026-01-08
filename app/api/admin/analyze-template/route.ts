@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminAuth } from '@/lib/api/auth-middleware';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const runtime = 'nodejs';
 
@@ -35,9 +34,6 @@ export async function POST(request: NextRequest) {
     console.log('✅ GEMINI_API_KEY encontrada');
     console.log('📊 Tamaño de imageData:', (imageData.length / 1024).toFixed(2), 'KB');
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
     // Extraer el tipo MIME de la imagen
     const mimeTypeMatch = imageData.match(/^data:(image\/\w+);base64,/);
     const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : 'image/jpeg';
@@ -52,14 +48,14 @@ export async function POST(request: NextRequest) {
 {
   "title": "Un título corto y descriptivo (máx 50 caracteres)",
   "description": "Descripción detallada de la escena (máx 150 caracteres)",
-  "bodyType": ["athletic", "slim", "curvy", "plus-size", "average"], // Array de tipos de cuerpo que se verían bien
-  "style": ["elegant", "casual", "professional", "party", "romantic", "edgy", "vintage", "modern"], // Array de estilos que representa
-  "mood": ["happy", "confident", "relaxed", "energetic", "mysterious", "playful"], // Array de moods de la imagen
-  "occasion": ["new-year", "birthday", "wedding", "casual", "professional", "date", "party"], // Array de ocasiones apropiadas
-  "framing": "close-up" | "medium" | "full-body" | "portrait", // Tipo de encuadre
-  "lighting": "natural" | "studio" | "dramatic" | "soft" | "neon", // Tipo de iluminación
-  "colorPalette": ["warm", "cool", "neutral", "vibrant", "pastel"], // Array de paletas de color presentes
-  "setting": ["indoor", "outdoor", "studio"] // Array de ambientes
+  "bodyType": ["athletic", "slim", "curvy", "plus-size", "average"],
+  "style": ["elegant", "casual", "professional", "party", "romantic", "edgy", "vintage", "modern"],
+  "mood": ["happy", "confident", "relaxed", "energetic", "mysterious", "playful"],
+  "occasion": ["new-year", "birthday", "wedding", "casual", "professional", "date", "party"],
+  "framing": "close-up" | "medium" | "full-body" | "portrait",
+  "lighting": "natural" | "studio" | "dramatic" | "soft" | "neon",
+  "colorPalette": ["warm", "cool", "neutral", "vibrant", "pastel"],
+  "setting": ["indoor", "outdoor", "studio"]
 }
 
 Analiza cuidadosamente:
@@ -73,29 +69,67 @@ Analiza cuidadosamente:
 
 Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          data: base64Data,
-          mimeType: mimeType
-        }
-      },
-      prompt
-    ]);
+    // Usar API REST de Gemini como en los otros endpoints
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
+    const payload = {
+      contents: [{
+        parts: [
+          {
+            text: prompt
+          },
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: base64Data
+            }
+          }
+        ]
+      }],
+      generationConfig: {
+        temperature: 0.4,
+        topK: 32,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+        responseMimeType: "application/json"
+      }
+    };
+
+    console.log('🚀 Calling Gemini API...');
+    const geminiResponse = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      console.error('❌ Gemini API error:', errorText);
+      throw new Error(`Gemini API error: ${geminiResponse.status}`);
+    }
+
+    const data = await geminiResponse.json();
     console.log('✅ Respuesta recibida de Gemini AI');
-    const response = result.response;
-    const text = response.text();
-    console.log('📝 Texto de respuesta (primeros 200 chars):', text.substring(0, 200));
 
-    // Limpiar la respuesta y parsear JSON
-    let cleanedText = text.trim();
+    // Extraer el JSON de la respuesta
+    const responseText = data.candidates[0].content.parts[0].text;
+    console.log('📝 Texto de respuesta (primeros 200 chars):', responseText.substring(0, 200));
 
-    // Remover markdown code blocks si existen
-    cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-
-    // Parsear el JSON
-    const analysis = JSON.parse(cleanedText);
+    let analysis;
+    try {
+      // Intentar parsear directamente como JSON
+      analysis = JSON.parse(responseText);
+    } catch (parseError) {
+      // Si falla, intentar extraer JSON del texto
+      let cleanedText = responseText.trim();
+      cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        analysis = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('Failed to parse JSON from Gemini response');
+      }
+    }
 
     console.log('✅ Template analyzed successfully:', analysis.title);
 
