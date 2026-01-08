@@ -43,7 +43,9 @@ export async function POST(request: NextRequest) {
     const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
     console.log('🔄 Enviando imagen a Gemini AI...');
 
-    const prompt = `Analiza esta imagen de template para Face Swap y extrae la siguiente información en formato JSON:
+    const prompt = `Analiza esta imagen de template para Face Swap y extrae la siguiente información en formato JSON.
+
+IMPORTANTE: Responde con un OBJETO JSON (no un array), con esta estructura exacta:
 
 {
   "title": "Un título corto y descriptivo (máx 50 caracteres)",
@@ -75,7 +77,7 @@ Para el "prompt" de Gemini, genera instrucciones técnicas específicas que:
 3. Especifiquen cómo mantener la iluminación y sombras naturales
 4. Mencionen qué elementos NO deben cambiar (pelo, ropa, cuerpo, fondo)
 
-Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
+Responde SOLO con el objeto JSON (no array), sin explicaciones adicionales.`;
 
     // Usar API REST de Gemini como en los otros endpoints
     // Usando gemini-2.0-flash-exp que tiene capacidades de visión y funciona correctamente
@@ -127,16 +129,34 @@ Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
     let analysis;
     try {
       // Intentar parsear directamente como JSON
-      analysis = JSON.parse(responseText);
+      let parsed = JSON.parse(responseText);
+      
+      // Si la respuesta es un array, tomar el primer elemento
+      if (Array.isArray(parsed)) {
+        console.log('⚠️ La IA devolvió un array, tomando el primer elemento');
+        analysis = parsed[0];
+      } else {
+        analysis = parsed;
+      }
     } catch (parseError) {
       // Si falla, intentar extraer JSON del texto
       let cleanedText = responseText.trim();
       cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        analysis = JSON.parse(jsonMatch[0]);
+      
+      // Intentar encontrar un objeto JSON
+      const objectMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (objectMatch) {
+        let parsed = JSON.parse(objectMatch[0]);
+        analysis = Array.isArray(parsed) ? parsed[0] : parsed;
       } else {
-        throw new Error('Failed to parse JSON from Gemini response');
+        // Intentar encontrar un array JSON
+        const arrayMatch = cleanedText.match(/\[[\s\S]*\]/);
+        if (arrayMatch) {
+          let parsed = JSON.parse(arrayMatch[0]);
+          analysis = Array.isArray(parsed) ? parsed[0] : parsed;
+        } else {
+          throw new Error('Failed to parse JSON from Gemini response');
+        }
       }
     }
 
