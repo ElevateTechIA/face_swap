@@ -70,7 +70,8 @@ Analiza cuidadosamente:
 Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
 
     // Usar API REST de Gemini como en los otros endpoints
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Usando gemini-2.0-flash-exp que tiene capacidades de visión y funciona correctamente
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [{

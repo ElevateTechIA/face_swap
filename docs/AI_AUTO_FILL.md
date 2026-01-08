@@ -24,7 +24,7 @@ TemplateForm.tsx
     ↓
 POST /api/admin/analyze-template
     ↓
-Gemini 1.5 Flash API
+Gemini 2.0 Flash Exp API
     ↓ (image analysis)
     ↓
 JSON Response con metadata
