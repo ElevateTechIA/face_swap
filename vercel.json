@@ -7,6 +7,10 @@
     "app/api/face-swap/process/route.ts": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "app/api/admin/analyze-template/route.ts": {
+      "maxDuration": 30,
+      "memory": 1024
     }
   }
 }

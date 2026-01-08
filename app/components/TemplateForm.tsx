@@ -15,6 +15,7 @@ interface TemplateFormProps {
 
 export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFormProps) {
   const [loading, setLoading] = useState(false);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [compressionStatus, setCompressionStatus] = useState<string>('');
   const [imagePreview, setImagePreview] = useState<string>(template?.imageUrl || '');
   const [imageData, setImageData] = useState<string>('');
@@ -84,6 +85,54 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
     const newDataList = [...variantDataList];
     newDataList.splice(index, 1);
     setVariantDataList(newDataList);
+  };
+
+  const analyzeWithAI = async () => {
+    if (!imageData) {
+      alert('Por favor sube una imagen primero');
+      return;
+    }
+
+    setAiAnalyzing(true);
+    try {
+      console.log('🤖 Analizando imagen con IA...');
+      const token = await user.getIdToken();
+      const response = await fetch('/api/admin/analyze-template', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageData }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al analizar imagen');
+      }
+
+      const { analysis } = await response.json();
+      console.log('✅ Análisis completado:', analysis);
+
+      // Populate form fields with AI analysis
+      setTitle(analysis.title || '');
+      setDescription(analysis.description || '');
+      setBodyType(analysis.bodyType || []);
+      setStyle(analysis.style || []);
+      setMood(analysis.mood || []);
+      setOccasion(analysis.occasion || []);
+      setFraming(analysis.framing || 'portrait');
+      setLighting(analysis.lighting || 'natural');
+      setColorPalette(analysis.colorPalette || []);
+      setSetting(analysis.setting || []);
+
+      alert('✅ Análisis completado! Los campos se han llenado automáticamente. Revisa y ajusta si es necesario.');
+    } catch (error: any) {
+      console.error('❌ Error al analizar imagen:', error);
+      alert(error.message || 'Error al analizar imagen con IA');
+    } finally {
+      setAiAnalyzing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -265,6 +314,37 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
                 </div>
               </div>
             </div>
+
+            {/* AI Analysis Button */}
+            {imageData && (
+              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold mb-1">✨ Análisis con IA</h3>
+                    <p className="text-xs text-gray-400">
+                      Usa Gemini AI para analizar la imagen y llenar automáticamente todos los campos del formulario
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={analyzeWithAI}
+                    disabled={aiAnalyzing || loading}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold hover:from-purple-700 hover:to-pink-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                  >
+                    {aiAnalyzing ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Analizando...
+                      </>
+                    ) : (
+                      <>
+                        🤖 Analizar
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Variants Section */}
             <div>
