@@ -32,11 +32,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('✅ GEMINI_API_KEY encontrada');
+    console.log('📊 Tamaño de imageData:', (imageData.length / 1024).toFixed(2), 'KB');
+
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
+    // Extraer el tipo MIME de la imagen
+    const mimeTypeMatch = imageData.match(/^data:(image\/\w+);base64,/);
+    const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : 'image/jpeg';
+    console.log('🖼️ Tipo MIME detectado:', mimeType);
+
     // Convertir base64 a formato que Gemini entiende
     const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+    console.log('🔄 Enviando imagen a Gemini AI...');
 
     const prompt = `Analiza esta imagen de template para Face Swap y extrae la siguiente información en formato JSON:
 
@@ -68,14 +77,16 @@ Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
       {
         inlineData: {
           data: base64Data,
-          mimeType: 'image/jpeg'
+          mimeType: mimeType
         }
       },
       prompt
     ]);
 
+    console.log('✅ Respuesta recibida de Gemini AI');
     const response = result.response;
     const text = response.text();
+    console.log('📝 Texto de respuesta (primeros 200 chars):', text.substring(0, 200));
 
     // Limpiar la respuesta y parsear JSON
     let cleanedText = text.trim();
@@ -94,9 +105,14 @@ Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
     });
 
   } catch (error: any) {
-    console.error('❌ Error analyzing template:', error.message);
+    console.error('❌ Error analyzing template:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
 
-    if (error.message.includes('autorizado') || error.message.includes('autenticado')) {
+    if (error.message?.includes('autorizado') || error.message?.includes('autenticado')) {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
 
@@ -109,8 +125,13 @@ Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
       );
     }
 
+    // Retornar más detalles del error en desarrollo
+    const errorMessage = error.message || 'Error al analizar la imagen';
     return NextResponse.json(
-      { error: 'Error al analizar la imagen' },
+      {
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
