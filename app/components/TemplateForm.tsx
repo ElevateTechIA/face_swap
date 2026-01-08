@@ -266,8 +266,19 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4">
-      <div className="relative max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-2xl sm:rounded-3xl border border-pink-500/30 shadow-2xl shadow-pink-500/20 flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4"
+      onClick={(e) => {
+        // Only close if clicking directly on the backdrop, not on children
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        className="relative max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-2xl sm:rounded-3xl border border-pink-500/30 shadow-2xl shadow-pink-500/20 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Close button */}
         <button
           onClick={onClose}
