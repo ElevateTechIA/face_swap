@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
 {
   "title": "Un título corto y descriptivo (máx 50 caracteres)",
   "description": "Descripción detallada de la escena (máx 150 caracteres)",
+  "prompt": "Un prompt detallado para Gemini que describa cómo hacer el face swap manteniendo la iluminación, pose, ropa y ambiente de la imagen original. Debe instruir claramente sobre qué mantener de la imagen template y qué reemplazar (solo el rostro).",
   "bodyType": ["athletic", "slim", "curvy", "plus-size", "average"],
   "style": ["elegant", "casual", "professional", "party", "romantic", "edgy", "vintage", "modern"],
   "mood": ["happy", "confident", "relaxed", "energetic", "mysterious", "playful"],
@@ -59,13 +60,20 @@ export async function POST(request: NextRequest) {
 }
 
 Analiza cuidadosamente:
-- Los colores predominantes
-- La iluminación y atmósfera
-- El tipo de ropa y estilo
+- Los colores predominantes y la iluminación
+- El tipo de ropa, accesorios y estilo visual
+- La pose, expresión y lenguaje corporal
+- El ambiente, fondo y contexto de la escena
 - La ocasión o evento que representa
-- El mood general de la imagen
+- El mood y atmósfera general
 - El tipo de cuerpo que se vería mejor en esta escena
-- El encuadre (si es close-up, cuerpo completo, etc)
+- El encuadre (close-up, cuerpo completo, etc)
+
+Para el "prompt" de Gemini, genera instrucciones técnicas específicas que:
+1. Describan la escena completa (pose, ropa, fondo, iluminación)
+2. Indiquen claramente que solo se reemplaza el rostro
+3. Especifiquen cómo mantener la iluminación y sombras naturales
+4. Mencionen qué elementos NO deben cambiar (pelo, ropa, cuerpo, fondo)
 
 Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
 

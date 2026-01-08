@@ -117,6 +117,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
       // Populate form fields with AI analysis
       setTitle(analysis.title || '');
       setDescription(analysis.description || '');
+      setPrompt(analysis.prompt || '');
       setBodyType(analysis.bodyType || []);
       setStyle(analysis.style || []);
       setMood(analysis.mood || []);

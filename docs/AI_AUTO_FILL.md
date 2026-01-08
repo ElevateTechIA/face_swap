@@ -39,6 +39,7 @@ La IA extrae y llena los siguientes campos:
 ### Campos Básicos:
 - **Title** - Título corto y descriptivo (máx 50 caracteres)
 - **Description** - Descripción detallada de la escena (máx 150 caracteres)
+- **Prompt** - Instrucciones técnicas detalladas para Gemini sobre cómo realizar el face swap, qué mantener y qué reemplazar
 
 ### Metadata Arrays:
 - **bodyType** - Tipos de cuerpo que se verían bien

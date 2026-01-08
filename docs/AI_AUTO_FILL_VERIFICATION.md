@@ -55,18 +55,19 @@ La funcionalidad de análisis automático de imágenes con IA está **completame
 
 ## 📝 CAMPOS QUE SE LLENAN AUTOMÁTICAMENTE
 
-La IA extrae y llena **10 campos** del formulario:
+La IA extrae y llena **11 campos** del formulario:
 
 1. ✅ `title` - Título corto y descriptivo
 2. ✅ `description` - Descripción detallada
-3. ✅ `bodyType` - Tipos de cuerpo (array)
-4. ✅ `style` - Estilos (array)
-5. ✅ `mood` - Estados de ánimo (array)
-6. ✅ `occasion` - Ocasiones (array)
-7. ✅ `framing` - Tipo de encuadre
-8. ✅ `lighting` - Iluminación
-9. ✅ `colorPalette` - Paleta de colores (array)
-10. ✅ `setting` - Ambiente (array)
+3. ✅ `prompt` - Instrucciones técnicas para Gemini
+4. ✅ `bodyType` - Tipos de cuerpo (array)
+5. ✅ `style` - Estilos (array)
+6. ✅ `mood` - Estados de ánimo (array)
+7. ✅ `occasion` - Ocasiones (array)
+8. ✅ `framing` - Tipo de encuadre
+9. ✅ `lighting` - Iluminación
+10. ✅ `colorPalette` - Paleta de colores (array)
+11. ✅ `setting` - Ambiente (array)
 
 ---
 

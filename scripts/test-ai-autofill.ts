@@ -50,6 +50,7 @@ async function testAIAutoFill() {
   const fields = [
     'title',
     'description',
+    'prompt',
     'bodyType',
     'style',
     'mood',
