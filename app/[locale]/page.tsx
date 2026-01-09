@@ -12,8 +12,6 @@ import { MobileMenu } from '@/app/components/MobileMenu';
 import { PublicGalleryToggle } from '@/app/components/PublicGalleryToggle';
 import { AppHeader } from '@/app/components/AppHeader';
 // StyleSelector removed - using default style only
-import { PromptStudio, type PromptInterpretation } from '@/app/components/PromptStudio';
-import { PromptSuggestions } from '@/app/components/PromptSuggestions';
 import { MultiFaceUpload } from '@/app/components/MultiFaceUpload';
 import { TemplateCarousel } from '@/app/components/TemplateCarousel';
 import { AI_STYLES } from '@/lib/styles/style-configs';
@@ -25,6 +23,77 @@ import {
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
+
+// Hero Slideshow Component
+const HeroSlideshow: React.FC<{ templates: any[] }> = ({ templates }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [visibleImages, setVisibleImages] = useState<number[]>([]);
+
+  // Select random templates for the slideshow - show 3 at a time
+  const randomTemplates = React.useMemo(() => {
+    if (templates.length === 0) return [];
+    const shuffled = [...templates].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(9, templates.length)); // Get 9 to show 3 sets of 3
+  }, [templates]);
+
+  useEffect(() => {
+    if (randomTemplates.length === 0) return;
+
+    // Animate images appearing one by one
+    setVisibleImages([]);
+    const timeouts = [
+      setTimeout(() => setVisibleImages([0]), 100),
+      setTimeout(() => setVisibleImages([0, 1]), 300),
+      setTimeout(() => setVisibleImages([0, 1, 2]), 500),
+    ];
+
+    const interval = setInterval(() => {
+      setVisibleImages([]);
+      setCurrentIndex((prev) => (prev + 3) % randomTemplates.length);
+      
+      // Stagger the appearance of new images
+      setTimeout(() => setVisibleImages([0]), 100);
+      setTimeout(() => setVisibleImages([0, 1]), 300);
+      setTimeout(() => setVisibleImages([0, 1, 2]), 500);
+    }, 4000);
+
+    return () => {
+      timeouts.forEach(t => clearTimeout(t));
+      clearInterval(interval);
+    };
+  }, [randomTemplates.length]);
+
+  if (randomTemplates.length === 0) return null;
+
+  // Get 3 templates to display
+  const displayTemplates = [
+    randomTemplates[currentIndex % randomTemplates.length],
+    randomTemplates[(currentIndex + 1) % randomTemplates.length],
+    randomTemplates[(currentIndex + 2) % randomTemplates.length],
+  ];
+
+  return (
+    <div className="relative w-full h-full flex gap-2">
+      {displayTemplates.map((template, index) => (
+        <div
+          key={`${currentIndex}-${index}`}
+          className={`flex-1 transition-all duration-500 transform ${
+            visibleImages.includes(index)
+              ? 'opacity-100 scale-100'
+              : 'opacity-0 scale-95'
+          }`}
+        >
+          <img
+            src={template.url}
+            alt={template.title}
+            className="w-full h-full object-cover rounded-xl"
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+
 
 // --- Plantillas Fallback (se usan si no hay templates dinámicos de Firebase) ---
 const TEMPLATES = [
@@ -108,11 +177,6 @@ export default function Home() {
   // Estados de templates dinámicos desde Firebase
   const [dynamicTemplates, setDynamicTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
-
-  // Estados de Prompt Studio
-  const [selectionMode, setSelectionMode] = useState<'browse' | 'prompt'>('browse');
-  const [promptInterpretation, setPromptInterpretation] = useState<PromptInterpretation | null>(null);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Group photos state
   const [groupImages, setGroupImages] = useState<string[]>([]);
@@ -335,21 +399,13 @@ export default function Home() {
     setProcessingProgress(0);
   };
 
-  const selectVariant = (index: number) => {
-    // Solo marcar la variante seleccionada, no avanzar automáticamente
-    setSelectedVariantIndex(index);
-    console.log(`✅ Variant ${index + 1} selected`);
-  };
-
-  const confirmVariantSelection = async () => {
-    const variants = getTemplateVariants(selectedTemplate);
-    const variantUrl = variants[selectedVariantIndex];
-
+  const selectVariant = async (variantUrl: string, index: number) => {
     setProcessingProgress(10);
+    setSelectedVariantIndex(index);
 
     // Si es una URL de Firebase Storage (https://), enviarla directamente
     if (variantUrl.startsWith('http://') || variantUrl.startsWith('https://')) {
-      console.log(`✅ Confirming variant ${selectedVariantIndex + 1}:`, variantUrl);
+      console.log(`✅ Variant ${index + 1} selected:`, variantUrl);
       setTargetImg(variantUrl);
       setStep(2);
       setProcessingProgress(0);
@@ -359,7 +415,7 @@ export default function Home() {
     // Si es una ruta local, convertir a base64
     try {
       const base64 = await urlToBase64(variantUrl);
-      console.log(`✅ Variant ${selectedVariantIndex + 1} confirmed and converted to base64`);
+      console.log(`✅ Variant ${index + 1} converted to base64`);
       setTargetImg(base64);
       setStep(2);
     } catch (e) {
@@ -649,11 +705,11 @@ export default function Home() {
     url: t.imageUrl,
     title: t.title,
     category: t.metadata?.occasion?.[0] || 'all',
-    trending: (t.usageCount || 0) > 5,
+    usageCount: t.usageCount || 0,
     faceCount: t.faceCount || 1,
     isGroup: t.isGroup || false,
     variants: t.variants || [] // Array de URLs de variantes del template
-  })) : TEMPLATES;
+  })) : TEMPLATES.map(t => ({ ...t, usageCount: 0 }));
 
   // Función helper para generar variantes de un template
   const getTemplateVariants = (template: any): string[] => {
@@ -693,8 +749,13 @@ export default function Home() {
   };
 
   // Crear objeto dinámico con todas las categorías
+  // Para trending, mostrar los 6 templates más usados
+  const trendingTemplates = [...templatesSource]
+    .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
+    .slice(0, 6);
+  
   const templatesByCategory: Record<string, any[]> = {
-    trending: templatesSource.filter(t => t.trending),
+    trending: trendingTemplates,
   };
 
   // Agregar carruseles para cada categoría única encontrada
@@ -703,6 +764,13 @@ export default function Home() {
   });
 
   templatesByCategory.all = templatesSource;
+
+  // Ordenar categorías por cantidad de templates (de mayor a menor)
+  const sortedCategories = uniqueCategories.sort((a, b) => {
+    const countA = templatesByCategory[a]?.length || 0;
+    const countB = templatesByCategory[b]?.length || 0;
+    return countB - countA;
+  });
 
   const filteredTemplates = templatesSource;
 
@@ -772,66 +840,73 @@ export default function Home() {
 
         {step === 1 && (
           <div className="flex flex-col gap-6">
-            {/* Toggle entre Browse y Prompt Studio */}
-            <div className="flex gap-2 p-1 rounded-2xl bg-white/5 border border-white/10">
-              <button
-                onClick={() => {
-                  setSelectionMode('browse');
-                  setShowSuggestions(false);
-                }}
-                className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all ${
-                  selectionMode === 'browse'
-                    ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <Grid size={16} className="inline mr-2" />
-                {t('prompts.modes.browse')}
-              </button>
-              <button
-                onClick={() => {
-                  setSelectionMode('prompt');
-                  setShowSuggestions(false);
-                }}
-                className={`flex-1 px-4 py-3 rounded-xl font-bold transition-all ${
-                  selectionMode === 'prompt'
-                    ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <Sparkles size={16} className="inline mr-2" />
-                {t('prompts.modes.prompt')}
-              </button>
+            {/* Hero Slideshow Section - Compact with Polaroid Style */}
+            <div className="relative w-full bg-gray-800 p-3 pb-8 rounded-2xl shadow-2xl">
+              <div className="relative w-full h-64 overflow-hidden">
+                {/* Slideshow */}
+                <div className="absolute inset-0">
+                  {templatesSource.length > 0 && (
+                    <HeroSlideshow templates={templatesSource} />
+                  )}
+                </div>
+
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              </div>
+
+              {/* Text in Polaroid Bottom Space */}
+              <div className="absolute bottom-1 left-0 right-0 text-center">
+                <h2 className="text-2xl font-black italic text-white">
+                  {t('faceSwap.steps.explore')}
+                </h2>
+              </div>
             </div>
 
             {/* Modo Browse Templates (Carruseles por Categoría) */}
-            {selectionMode === 'browse' && !showSuggestions && (
-              <>
-                <h2 className="text-3xl font-black italic">{t('faceSwap.steps.explore')}</h2>
-
-                {/* Upload Scene Card */}
-                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black border border-white/10 p-6 flex items-center justify-between group active:scale-95 transition-all">
-                  <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'target')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
-                  <div className="flex flex-col gap-1">
-                    <p className="text-lg font-black italic uppercase">{t('templates.uploadScene')}</p>
-                    <p className="text-xs text-gray-500">{t('templates.uploadSceneDesc')}</p>
+            <>
+              {/* Carruseles por Categoría (Dinámicos) */}
+              <div className="flex flex-col gap-6">
+                {/* Trending (siempre primero) */}
+                {templatesByCategory.trending?.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      <Flame size={18} className="text-pink-500" />
+                      <h3 className="text-lg font-black italic uppercase">{t('templates.categories.trending')}</h3>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                      {templatesByCategory.trending.map((template) => (
+                        <TemplateCarousel
+                          key={template.id}
+                          images={getTemplateVariants(template)}
+                          title={template.title}
+                          onClick={() => selectTemplate(template)}
+                          className="flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl border border-white/5"
+                          interval={1200}
+                          transition={template.transition || 'fade'}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-pink-600 flex items-center justify-center">
-                    <Upload size={20} className="text-white" />
-                  </div>
-                </div>
+                )}
 
-                {/* Carruseles por Categoría (Dinámicos) */}
-                <div className="flex flex-col gap-6">
-                  {/* Trending (siempre primero) */}
-                  {templatesByCategory.trending?.length > 0 && (
-                    <div className="flex flex-col gap-3">
+                {/* Resto de categorías dinámicamente - ordenadas por cantidad */}
+                {sortedCategories.map((category) => {
+                  const templates = templatesByCategory[category];
+                  if (!templates || templates.length === 0) return null;
+
+                  const config = categoryConfig[category] || categoryConfig.default;
+                  const Icon = config.icon;
+
+                  return (
+                    <div key={category} className="flex flex-col gap-3">
                       <div className="flex items-center gap-2">
-                        <Flame size={18} className="text-pink-500" />
-                        <h3 className="text-lg font-black italic uppercase">{t('templates.categories.trending')}</h3>
+                        <Icon size={18} className={config.color} />
+                        <h3 className="text-lg font-black italic uppercase">
+                          {t(`templates.categories.${category}`) || category}
+                        </h3>
                       </div>
                       <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                        {templatesByCategory.trending.map((template) => (
+                        {templates.map((template) => (
                           <TemplateCarousel
                             key={template.id}
                             images={getTemplateVariants(template)}
@@ -844,74 +919,22 @@ export default function Home() {
                         ))}
                       </div>
                     </div>
-                  )}
+                  );
+                })}
+              </div>
 
-                  {/* Resto de categorías dinámicamente */}
-                  {uniqueCategories.map((category) => {
-                    const templates = templatesByCategory[category];
-                    if (!templates || templates.length === 0) return null;
-
-                    const config = categoryConfig[category] || categoryConfig.default;
-                    const Icon = config.icon;
-
-                    return (
-                      <div key={category} className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2">
-                          <Icon size={18} className={config.color} />
-                          <h3 className="text-lg font-black italic uppercase">
-                            {t(`templates.categories.${category}`) || category}
-                          </h3>
-                        </div>
-                        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                          {templates.map((template) => (
-                            <TemplateCarousel
-                              key={template.id}
-                              images={getTemplateVariants(template)}
-                              title={template.title}
-                              onClick={() => selectTemplate(template)}
-                              className="flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl border border-white/5"
-                              interval={1200}
-                              transition={template.transition || 'fade'}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+              {/* Upload Scene Card - Al final */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black border border-white/10 p-6 flex items-center justify-between group active:scale-95 transition-all">
+                <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'target')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
+                <div className="flex flex-col gap-1">
+                  <p className="text-lg font-black italic uppercase">{t('templates.uploadScene')}</p>
+                  <p className="text-xs text-gray-500">{t('templates.uploadSceneDesc')}</p>
                 </div>
-              </>
-            )}
-
-            {/* Modo Prompt Studio */}
-            {selectionMode === 'prompt' && !showSuggestions && (
-              <PromptStudio
-                onInterpretation={(interpretation) => {
-                  setPromptInterpretation(interpretation);
-                  setShowSuggestions(true);
-                }}
-              />
-            )}
-
-            {/* Sugerencias de IA */}
-            {showSuggestions && promptInterpretation && (
-              <PromptSuggestions
-                interpretation={promptInterpretation}
-                availableTemplates={filteredTemplates}
-                onSelectTemplate={(template) => {
-                  selectTemplate(template);
-                }}
-                onSelectStyle={() => {
-                  // Style selection removed - using default style only
-                  console.log('Style selection ignored, using default style:', selectedStyle.id);
-                }}
-                onContinue={() => {
-                  // Continuar al siguiente paso si ya hay template seleccionado
-                  if (targetImg) {
-                    setStep(2);
-                  }
-                }}
-              />
-            )}
+                <div className="w-12 h-12 rounded-2xl bg-pink-600 flex items-center justify-center">
+                  <Upload size={20} className="text-white" />
+                </div>
+              </div>
+            </>
           </div>
         )}
 
@@ -932,7 +955,7 @@ export default function Home() {
               {getTemplateVariants(selectedTemplate).map((variantUrl, index) => (
                 <div
                   key={index}
-                  onClick={() => selectVariant(index)}
+                  onClick={() => selectVariant(variantUrl, index)}
                   className={`relative aspect-[3/4.5] rounded-2xl overflow-hidden border-2 cursor-pointer active:scale-95 transition-all ${
                     selectedVariantIndex === index
                       ? 'border-pink-500 shadow-xl shadow-pink-500/30'
@@ -979,21 +1002,17 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Botones de navegación */}
-            <div className="mt-auto flex flex-col gap-3">
-              <Button onClick={confirmVariantSelection} className="h-16 text-xl italic uppercase font-black">
-                {t('common.next')} <ChevronRight size={24} />
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setStep(1);
-                  setSelectedTemplate(null);
-                }}
-              >
-                <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
-              </Button>
-            </div>
+            {/* Botón para volver */}
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setStep(1);
+                setSelectedTemplate(null);
+              }}
+              className="mt-auto"
+            >
+              <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+            </Button>
           </div>
         )}
 
