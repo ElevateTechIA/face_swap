@@ -529,7 +529,7 @@ export default function Home() {
         setTimeout(() => {
           setShowScreenerSurvey(false);
           setIsProcessingFaceSwap(false);
-          setStep(5);
+          setStep(4);
           console.log('✅ Face Swap completado - mostrando resultado');
         }, 1000);
       } else {
@@ -549,7 +549,7 @@ export default function Home() {
   const processGroupFaceSwap = async (isGuest = false) => {
     setIsProcessingFaceSwap(true);
     setProcessingProgress(0);
-    setStep(4);
+    setStep(3);
 
     try {
       console.log('👥 Starting group face swap with', groupImages.length, 'faces');
@@ -624,7 +624,7 @@ export default function Home() {
     // Si es guest mode
     if (isGuestMode) {
       if (guestTrialAvailable) {
-        setStep(4);
+        setStep(3);
         await processFaceSwapOnServer(true); // Guest trial
       } else {
         // Ya usó su trial - mostrar modal de login
@@ -639,7 +639,7 @@ export default function Home() {
       return;
     }
 
-    setStep(4);
+    setStep(3);
     await processFaceSwapOnServer(false); // Authenticated
   };
 
@@ -1005,86 +1005,76 @@ export default function Home() {
                 faceCount={selectedTemplate?.faceCount || 2}
                 onImagesSelected={(images) => {
                   setGroupImages(images);
-                  setStep(3);
+                  startProcessing();
                 }}
                 templatePreview={targetImg || undefined}
               />
             ) : (
-              // Single face upload - regular flow
+              // Single face upload - regular flow con template preview
               <>
-                <div className="text-center">
-                  <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.yourFace')}</h2>
-                  <p className="text-gray-500 font-medium">{t('faceSwap.steps.yourFaceDesc')}</p>
-                </div>
+                {/* Preview de imágenes - Template grande arriba, cara pequeña abajo */}
+                <div className="flex flex-col gap-4 items-center">
+                  {/* Template - Grande arriba */}
+                  {targetImg && (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
+                        <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
+                      </div>
+                      <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
+                    </div>
+                  )}
 
-                <div className="relative mx-auto w-full aspect-square max-w-[280px]">
-                  <div className={`w-full h-full rounded-[60px] border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'source')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
-                    {sourceImg ? (
-                      <img src={sourceImg} className="w-full h-full object-cover" alt="Selfie" />
-                    ) : (
-                      <Camera size={64} className="text-white/10" />
-                    )}
+                  {/* Icono de flecha hacia abajo */}
+                  <ChevronRight className="text-pink-500 rotate-90" size={32} />
+
+                  {/* Tu rostro - Upload abajo */}
+                  <div className="flex flex-col items-center gap-2 w-full">
+                    <p className="text-xs text-gray-400 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
+                    <div className="relative w-full max-w-[200px] aspect-square">
+                      <div className={`w-full h-full rounded-3xl border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            handleImageUpload(e, 'source');
+                          }}
+                          className="absolute inset-0 opacity-0 z-10 cursor-pointer"
+                        />
+                        {sourceImg ? (
+                          <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
+                        ) : (
+                          <>
+                            <Camera size={48} className="text-white/10 mb-2" />
+                            <p className="text-xs text-gray-500 font-bold">Toca para subir</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <Button onClick={() => setStep(3)} disabled={!sourceImg} className="mt-auto h-16 text-xl italic uppercase font-black">
-                  {t('common.next')} <ChevronRight size={24} />
-                </Button>
+                {/* Botones de navegación */}
+                <div className="mt-auto flex flex-col gap-3">
+                  <Button
+                    onClick={startProcessing}
+                    disabled={!sourceImg}
+                    className="h-16 bg-white text-black text-xl italic font-black uppercase"
+                  >
+                    {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setStep(1)}
+                  >
+                    <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+                  </Button>
+                </div>
               </>
             )}
           </div>
         )}
 
         {step === 3 && (
-          <div className="flex flex-col flex-1 gap-6">
-            <div className="text-center">
-              <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.readyToGenerate')}</h2>
-              <p className="text-gray-500 font-medium">{t('faceSwap.steps.readyToGenerateDesc')}</p>
-            </div>
-
-            {/* Preview de imágenes - Template grande arriba, cara pequeña abajo */}
-            <div className="flex flex-col gap-4 items-center">
-              {/* Template - Grande arriba */}
-              {targetImg && (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
-                    <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
-                  </div>
-                  <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
-                </div>
-              )}
-
-              {/* Icono de flecha hacia abajo */}
-              <ChevronRight className="text-pink-500 rotate-90" size={32} />
-
-              {/* Tu rostro - Pequeño abajo */}
-              {sourceImg && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10">
-                    <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
-                  </div>
-                  <p className="text-xs text-gray-400 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Botones de navegación */}
-            <div className="mt-auto flex flex-col gap-3">
-              <Button onClick={startProcessing} className="h-16 bg-white text-black text-xl italic font-black uppercase">
-                {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => setStep(2)}
-              >
-                <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {step === 4 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="relative w-48 h-48 mb-12">
               <svg className="w-full h-full transform -rotate-90">
@@ -1119,7 +1109,7 @@ export default function Home() {
           </div>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
           <div className="flex flex-col flex-1 animate-fade-in">
             <div className="relative aspect-[3/4.5] w-full rounded-[40px] overflow-hidden border border-white/10 mb-6">
               <img src={showComparison ? targetImg || '' : resultImage || ''} className="w-full h-full object-cover" alt="Result" />
