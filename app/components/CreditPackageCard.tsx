@@ -28,15 +28,15 @@ export function CreditPackageCard({
 
   return (
     <div
-      className={`relative rounded-3xl p-6 border transition-all ${
+      className={`relative rounded-2xl sm:rounded-3xl p-5 sm:p-6 border transition-all ${
         pkg.popular
-          ? 'bg-gradient-to-b from-pink-600/10 to-purple-600/10 border-pink-500/50 scale-105'
+          ? 'bg-gradient-to-b from-pink-600/10 to-purple-600/10 border-pink-500/50 sm:scale-105'
           : 'bg-white/5 border-white/10 hover:border-white/20'
       }`}
     >
       {/* Popular badge */}
       {pkg.popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-xs font-black uppercase tracking-wider">
+        <div className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-[10px] sm:text-xs font-black uppercase tracking-wider">
           Popular
         </div>
       )}
@@ -44,50 +44,50 @@ export function CreditPackageCard({
       {/* Content */}
       <div className="text-center">
         {/* Icon */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl">🪙</span>
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+          <span className="text-2xl sm:text-3xl">🪙</span>
         </div>
 
         {/* Name */}
-        <h3 className="text-xl font-black uppercase italic mb-1">{pkg.name}</h3>
+        <h3 className="text-lg sm:text-xl font-black uppercase italic mb-1">{pkg.name}</h3>
 
         {/* Credits */}
-        <p className="text-4xl font-black mb-2">
-          {pkg.credits} <span className="text-base text-gray-400">créditos</span>
+        <p className="text-3xl sm:text-4xl font-black mb-1.5 sm:mb-2">
+          {pkg.credits} <span className="text-sm sm:text-base text-gray-400">créditos</span>
         </p>
 
         {/* Price */}
-        <p className="text-3xl font-bold mb-1">${priceInDollars}</p>
+        <p className="text-2xl sm:text-3xl font-bold mb-0.5 sm:mb-1">${priceInDollars}</p>
 
         {/* Price per credit */}
-        <p className="text-xs text-gray-500 mb-4">
+        <p className="text-[10px] sm:text-xs text-gray-500 mb-3 sm:mb-4">
           ${pricePerCredit} por crédito
         </p>
 
         {/* Description */}
-        <p className="text-sm text-gray-400 mb-6">{pkg.description}</p>
+        <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6">{pkg.description}</p>
 
         {/* Button */}
         <button
           onClick={() => onSelect(pkg.packageId)}
           disabled={loading}
-          className={`w-full px-6 py-4 rounded-2xl font-bold transition-all ${
+          className={`w-full px-5 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base transition-all ${
             pkg.popular
               ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-xl shadow-pink-500/20 hover:shadow-pink-500/30'
               : 'bg-white/10 text-white hover:bg-white/20'
-          } active:scale-95 flex items-center justify-center gap-2 ${
+          } active:scale-95 flex items-center justify-center gap-2 touch-manipulation ${
             loading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
           {loading ? (
             <>
-              <RefreshCw size={18} className="animate-spin" />
-              Procesando...
+              <RefreshCw size={16} className="animate-spin sm:w-[18px] sm:h-[18px]" />
+              <span>Procesando...</span>
             </>
           ) : (
             <>
-              <Sparkles size={18} />
-              Comprar
+              <Sparkles size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span>Comprar</span>
             </>
           )}
         </button>

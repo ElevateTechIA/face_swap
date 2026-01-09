@@ -19,7 +19,14 @@
       "Bash(npx tsx:*)",
       "Bash(powershell:*)",
       "Bash(scoop bucket add:*)",
-      "Bash(scoop install:*)"
+      "Bash(scoop install:*)",
+      "Bash(ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(head:*)",
+      "Bash(grep:*)"
     ]
   }
 }

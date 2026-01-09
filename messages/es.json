@@ -1,0 +1,461 @@
+{
+  "common": {
+    "appName": "GLAMOUR",
+    "welcome": "¡Bienvenido a GLAMOUR!",
+    "subtitle": "Transforma tus fotos con IA",
+    "loading": "Cargando...",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "back": "Volver",
+    "next": "Siguiente",
+    "continue": "Continuar",
+    "download": "Descargar",
+    "buyCredits": "Comprar Créditos",
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "enter": "Entrar"
+  },
+  "auth": {
+    "signInWithGoogle": "Iniciar con Google",
+    "signingIn": "Iniciando...",
+    "signInError": "Error al iniciar sesión"
+  },
+  "credits": {
+    "balance": "Tienes {credits} créditos",
+    "insufficient": "Sin Créditos",
+    "insufficientMessage": "Necesitas créditos para crear Face Swaps. Compra un paquete para continuar.",
+    "buyTitle": "Comprar Créditos",
+    "buySubtitle": "Elige el paquete perfecto para ti",
+    "transactionsLink": "Ver historial de transacciones",
+    "noPackages": "No hay paquetes disponibles en este momento.",
+    "tryLater": "Por favor, intenta más tarde.",
+    "securePayment": "Pagos procesados de forma segura por Stripe",
+    "creditsNeverExpire": "Los créditos no caducan y puedes usarlos en cualquier momento"
+  },
+  "loginGate": {
+    "title": "¡Tu Face Swap",
+    "titleHighlight": "Está Listo!",
+    "offerExpires": "Oferta expira en {time}",
+    "signInNowAndGet": "Inicia sesión {now} y obtén:",
+    "now": "AHORA",
+    "benefit1": "80 créditos GRATIS",
+    "benefit1Desc": "(1 Face Swap completo)",
+    "benefit2": "Descarga",
+    "benefit2Desc": "este resultado en alta calidad",
+    "benefit3": "Guarda en tu historial",
+    "benefit3Desc": "tus Face Swaps favoritos",
+    "socialProof": "+10,000 usuarios ya crearon su Face Swap",
+    "finePrint": "🔒 Sin tarjeta para empezar • Los créditos no caducan • Compra solo cuando necesites"
+  },
+  "templates": {
+    "categories": {
+      "all": "Todos",
+      "trending": "Tendencias",
+      "editorial": "Editorial",
+      "cinematic": "Cine",
+      "forYou": "Para Ti",
+      "newYear": "Año Nuevo",
+      "new-year": "Año Nuevo",
+      "party": "Fiesta",
+      "birthday": "Cumpleaños",
+      "casual": "Casual",
+      "professional": "Profesional",
+      "date": "Cita Romántica",
+      "wedding": "Boda",
+      "graduation": "Graduación",
+      "vacation": "Vacaciones"
+    },
+    "uploadScene": "SUBIR ESCENA",
+    "uploadSceneDesc": "Usa tu propia foto de fondo",
+    "selectVariant": "Elige una Versión",
+    "selectVariantDesc": "Selecciona la variante que más te guste",
+    "noTemplates": "No hay templates disponibles",
+    "loading": "Cargando templates..."
+  },
+  "survey": {
+    "initial": {
+      "calibrating": "CALIBRANDO IA...",
+      "title": "Face",
+      "titleHighlight": "Clone",
+      "subtitle": "Nano Banana Pro Engine Enabled.",
+      "questions": {
+        "q1": {
+          "question": "¿Cuál es tu objetivo principal?",
+          "subtitle": "Personalizaremos la IA según tu meta.",
+          "options": {
+            "fun": "Divertirme y reír",
+            "beauty": "Mejorar mis fotos",
+            "content": "Crear contenido",
+            "explore": "Probar estilos nuevos"
+          }
+        },
+        "q2": {
+          "question": "¿Qué estilo te define mejor?",
+          "subtitle": "Para sugerirte los mejores filtros.",
+          "options": {
+            "chic": "Chic & Glamour",
+            "urban": "Urbano & Street",
+            "vintage": "Retro & Vintage",
+            "fantasy": "Fantasía & Cosplay"
+          }
+        },
+        "q3": {
+          "question": "¿Con quién te identificas?",
+          "subtitle": "Ajustaremos los modelos base.",
+          "options": {
+            "female": "Femenino",
+            "male": "Masculino",
+            "nb": "No Binario / Otro"
+          }
+        }
+      }
+    },
+    "screener": {
+      "title": "¡Ayúdanos a mejorar!",
+      "subtitle": "Mientras procesamos tu imagen, responde estas preguntas rápidas",
+      "question": "Pregunta",
+      "selectOne": "Selecciona una opción",
+      "selectMultiple": "Selecciona una o más opciones",
+      "selectAtLeastOne": "Por favor, selecciona al menos una opción",
+      "questions": {
+        "bodyType": {
+          "label": "¿Qué tipo de cuerpo prefieres en los resultados?",
+          "placeholder": "Elige una o más opciones",
+          "options": {
+            "slim": "Delgado",
+            "athletic": "Atlético",
+            "curvy": "Curvy",
+            "average": "Promedio",
+            "plus-size": "Plus Size"
+          }
+        },
+        "occasions": {
+          "label": "¿Para qué ocasiones usarías Face Swaps?",
+          "placeholder": "Elige una o más opciones",
+          "options": {
+            "new-year": "Año Nuevo",
+            "birthday": "Cumpleaños",
+            "wedding": "Boda",
+            "party": "Fiesta",
+            "date": "Cita",
+            "professional": "Profesional",
+            "casual": "Casual"
+          }
+        },
+        "mood": {
+          "label": "¿Qué mood buscas en tus fotos?",
+          "placeholder": "Elige una o más opciones",
+          "options": {
+            "happy": "Feliz",
+            "confident": "Confiado",
+            "mysterious": "Misterioso",
+            "playful": "Juguetón",
+            "romantic": "Romántico",
+            "energetic": "Energético",
+            "relaxed": "Relajado"
+          }
+        },
+        "stylePreference": {
+          "label": "¿Qué estilos te gustan más?",
+          "placeholder": "Elige una o más opciones",
+          "options": {
+            "elegant": "Elegante",
+            "casual": "Casual",
+            "edgy": "Atrevido",
+            "vintage": "Vintage",
+            "modern": "Moderno",
+            "professional": "Profesional",
+            "party": "Fiesta",
+            "romantic": "Romántico"
+          }
+        }
+      },
+      "skip": "Saltar encuesta",
+      "processing": "Procesando tu Face Swap..."
+    }
+  },
+  "faceSwap": {
+    "steps": {
+      "explore": "EXPLORAR",
+      "yourFace": "TU ROSTRO",
+      "yourFaceDesc": "Sube el rostro que quieres usar.",
+      "customizeStyle": "PERSONALIZA",
+      "styleLabel": "Estilo de IA",
+      "readyToGenerate": "¡TODO LISTO!",
+      "readyToGenerateDesc": "Presiona el botón para crear tu Face Swap",
+      "processing": "PROCESANDO..."
+    },
+    "styles": {
+      "natural": "Natural",
+      "glam": "Glamour",
+      "cyber": "Cyberpunk",
+      "vintage": "90s Retro",
+      "noir": "Noir"
+    },
+    "buttons": {
+      "generate": "CREAR FACE SWAP",
+      "newSwap": "NUEVO FACE SWAP",
+      "viewHistory": "Ver Historial"
+    },
+    "guestTrial": {
+      "title": "Prueba Gratis",
+      "used": "Ya usaste tu prueba gratis",
+      "usedDesc": "Inicia sesión para continuar creando Face Swaps"
+    },
+    "errors": {
+      "generic": "Error al procesar Face Swap",
+      "tryAgain": "Intenta de nuevo"
+    }
+  },
+  "admin": {
+    "title": "Panel de Administración",
+    "templates": {
+      "title": "Gestión de Templates",
+      "create": "Crear Nuevo Template",
+      "edit": "Editar Template",
+      "list": "Lista de Templates",
+      "noTemplates": "No hay templates creados",
+      "fields": {
+        "title": "Título",
+        "description": "Descripción",
+        "image": "Imagen",
+        "prompt": "Prompt para IA",
+        "active": "Template Activo",
+        "premium": "Premium",
+        "metadata": "Metadata"
+      }
+    },
+    "unauthorized": "Acceso no autorizado",
+    "loading": "Cargando..."
+  },
+  "history": {
+    "title": "Tu Historial",
+    "noHistory": "Aún no tienes Face Swaps guardados",
+    "createFirst": "Crea tu primer Face Swap para verlo aquí"
+  },
+  "styles": {
+    "categories": {
+      "realistic": "Realista",
+      "artistic": "Artístico",
+      "cinematic": "Cinematográfico",
+      "fantasy": "Fantasía",
+      "seasonal": "Temporal",
+      "effects": "Efectos"
+    },
+    "selectStyle": "Selecciona un Estilo",
+    "allStyles": "Todos los Estilos",
+    "premium": "Premium",
+    "new": "Nuevo"
+  },
+  "prompts": {
+    "title": "Describe Tu Visión",
+    "subtitle": "Dile a la IA qué tipo de foto quieres crear",
+    "placeholder": "Ej: Quiero verme en una fiesta de año nuevo glamurosa con luces doradas...",
+    "quickIdeas": "Ideas rápidas:",
+    "quick": {
+      "nyeParty": "Fiesta Año Nuevo",
+      "beachSunset": "Playa al Atardecer",
+      "cityNight": "Ciudad Nocturna",
+      "vintageGlam": "Glamour Vintage",
+      "cyberpunk": "Cyberpunk Futurista",
+      "nature": "Naturaleza Serena"
+    },
+    "send": "Enviar",
+    "hint": "Presiona Enter para enviar, Shift+Enter para nueva línea",
+    "interpreting": "Interpretando tu visión con IA...",
+    "examples": {
+      "title": "Ejemplos:",
+      "ex1": "Una fiesta elegante de año nuevo con champagne y luces doradas",
+      "ex2": "Playa tropical al atardecer con vestido rojo y palmeras",
+      "ex3": "Ciudad futurista de noche con luces de neón azules y rosas"
+    },
+    "interpretation": {
+      "title": "La IA interpretó tu visión:",
+      "scenario": "Escenario",
+      "mood": "Ambiente",
+      "lighting": "Iluminación"
+    },
+    "suggestions": {
+      "templates": "Templates Recomendados",
+      "styles": "Estilos Sugeridos",
+      "continue": "Continuar con Selección"
+    },
+    "modes": {
+      "browse": "Explorar Templates",
+      "prompt": "Describir Visión"
+    },
+    "errors": {
+      "empty": "Por favor describe tu visión",
+      "failed": "Error al interpretar. Intenta de nuevo."
+    },
+    "success": {
+      "interpreted": "¡Visión interpretada! Revisa las sugerencias"
+    }
+  },
+  "share": {
+    "title": "Compartir",
+    "shareApp": "Compartir App",
+    "shareImage": "Compartir Imagen",
+    "instagram": "Instagram",
+    "whatsapp": "WhatsApp",
+    "facebook": "Facebook",
+    "twitter": "X (Twitter)",
+    "copyLink": "Copiar Link",
+    "qrCode": "Código QR",
+    "qrTitle": "Escanea para crear tu Face Swap",
+    "qrDownload": "Descargar QR",
+    "qrDownloaded": "QR descargado correctamente",
+    "copied": "Enlace copiado al portapapeles",
+    "copyError": "Error al copiar",
+    "appShare": "He creado un Face Swap increíble con GLAMOUR. ¡Pruébalo tú también!",
+    "imageShare": "Mira mi Face Swap creado con GLAMOUR IA",
+    "shared": "Compartido exitosamente",
+    "openedWhatsApp": "WhatsApp abierto",
+    "openedFacebook": "Facebook abierto",
+    "openedTwitter": "Twitter abierto"
+  },
+  "landing": {
+    "hero": {
+      "title": "Fotos de Año Nuevo",
+      "titleHighlight": "Que Se Ven Caras.",
+      "subtitle": "Sube un selfie — elige una plantilla de Año Nuevo — obtén tu foto perfecta en",
+      "subtitleHighlight": "segundos",
+      "cta": "Crear mi foto de Año Nuevo",
+      "noCreditCard": "No se necesita tarjeta",
+      "highQuality": "Resultados de alta calidad",
+      "endlessPresets": "Presets Infinitos",
+      "perfectFinishes": "Acabados Perfectos",
+      "premiumQuality": "Calidad Premium",
+      "year": "2026"
+    },
+    "howItWorks": {
+      "title": "Cómo Funciona",
+      "step1": {
+        "title": "Sube tu selfie",
+        "description": "Comienza con una foto de cerca donde tu rostro sea claramente visible."
+      },
+      "step2": {
+        "title": "Elige una plantilla de Año Nuevo",
+        "description": "Selecciona tu estilo glamuroso favorito de Nochevieja."
+      },
+      "step3": {
+        "title": "Desbloquea tu foto perfecta",
+        "description": "Obtén tu retrato de Año Nuevo impresionante en segundos."
+      },
+      "footer": "Sin suscripciones. Solo compra créditos para desbloquear fotos cuando quieras."
+    },
+    "templates": {
+      "title": "Elige Tu Look de Año Nuevo",
+      "cta": "Crear mi foto de Año Nuevo"
+    },
+    "pricing": {
+      "title": "Obtén Fotos Increíbles,",
+      "titleHighlight": "Al Instante",
+      "subtitle": "Elige tu paquete de créditos y comienza a crear",
+      "credits": "CRÉDITOS",
+      "generates": "Genera {count} fotos",
+      "cta": "Comprar Créditos"
+    },
+    "features": {
+      "title": "¿Por Qué Elegir Nuestro Generador de Fotos IA?",
+      "realistic": {
+        "title": "Tecnología IA Realista",
+        "description": "IA avanzada crea intercambios de rostros naturales y de aspecto profesional que se mezclan perfectamente con tu plantilla elegida."
+      },
+      "instant": {
+        "title": "Resultados Instantáneos",
+        "description": "Obtén tus fotos increíbles en segundos. Sin esperas, sin edición complicada requerida."
+      },
+      "privacy": {
+        "title": "Privacidad Protegida",
+        "description": "Tus fotos están seguras y son privadas. Nunca compartimos ni vendemos tus imágenes personales."
+      },
+      "premium": {
+        "title": "Calidad Premium",
+        "description": "Resultados en alta resolución perfectos para redes sociales, impresión o compartir con amigos y familia."
+      }
+    },
+    "finalCta": {
+      "title": "¿Listo Para Transformar Tus Fotos?",
+      "subtitle": "Únete a miles creando retratos increíbles con IA para cada ocasión",
+      "cta": "Comenzar Ahora"
+    },
+    "footer": {
+      "copyright": "© 2026 AI Photo Studio. Todos los derechos reservados.",
+      "getStarted": "Comenzar",
+      "createPhotos": "Crear Fotos",
+      "tryNow": "Probar Ahora"
+    }
+  },
+  "upload": {
+    "tapToUpload": "Toca para subir",
+    "remove": "Eliminar",
+    "errors": {
+      "invalidType": "Tipo de archivo no válido",
+      "tooLarge": "La imagen es demasiado grande (máx. 10MB)"
+    }
+  },
+  "groupPhotos": {
+    "title": "Foto Grupal",
+    "subtitle": "Sube {count} fotos para crear tu foto grupal",
+    "templatePreview": "Plantilla seleccionada",
+    "progress": "{uploaded} de {total} fotos",
+    "person": "Persona {number}",
+    "continue": "Continuar",
+    "hint": "Asegúrate de que cada foto muestre claramente el rostro de la persona",
+    "processing": {
+      "title": "Creando tu foto grupal...",
+      "swapping": "Intercambiando rostro {current} de {total}",
+      "almostDone": "¡Casi listo!",
+      "completed": "¡Foto grupal completada!"
+    },
+    "errors": {
+      "notAllUploaded": "Por favor sube las {count} fotos",
+      "processingFailed": "Error al procesar la foto grupal",
+      "faceNotDetected": "No se detectó rostro en la imagen {number}"
+    }
+  },
+  "security": {
+    "rateLimit": {
+      "exceeded": "Has alcanzado el límite de solicitudes. Por favor, intenta más tarde.",
+      "retryAfter": "Intenta nuevamente en {minutes} minutos"
+    },
+    "validation": {
+      "imageTooLarge": "La imagen es demasiado grande. Máximo {maxMB}MB",
+      "invalidDimensions": "Dimensiones de imagen no válidas. Máximo {maxWidth}x{maxHeight}px",
+      "invalidFormat": "Formato de imagen no válido. Solo se permiten JPG, PNG y WebP",
+      "suspiciousImage": "La imagen tiene características sospechosas"
+    }
+  },
+  "gallery": {
+    "title": "Galería Pública",
+    "subtitle": "Descubre creaciones increíbles de nuestra comunidad",
+    "createYours": "Crear la Tuya",
+    "public": "Público",
+    "private": "Privado",
+    "publicDesc": "Visible en la galería pública",
+    "privateDesc": "Solo tú puedes verla",
+    "published": "¡Publicado en la galería!",
+    "unpublished": "Removido de la galería",
+    "error": "Error al actualizar galería",
+    "captionHint": "Agrega un caption opcional para tu creación (máx. 150 caracteres)",
+    "captionPlaceholder": "Ej: Mi look favorito de año nuevo ✨",
+    "publishNow": "Publicar Ahora",
+    "visibleInGallery": "Visible en galería pública",
+    "loadError": "Error al cargar galería",
+    "likeError": "Error al dar like",
+    "empty": "No hay fotos en la galería aún",
+    "featured": "Destacado",
+    "loadMore": "Cargar Más",
+    "filters": {
+      "recent": "Recientes",
+      "trending": "Tendencia",
+      "popular": "Populares",
+      "featured": "Destacados"
+    }
+  }
+}

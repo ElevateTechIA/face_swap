@@ -3,9 +3,42 @@ import { getAdminFirestore } from '@/lib/firebase/admin';
 import { verifyUserAuth } from '@/lib/api/auth-middleware';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getTemplatePrompt } from '@/lib/template-prompts';
+import { getStyleById } from '@/lib/styles/style-configs';
+import { withRateLimit, RATE_LIMITS, getClientIp } from '@/lib/security/rate-limiter';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Face swap puede tomar tiempo
+
+/**
+ * Convierte una URL de imagen a base64 data URL
+ * @param url URL de la imagen
+ * @returns Data URL en formato base64
+ */
+async function urlToBase64(url: string): Promise<string> {
+  try {
+    console.log('🔄 Server fetching image from URL:', url);
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+    console.log('✅ Image fetched, size:', buffer.length, 'bytes, type:', contentType);
+
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:${contentType};base64,${base64}`;
+
+    console.log('✅ Image converted to base64 on server');
+    return dataUrl;
+  } catch (error: any) {
+    console.error('❌ Server urlToBase64 failed:', error.message);
+    throw new Error(`Failed to fetch image from URL: ${error.message}`);
+  }
+}
 
 export async function POST(request: NextRequest) {
   let faceSwapId: string | null = null;
@@ -16,11 +49,25 @@ export async function POST(request: NextRequest) {
   try {
     // Obtener body del request primero
     const body = await request.json();
-    const { sourceImage, targetImage, style, templateTitle, isGuestTrial: requestIsGuest } = body;
+    const {
+      sourceImage,
+      targetImage,
+      style,
+      templateTitle,
+      isGuestTrial: requestIsGuest,
+      isGroupSwap,
+      faceIndex,
+      totalFaces
+    } = body;
 
     // Detectar si es guest trial
     const guestHeader = request.headers.get('X-Guest-Trial');
     isGuestTrial = guestHeader === 'true' || requestIsGuest === true;
+
+    // Log group swap info
+    if (isGroupSwap) {
+      console.log(`👥 GROUP SWAP: Processing face ${faceIndex + 1} of ${totalFaces}`);
+    }
 
     // Verificar autenticación solo si NO es guest trial
     if (!isGuestTrial) {
@@ -32,6 +79,39 @@ export async function POST(request: NextRequest) {
       userId = `guest_${ip}_${Date.now()}`;
       console.log('🎁 Processing GUEST TRIAL for:', userId);
     }
+
+    // 🔒 SECURITY: Rate limiting
+    console.log('🔒 Checking rate limit...');
+    const { allowed, result } = await withRateLimit(
+      request,
+      RATE_LIMITS.FACE_SWAP,
+      userId || undefined
+    );
+
+    if (!allowed) {
+      const clientIp = getClientIp(request);
+      console.warn(`⚠️ Rate limit exceeded for ${userId || clientIp}`);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Por favor, intenta más tarde.',
+          code: 'RATE_LIMIT_EXCEEDED',
+          retryAfter: result.retryAfter
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(result.retryAfter || 3600),
+            'X-RateLimit-Limit': String(RATE_LIMITS.FACE_SWAP.maxRequests),
+            'X-RateLimit-Remaining': String(result.remaining),
+            'X-RateLimit-Reset': String(result.resetTime)
+          }
+        }
+      );
+    }
+
+    console.log(`✅ Rate limit OK: ${result.remaining}/${RATE_LIMITS.FACE_SWAP.maxRequests} remaining`);
 
     if (!sourceImage || !targetImage) {
       return NextResponse.json(
@@ -121,11 +201,53 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener el prompt específico del template (o usar el default)
-    const prompt = getTemplatePrompt(templateTitle);
+    let prompt = getTemplatePrompt(templateTitle);
+
+    // Si hay un estilo seleccionado, agregar sus instrucciones al prompt
+    if (style) {
+      const styleConfig = getStyleById(style);
+      if (styleConfig) {
+        prompt = `${prompt}\n\nAdditional style instructions: ${styleConfig.prompt}`;
+        console.log(`🎨 Applying style: ${styleConfig.name} (${styleConfig.category})`);
+      }
+    }
+
     console.log(`🎯 Using prompt for template: ${templateTitle || 'default'}`);
-    console.log(`📝 Prompt: ${prompt}`);
-    console.log(`📸 Target image size: ${targetImage.split(',')[1]?.length || 0} bytes`);
-    console.log(`📸 Source image size: ${sourceImage.split(',')[1]?.length || 0} bytes`);
+    console.log(`📝 Full prompt: ${prompt}`);
+
+    // Convertir URLs a base64 si es necesario
+    let processedTargetImage = targetImage;
+    let processedSourceImage = sourceImage;
+
+    // Si targetImage es una URL, convertirla a base64 en el servidor
+    if (targetImage.startsWith('http://') || targetImage.startsWith('https://')) {
+      console.log('🌐 Target image is a URL, converting on server...');
+      processedTargetImage = await urlToBase64(targetImage);
+    }
+
+    // Si sourceImage es una URL, convertirla a base64 en el servidor
+    if (sourceImage.startsWith('http://') || sourceImage.startsWith('https://')) {
+      console.log('🌐 Source image is a URL, converting on server...');
+      processedSourceImage = await urlToBase64(sourceImage);
+    }
+
+    // Extraer y validar las imágenes base64
+    const targetBase64 = processedTargetImage.split(',')[1];
+    const sourceBase64 = processedSourceImage.split(',')[1];
+
+    if (!targetBase64 || !sourceBase64) {
+      throw new Error('Invalid image format');
+    }
+
+    console.log(`📸 Target image size: ${targetBase64.length} bytes`);
+    console.log(`📸 Source image size: ${sourceBase64.length} bytes`);
+
+    // Detectar el mimeType de las imágenes
+    const targetMime = processedTargetImage.split(';')[0].split(':')[1] || 'image/jpeg';
+    const sourceMime = processedSourceImage.split(';')[0].split(':')[1] || 'image/jpeg';
+
+    console.log(`🖼️ Target mime: ${targetMime}`);
+    console.log(`🖼️ Source mime: ${sourceMime}`);
 
     // Using gemini-3-pro-image-preview for image generation and editing
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${geminiApiKey}`;
@@ -134,8 +256,8 @@ export async function POST(request: NextRequest) {
       contents: [{
         parts: [
           { text: prompt },
-          { inlineData: { mimeType: "image/png", data: targetImage.split(',')[1] } },
-          { inlineData: { mimeType: "image/png", data: sourceImage.split(',')[1] } }
+          { inlineData: { mimeType: targetMime, data: targetBase64 } },
+          { inlineData: { mimeType: sourceMime, data: sourceBase64 } }
         ]
       }],
       generationConfig: { responseModalities: ["IMAGE"] }
@@ -153,6 +275,22 @@ export async function POST(request: NextRequest) {
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
       console.error('❌ Gemini API error:', errorText);
+
+      // Parse error para mejor debugging
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('❌ Gemini error details:', JSON.stringify(errorJson, null, 2));
+
+        // Errores comunes
+        if (errorJson.error?.message?.includes('Unable to process input image')) {
+          console.error('💡 Tip: Las imágenes pueden ser muy grandes o tener formato incompatible');
+          console.error(`   Target size: ${targetBase64.length} bytes (${(targetBase64.length / 1024 / 1024).toFixed(2)} MB)`);
+          console.error(`   Source size: ${sourceBase64.length} bytes (${(sourceBase64.length / 1024 / 1024).toFixed(2)} MB)`);
+        }
+      } catch (e) {
+        // Error no es JSON
+      }
+
       throw new Error('GEMINI_API_ERROR');
     }
 
@@ -186,8 +324,56 @@ export async function POST(request: NextRequest) {
       await db.collection('faceSwaps').doc(faceSwapId).update({
         status: 'completed',
         resultImageUrl: resultImageUrl || null,
+        templateTitle: templateTitle || null,
         completedAt: FieldValue.serverTimestamp(),
       });
+    }
+
+    // Incrementar contador de uso del template y actualizar perfil del usuario
+    if (templateTitle) {
+      try {
+        // Buscar el template por título
+        const templatesSnapshot = await db.collection('templates')
+          .where('title', '==', templateTitle)
+          .limit(1)
+          .get();
+
+        if (!templatesSnapshot.empty) {
+          const templateDoc = templatesSnapshot.docs[0];
+          const templateId = templateDoc.id;
+
+          // Incrementar usageCount del template
+          await templateDoc.ref.update({
+            usageCount: FieldValue.increment(1),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+
+          console.log(`✅ Template usage incremented: ${templateTitle} (${templateId})`);
+
+          // Actualizar perfil del usuario con template usado (solo para usuarios autenticados)
+          if (!isGuestTrial && userId) {
+            const profileRef = db.collection('userProfiles').doc(userId);
+            const profileDoc = await profileRef.get();
+
+            if (profileDoc.exists) {
+              await profileRef.update({
+                usedTemplates: FieldValue.arrayUnion({
+                  templateId,
+                  timestamp: new Date().toISOString(),
+                }),
+                updatedAt: FieldValue.serverTimestamp(),
+              });
+
+              console.log(`✅ User profile updated with template usage: ${userId}`);
+            }
+          }
+        } else {
+          console.log(`⚠️ Template not found in Firestore: ${templateTitle}`);
+        }
+      } catch (templateError: any) {
+        console.error('⚠️ Error updating template usage:', templateError.message);
+        // Non-critical error - continue
+      }
     }
 
     console.log(`✅ Face swap completed successfully: ${faceSwapId}`);
@@ -195,8 +381,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       resultImage,
+      resultUrl: resultImageUrl || resultImage, // For group swaps to use in next iteration
       faceSwapId,
       creditsRemaining: isGuestTrial ? 0 : newCredits,
+      isGroupSwap: isGroupSwap || false,
+      faceIndex: faceIndex ?? 0,
+      totalFaces: totalFaces ?? 1,
     });
 
   } catch (error: any) {
