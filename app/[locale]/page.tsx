@@ -281,13 +281,39 @@ export default function Home() {
       setIsGuestMode(false);
       setStep(1); // Ir directamente a la app
     } else {
-      // Modo guest
+
+      // Modo guest - ir directo a templates (encuesta desactivada temporalmente)
       setIsGuestMode(true);
       setGuestTrialAvailable(canUseGuestTrial());
       setStep(1); // Ir directamente a templates
       setLoadingCredits(false);
     }
   }, [user, authLoading]);
+
+
+  const loadPreferences = async () => {
+    try {
+      const token = await getUserIdToken();
+      if (!token) {
+        setStep(-1);
+        return;
+      }
+      const response = await fetch('/api/preferences', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Ir directo a la app (encuesta desactivada temporalmente)
+        setStep(1);
+      } else if (response.status === 401) {
+        setStep(-1);
+      } else {
+        setStep(1); // Ir directo a templates
+      }
+    } catch (error) {
+      setStep(1); // Ir directo a templates
+    }
+  };
 
   const loadUserCredits = async () => {
     try {
@@ -680,7 +706,7 @@ export default function Home() {
         setTimeout(() => {
           setShowScreenerSurvey(false);
           setIsProcessingFaceSwap(false);
-          setStep(5);
+          setStep(4);
           console.log('✅ Face Swap completado - mostrando resultado');
         }, 1000);
       } else {
@@ -700,7 +726,7 @@ export default function Home() {
   const processGroupFaceSwap = async (isGuest = false) => {
     setIsProcessingFaceSwap(true);
     setProcessingProgress(0);
-    setStep(4);
+    setStep(3);
 
     try {
       console.log('👥 Starting group face swap with', groupImages.length, 'faces');
@@ -775,7 +801,7 @@ export default function Home() {
     // Si es guest mode
     if (isGuestMode) {
       if (guestTrialAvailable) {
-        setStep(4);
+        setStep(3);
         await processFaceSwapOnServer(true); // Guest trial
       } else {
         // Ya usó su trial - mostrar modal de login
@@ -790,7 +816,7 @@ export default function Home() {
       return;
     }
 
-    setStep(4);
+    setStep(3);
     await processFaceSwapOnServer(false); // Authenticated
   };
 
@@ -1212,7 +1238,7 @@ export default function Home() {
           </div>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
           <div className="flex flex-col flex-1 animate-fade-in">
             <div className="relative aspect-[3/4.5] w-full rounded-[40px] overflow-hidden border border-white/10 mb-6">
               <img src={showComparison ? targetImg || '' : resultImage || ''} className="w-full h-full object-cover" alt="Result" />
