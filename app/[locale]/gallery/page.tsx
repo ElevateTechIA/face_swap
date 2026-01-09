@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import {
-  Heart, Grid as GridIcon, RefreshCw, ArrowLeft
+  Heart, Grid as GridIcon, RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/auth/AuthProvider';
@@ -216,15 +216,6 @@ export default function PublicGalleryPage() {
 
       {/* Main Content - Mobile Centered */}
       <main className="flex flex-col min-h-screen max-w-md mx-auto pt-14 pb-4 px-4">
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 mt-2"
-        >
-          <ArrowLeft size={20} />
-          <span className="text-sm">{t('common.back')}</span>
-        </button>
-
         {/* Gallery Grid */}
         {loading && offset === 0 ? (
           <div className="flex items-center justify-center py-12">

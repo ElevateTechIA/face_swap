@@ -12,6 +12,17 @@ import { FieldValue } from 'firebase-admin/firestore';
 import type { PublicGalleryItem } from '@/types/gallery';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+// Handle OPTIONS for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Allow': 'POST, OPTIONS',
+    },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {

@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
       const auth = getAdminAuth();
       const userRecord = await auth.getUser(userId);
 
-      // 10 créditos de bienvenida (valor: ~$1.40 USD)
-      const welcomeCredits = parseInt(process.env.WELCOME_CREDITS || '10');
+      // 80 créditos de bienvenida (1 Face Swap completo)
+      const welcomeCredits = parseInt(process.env.WELCOME_CREDITS || '80');
 
       const newUserData = {
         userId,

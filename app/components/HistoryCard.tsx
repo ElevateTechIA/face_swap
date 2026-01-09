@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, RefreshCw, ZoomIn } from 'lucide-react';
+import { Download, RefreshCw, ZoomIn, Trash2 } from 'lucide-react';
 import { ImagePreviewModal } from './modals/ImagePreviewModal';
 import { toast } from 'sonner';
+import { useAuth } from '@/app/auth/AuthProvider';
 
 interface HistoryCardProps {
   faceSwap: {
@@ -12,12 +13,16 @@ interface HistoryCardProps {
     style: string;
     completedAt: any;
   };
+  onDelete?: () => void;
 }
 
-export function HistoryCard({ faceSwap }: HistoryCardProps) {
+export function HistoryCard({ faceSwap, onDelete }: HistoryCardProps) {
+  const { getUserIdToken } = useAuth();
   const [downloading, setDownloading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDownload = async () => {
     try {
@@ -50,6 +55,43 @@ export function HistoryCard({ faceSwap }: HistoryCardProps) {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      setDeleting(true);
+
+      // Get auth token using the proper auth hook
+      const token = await getUserIdToken();
+
+      const response = await fetch('/api/history', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          faceSwapId: faceSwap.faceSwapId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar');
+      }
+
+      toast.success('Imagen eliminada del historial');
+      setShowDeleteConfirm(false);
+
+      // Notify parent component to remove from list
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Error deleting face swap:', error);
+      toast.error('Error al eliminar la imagen');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const formatDate = (timestamp: any) => {
     if (!timestamp) return '';
 
@@ -60,9 +102,10 @@ export function HistoryCard({ faceSwap }: HistoryCardProps) {
       if (timestamp?.toDate && typeof timestamp.toDate === 'function') {
         // Firestore Timestamp
         date = timestamp.toDate();
-      } else if (timestamp?.seconds) {
-        // Firestore Timestamp en formato objeto
-        date = new Date(timestamp.seconds * 1000);
+      } else if (timestamp?.seconds || timestamp?._seconds) {
+        // Firestore Timestamp en formato objeto (tanto 'seconds' como '_seconds')
+        const seconds = timestamp.seconds || timestamp._seconds;
+        date = new Date(seconds * 1000);
       } else if (timestamp instanceof Date) {
         // Ya es un objeto Date
         date = timestamp;
@@ -113,17 +156,29 @@ export function HistoryCard({ faceSwap }: HistoryCardProps) {
           loading="lazy"
         />
 
-        {/* Botón de zoom en la esquina */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowPreview(true);
-          }}
-          className="absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation"
-          aria-label="Ver en grande"
-        >
-          <ZoomIn size={14} className="text-white sm:w-4 sm:h-4" />
-        </button>
+        {/* Botones en la esquina superior */}
+        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDeleteConfirm(true);
+            }}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-500/80 backdrop-blur-sm border border-red-400/50 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation hover:bg-red-600"
+            aria-label="Eliminar"
+          >
+            <Trash2 size={14} className="text-white sm:w-4 sm:h-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPreview(true);
+            }}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation"
+            aria-label="Ver en grande"
+          >
+            <ZoomIn size={14} className="text-white sm:w-4 sm:h-4" />
+          </button>
+        </div>
 
         {/* Overlay - Siempre visible en mobile, hover en desktop */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 sm:p-4 pointer-events-none">
@@ -161,6 +216,44 @@ export function HistoryCard({ faceSwap }: HistoryCardProps) {
         title={faceSwap.style}
         onDownload={handleDownload}
       />
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 border border-white/10 rounded-3xl p-6 max-w-sm w-full">
+            <h3 className="text-xl font-black mb-2">¿Eliminar imagen?</h3>
+            <p className="text-gray-400 text-sm mb-6">
+              Esta acción no se puede deshacer. La imagen se eliminará permanentemente de tu historial.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 font-bold text-sm hover:bg-white/10 transition-all active:scale-95 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-3 rounded-xl bg-red-500 font-bold text-sm hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    <span>Eliminar</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

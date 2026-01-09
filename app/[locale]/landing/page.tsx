@@ -81,6 +81,11 @@ export default function LandingPage() {
                 </span>
               </h1>
 
+              <p className="text-lg md:text-xl text-gray-300 mb-6 md:mb-8 max-w-2xl mx-auto lg:mx-0">
+                {t('hero.subtitle')}<br className="hidden sm:block" />
+                <span className="text-yellow-400 font-semibold">{t('hero.subtitleHighlight')}</span>.
+              </p>
+
               <CTAButton className="w-full sm:w-auto">
                 {t('hero.cta')}
               </CTAButton>
