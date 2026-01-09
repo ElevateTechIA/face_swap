@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { X, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
-import { Template, TemplateMetadata, BodyType, StyleTag, Mood, Occasion, Framing, Lighting, ColorPalette } from '@/types/template';
+import { Template, TemplateMetadata, BodyType, StyleTag, Mood, Occasion, Framing, Lighting, ColorPalette, TransitionType } from '@/types/template';
 import { User } from 'firebase/auth';
 import { compressImage, compressImages, validatePayloadSize } from '@/lib/utils/image-compression';
 
@@ -32,6 +32,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
   const [prompt, setPrompt] = useState(template?.prompt || '');
   const [isActive, setIsActive] = useState(template?.isActive ?? true);
   const [isPremium, setIsPremium] = useState(template?.isPremium ?? false);
+  const [transition, setTransition] = useState<TransitionType>(template?.transition || 'fade');
 
   // Metadata state
   const [bodyType, setBodyType] = useState<BodyType[]>(template?.metadata.bodyType || []);
@@ -180,6 +181,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
         metadata,
         isActive,
         isPremium,
+        transition,
       };
 
       // Comprimir y agregar imagen principal si es nueva
@@ -589,6 +591,29 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
                     <option value="neon" className="bg-gray-900 text-white">Neon</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Transition Type */}
+              <div className="mb-4">
+                <label className="block text-sm font-bold mb-2">Transición (Variantes)</label>
+                <select
+                  value={transition}
+                  onChange={(e) => setTransition(e.target.value as TransitionType)}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none text-white appearance-none cursor-pointer hover:bg-white/10 transition-colors"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 1rem center',
+                    backgroundSize: '1rem',
+                  }}
+                >
+                  <option value="fade" className="bg-gray-900 text-white">Fade (Desvanecimiento)</option>
+                  <option value="slide" className="bg-gray-900 text-white">Slide (Deslizar)</option>
+                  <option value="zoom" className="bg-gray-900 text-white">Zoom (Ampliar)</option>
+                  <option value="flip" className="bg-gray-900 text-white">Flip (Voltear)</option>
+                  <option value="blur" className="bg-gray-900 text-white">Blur (Difuminar)</option>
+                  <option value="rotate" className="bg-gray-900 text-white">Rotate (Rotar)</option>
+                </select>
               </div>
 
               {/* Color Palette */}

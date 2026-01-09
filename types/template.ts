@@ -7,6 +7,7 @@ export type Occasion = 'new-year' | 'birthday' | 'wedding' | 'casual' | 'profess
 export type Framing = 'close-up' | 'medium' | 'full-body' | 'portrait';
 export type Lighting = 'natural' | 'studio' | 'dramatic' | 'soft' | 'neon';
 export type ColorPalette = 'warm' | 'cool' | 'neutral' | 'vibrant' | 'pastel';
+export type TransitionType = 'fade' | 'slide' | 'zoom' | 'flip' | 'blur' | 'rotate';
 
 export interface TemplateMetadata {
   // Physical attributes
@@ -45,6 +46,7 @@ export interface Template {
   imageUrl: string; // Firebase Storage URL
   thumbnailUrl?: string; // Optional optimized thumbnail
   variants?: string[]; // Array of variant image URLs for carousel (max 3)
+  transition?: TransitionType; // Transition effect for carousel (default: 'fade')
 
   // AI generation
   prompt: string; // Template-specific Gemini prompt

@@ -1059,6 +1059,7 @@ export default function Home() {
                             onClick={() => selectTemplate(template)}
                             className="flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl border border-white/5"
                             interval={3000}
+                            transition={template.transition || 'fade'}
                           />
                         ))}
                       </div>
@@ -1090,6 +1091,7 @@ export default function Home() {
                               onClick={() => selectTemplate(template)}
                               className="flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl border border-white/5"
                               interval={3000}
+                              transition={template.transition || 'fade'}
                             />
                           ))}
                         </div>

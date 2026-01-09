@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 
+type TransitionType = 'fade' | 'slide' | 'zoom' | 'flip' | 'blur' | 'rotate';
+
 interface TemplateCarouselProps {
   images: string[]; // Array de URLs de las imágenes
   title: string;
   interval?: number; // Intervalo en milisegundos (default 3000)
+  transition?: TransitionType; // Tipo de transición
   className?: string;
   onClick?: () => void;
 }
@@ -14,18 +17,24 @@ export const TemplateCarousel: React.FC<TemplateCarouselProps> = ({
   images,
   title,
   interval = 3000,
+  transition = 'fade', // Default fade
   className = '',
   onClick,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Auto-rotate entre las imágenes
   useEffect(() => {
     if (images.length <= 1) return;
 
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % images.length);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+        setIsTransitioning(false);
+      }, 50);
     }, interval);
 
     return () => clearInterval(timer);
@@ -70,18 +79,72 @@ export const TemplateCarousel: React.FC<TemplateCarouselProps> = ({
     );
   }
 
+  // Función para obtener las clases CSS de transición según el tipo
+  const getTransitionClasses = (index: number): string => {
+    const isActive = index === currentIndex;
+    const baseClasses = 'absolute inset-0';
+
+    switch (transition) {
+      case 'fade':
+        return `${baseClasses} transition-opacity duration-700 ease-in-out ${
+          isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
+        }`;
+      
+      case 'slide':
+        return `${baseClasses} transition-transform duration-700 ease-in-out ${
+          isActive 
+            ? 'translate-x-0 z-10' 
+            : index < currentIndex 
+              ? '-translate-x-full z-0' 
+              : 'translate-x-full z-0'
+        }`;
+      
+      case 'zoom':
+        return `${baseClasses} transition-all duration-700 ease-in-out ${
+          isActive 
+            ? 'opacity-100 scale-100 z-10' 
+            : 'opacity-0 scale-125 z-0'
+        }`;
+      
+      case 'flip':
+        return `${baseClasses} transition-all duration-700 ease-in-out ${
+          isActive 
+            ? 'opacity-100 rotateY-0 z-10' 
+            : 'opacity-0 z-0'
+        } ${!isActive && '[transform:rotateY(90deg)]'}`;
+      
+      case 'blur':
+        return `${baseClasses} transition-all duration-700 ease-in-out ${
+          isActive 
+            ? 'opacity-100 blur-0 scale-100 z-10' 
+            : 'opacity-0 blur-md scale-95 z-0'
+        }`;
+      
+      case 'rotate':
+        return `${baseClasses} transition-all duration-700 ease-in-out ${
+          isActive 
+            ? 'opacity-100 rotate-0 scale-100 z-10' 
+            : 'opacity-0 rotate-12 scale-90 z-0'
+        }`;
+      
+      default:
+        return `${baseClasses} transition-opacity duration-700 ease-in-out ${
+          isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
+        }`;
+    }
+  };
+
   return (
     <div
       onClick={onClick}
       className={`relative overflow-hidden active:scale-95 transition-all cursor-pointer ${className}`}
+      style={{ perspective: '1000px' }} // Para el efecto flip
     >
       {/* Imágenes del carousel */}
       {images.map((image, index) => (
         <div
           key={index}
-          className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-            index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-          }`}
+          className={getTransitionClasses(index)}
         >
           <img
             src={image}
