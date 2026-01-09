@@ -26,43 +26,6 @@ import {
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 
-
-// --- Constantes de Encuesta (Onboarding) ---
-const SURVEY_QUESTIONS = [
-  {
-    id: 1,
-    question: "¿Cuál es tu objetivo principal?",
-    subtitle: "Personalizaremos la IA según tu meta.",
-    options: [
-      { id: 'fun', text: "Divertirme y reír", icon: "😂" },
-      { id: 'beauty', text: "Mejorar mis fotos", icon: "✨" },
-      { id: 'content', text: "Crear contenido", icon: "📸" },
-      { id: 'explore', text: "Probar estilos nuevos", icon: "🎨" }
-    ]
-  },
-  {
-    id: 2,
-    question: "¿Qué estilo te define mejor?",
-    subtitle: "Para sugerirte los mejores filtros.",
-    options: [
-      { id: 'chic', text: "Chic & Glamour", icon: "💎" },
-      { id: 'urban', text: "Urbano & Street", icon: "👟" },
-      { id: 'vintage', text: "Retro & Vintage", icon: "🎞️" },
-      { id: 'fantasy', text: "Fantasía & Cosplay", icon: "🦄" }
-    ]
-  },
-  {
-    id: 3,
-    question: "¿Con quién te identificas?",
-    subtitle: "Ajustaremos los modelos base.",
-    options: [
-      { id: 'female', text: "Femenino", icon: "👩" },
-      { id: 'male', text: "Masculino", icon: "👨" },
-      { id: 'nb', text: "No Binario / Otro", icon: "🌈" }
-    ]
-  }
-];
-
 // --- Plantillas Fallback (se usan si no hay templates dinámicos de Firebase) ---
 const TEMPLATES = [
   { id: 't1', url: '/templates/Midnight Celebration.jpg', title: 'Midnight Celebration', category: 'cinematic', trending: true },
@@ -121,9 +84,6 @@ export default function Home() {
   const [aiCaption, setAiCaption] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  const [surveyIndex, setSurveyIndex] = useState(0);
-  const [isSurveyLoading, setIsSurveyLoading] = useState(false);
-  const [surveyAnswers, setSurveyAnswers] = useState<Record<number, string>>({});
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   // Estados de créditos
@@ -205,53 +165,18 @@ export default function Home() {
   useEffect(() => {
     if (authLoading) return;
     if (user) {
-      loadPreferences();
       loadUserCredits();
       checkUserProfile();
       setIsGuestMode(false);
+      setStep(1); // Ir directamente a la app
     } else {
-      // Modo guest - verificar si es primera visita
+      // Modo guest
       setIsGuestMode(true);
       setGuestTrialAvailable(canUseGuestTrial());
-
-      // Verificar si el guest ya completó la encuesta inicial
-      const hasCompletedSurvey = localStorage.getItem('guestSurveyCompleted');
-      if (!hasCompletedSurvey) {
-        setStep(0); // Mostrar encuesta inicial
-      } else {
-        setStep(1); // Ir directamente a templates
-      }
+      setStep(1); // Ir directamente a templates
       setLoadingCredits(false);
     }
   }, [user, authLoading]);
-
-  const loadPreferences = async () => {
-    try {
-      const token = await getUserIdToken();
-      if (!token) {
-        setStep(-1);
-        return;
-      }
-      const response = await fetch('/api/preferences', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.preferences) {
-          setSurveyAnswers(data.preferences);
-          setStep(1); // Ir directo a la app si ya tiene preferencias
-        } else {
-          setStep(0); // Mostrar encuesta si no tiene preferencias
-        }
-      } else if (response.status === 401) {
-        setStep(-1);
-      } else {
-        setStep(0);
-      }
-    } catch (error) {
-      setStep(0);
-    }
-  };
 
   const loadUserCredits = async () => {
     try {
@@ -296,23 +221,6 @@ export default function Home() {
     console.log('📋 Screener survey completado');
     setShowScreenerSurvey(false);
     // El componente DynamicScreenerSurvey ya guarda las respuestas internamente
-  };
-
-  const savePreferences = async (preferences: Record<number, string>) => {
-    try {
-      const token = await getUserIdToken();
-      if (!token) return;
-      await fetch('/api/preferences', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(preferences),
-      });
-    } catch (error) {
-      console.error('Error guardando preferencias:', error);
-    }
   };
 
   const generateCaption = async () => {
@@ -377,31 +285,6 @@ export default function Home() {
     }
   };
 
-  const handleSurveyOption = (optionId: string) => {
-    const newAnswers = { ...surveyAnswers, [surveyIndex + 1]: optionId };
-    setSurveyAnswers(newAnswers);
-
-    if (surveyIndex < SURVEY_QUESTIONS.length - 1) {
-      setSurveyIndex(prev => prev + 1);
-    } else {
-      setIsSurveyLoading(true);
-
-      // Guardar preferencias si es usuario autenticado
-      if (!isGuestMode) {
-        savePreferences(newAnswers);
-      } else {
-        // Para guests, guardar en localStorage que completaron la encuesta
-        localStorage.setItem('guestSurveyCompleted', 'true');
-        localStorage.setItem('guestSurveyAnswers', JSON.stringify(newAnswers));
-      }
-
-      setTimeout(() => {
-        setIsSurveyLoading(false);
-        setStep(1);
-      }, 1000);
-    }
-  };
-
   const selectTemplate = async (template: any) => {
     setProcessingProgress(10);
     setSelectedTemplate(template);
@@ -452,13 +335,21 @@ export default function Home() {
     setProcessingProgress(0);
   };
 
-  const selectVariant = async (variantUrl: string, index: number) => {
-    setProcessingProgress(10);
+  const selectVariant = (index: number) => {
+    // Solo marcar la variante seleccionada, no avanzar automáticamente
     setSelectedVariantIndex(index);
+    console.log(`✅ Variant ${index + 1} selected`);
+  };
+
+  const confirmVariantSelection = async () => {
+    const variants = getTemplateVariants(selectedTemplate);
+    const variantUrl = variants[selectedVariantIndex];
+
+    setProcessingProgress(10);
 
     // Si es una URL de Firebase Storage (https://), enviarla directamente
     if (variantUrl.startsWith('http://') || variantUrl.startsWith('https://')) {
-      console.log(`✅ Variant ${index + 1} selected:`, variantUrl);
+      console.log(`✅ Confirming variant ${selectedVariantIndex + 1}:`, variantUrl);
       setTargetImg(variantUrl);
       setStep(2);
       setProcessingProgress(0);
@@ -468,7 +359,7 @@ export default function Home() {
     // Si es una ruta local, convertir a base64
     try {
       const base64 = await urlToBase64(variantUrl);
-      console.log(`✅ Variant ${index + 1} converted to base64`);
+      console.log(`✅ Variant ${selectedVariantIndex + 1} confirmed and converted to base64`);
       setTargetImg(base64);
       setStep(2);
     } catch (e) {
@@ -879,39 +770,6 @@ export default function Home() {
 
       <main className={`max-w-md mx-auto px-6 ${step > 0 ? 'pt-20' : 'pt-12'} pb-24 min-h-screen flex flex-col`}>
 
-        {step === 0 && (
-          <div className="flex flex-col flex-1">
-            {isSurveyLoading ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center">
-                <Sparkles className="w-12 h-12 text-pink-500 animate-pulse mb-4" />
-                <h2 className="text-2xl font-black italic">{t('survey.initial.calibrating')}</h2>
-              </div>
-            ) : (
-              <>
-                <div className="mb-12">
-                  <h1 className="text-5xl font-black tracking-tighter leading-none mb-4 uppercase italic">
-                    {t('survey.initial.title')}<br/>
-                    <span className="text-pink-600">{t('survey.initial.titleHighlight')}</span>
-                  </h1>
-                  <p className="text-gray-400 font-medium">{t('survey.initial.subtitle')}</p>
-                </div>
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold mb-6">{t(`survey.initial.questions.q${surveyIndex + 1}.question`)}</h2>
-                  <p className="text-gray-500 text-sm mb-4">{t(`survey.initial.questions.q${surveyIndex + 1}.subtitle`)}</p>
-                  <div className="grid gap-3">
-                    {SURVEY_QUESTIONS[surveyIndex].options.map((opt) => (
-                      <Button key={opt.id} variant="survey" onClick={() => handleSurveyOption(opt.id)}>
-                        <span className="text-2xl mr-4">{opt.icon}</span>
-                        <span className="font-bold text-lg">{t(`survey.initial.questions.q${surveyIndex + 1}.options.${opt.id}`)}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
         {step === 1 && (
           <div className="flex flex-col gap-6">
             {/* Toggle entre Browse y Prompt Studio */}
@@ -1074,7 +932,7 @@ export default function Home() {
               {getTemplateVariants(selectedTemplate).map((variantUrl, index) => (
                 <div
                   key={index}
-                  onClick={() => selectVariant(variantUrl, index)}
+                  onClick={() => selectVariant(index)}
                   className={`relative aspect-[3/4.5] rounded-2xl overflow-hidden border-2 cursor-pointer active:scale-95 transition-all ${
                     selectedVariantIndex === index
                       ? 'border-pink-500 shadow-xl shadow-pink-500/30'
@@ -1121,17 +979,21 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Botón para volver */}
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setStep(1);
-                setSelectedTemplate(null);
-              }}
-              className="mt-auto"
-            >
-              <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
-            </Button>
+            {/* Botones de navegación */}
+            <div className="mt-auto flex flex-col gap-3">
+              <Button onClick={confirmVariantSelection} className="h-16 text-xl italic uppercase font-black">
+                {t('common.next')} <ChevronRight size={24} />
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setStep(1);
+                  setSelectedTemplate(null);
+                }}
+              >
+                <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -1207,9 +1069,18 @@ export default function Home() {
               )}
             </div>
 
-            <Button onClick={startProcessing} className="mt-auto h-16 bg-white text-black text-xl italic font-black uppercase">
-              {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
-            </Button>
+            {/* Botones de navegación */}
+            <div className="mt-auto flex flex-col gap-3">
+              <Button onClick={startProcessing} className="h-16 bg-white text-black text-xl italic font-black uppercase">
+                {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setStep(2)}
+              >
+                <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+              </Button>
+            </div>
           </div>
         )}
 
