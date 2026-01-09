@@ -127,7 +127,14 @@ export default function HistoryPage() {
           <>
             <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
               {history.map((item) => (
-                <HistoryCard key={item.faceSwapId} faceSwap={item} />
+                <HistoryCard
+                  key={item.faceSwapId}
+                  faceSwap={item}
+                  onDelete={() => {
+                    // Remove from local state
+                    setHistory(prev => prev.filter(h => h.faceSwapId !== item.faceSwapId));
+                  }}
+                />
               ))}
             </div>
 

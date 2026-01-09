@@ -131,6 +131,7 @@ const SURVEY_QUESTIONS = [
   }
 ];
 
+
 // --- Plantillas Fallback (se usan si no hay templates dinámicos de Firebase) ---
 const TEMPLATES = [
   { id: 't1', url: '/templates/Midnight Celebration.jpg', title: 'Midnight Celebration', category: 'cinematic', trending: true },
@@ -189,9 +190,6 @@ export default function Home() {
   const [aiCaption, setAiCaption] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  const [surveyIndex, setSurveyIndex] = useState(0);
-  const [isSurveyLoading, setIsSurveyLoading] = useState(false);
-  const [surveyAnswers, setSurveyAnswers] = useState<Record<number, string>>({});
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   // Estados de créditos
@@ -268,11 +266,12 @@ export default function Home() {
   useEffect(() => {
     if (authLoading) return;
     if (user) {
-      loadPreferences();
       loadUserCredits();
       checkUserProfile();
       setIsGuestMode(false);
+      setStep(1); // Ir directamente a la app
     } else {
+
       // Modo guest - ir directo a templates (encuesta desactivada temporalmente)
       setIsGuestMode(true);
       setGuestTrialAvailable(canUseGuestTrial());
@@ -280,6 +279,7 @@ export default function Home() {
       setLoadingCredits(false);
     }
   }, [user, authLoading]);
+
 
   const loadPreferences = async () => {
     try {
@@ -350,23 +350,6 @@ export default function Home() {
     // El componente DynamicScreenerSurvey ya guarda las respuestas internamente
   };
 
-  const savePreferences = async (preferences: Record<number, string>) => {
-    try {
-      const token = await getUserIdToken();
-      if (!token) return;
-      await fetch('/api/preferences', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(preferences),
-      });
-    } catch (error) {
-      console.error('Error guardando preferencias:', error);
-    }
-  };
-
   const generateCaption = async () => {
     if (!resultImage) return;
     setIsAiLoading(true);
@@ -429,31 +412,6 @@ export default function Home() {
     }
   };
 
-  const handleSurveyOption = (optionId: string) => {
-    const newAnswers = { ...surveyAnswers, [surveyIndex + 1]: optionId };
-    setSurveyAnswers(newAnswers);
-
-    if (surveyIndex < SURVEY_QUESTIONS.length - 1) {
-      setSurveyIndex(prev => prev + 1);
-    } else {
-      setIsSurveyLoading(true);
-
-      // Guardar preferencias si es usuario autenticado
-      if (!isGuestMode) {
-        savePreferences(newAnswers);
-      } else {
-        // Para guests, guardar en localStorage que completaron la encuesta
-        localStorage.setItem('guestSurveyCompleted', 'true');
-        localStorage.setItem('guestSurveyAnswers', JSON.stringify(newAnswers));
-      }
-
-      setTimeout(() => {
-        setIsSurveyLoading(false);
-        setStep(1);
-      }, 1000);
-    }
-  };
-
   const selectTemplate = async (template: any) => {
     setProcessingProgress(10);
     setSelectedTemplate(template);
@@ -504,13 +462,21 @@ export default function Home() {
     setProcessingProgress(0);
   };
 
-  const selectVariant = async (variantUrl: string, index: number) => {
-    setProcessingProgress(10);
+  const selectVariant = (index: number) => {
+    // Solo marcar la variante seleccionada, no avanzar automáticamente
     setSelectedVariantIndex(index);
+    console.log(`✅ Variant ${index + 1} selected`);
+  };
+
+  const confirmVariantSelection = async () => {
+    const variants = getTemplateVariants(selectedTemplate);
+    const variantUrl = variants[selectedVariantIndex];
+
+    setProcessingProgress(10);
 
     // Si es una URL de Firebase Storage (https://), enviarla directamente
     if (variantUrl.startsWith('http://') || variantUrl.startsWith('https://')) {
-      console.log(`✅ Variant ${index + 1} selected:`, variantUrl);
+      console.log(`✅ Confirming variant ${selectedVariantIndex + 1}:`, variantUrl);
       setTargetImg(variantUrl);
       setStep(2);
       setProcessingProgress(0);
@@ -520,7 +486,7 @@ export default function Home() {
     // Si es una ruta local, convertir a base64
     try {
       const base64 = await urlToBase64(variantUrl);
-      console.log(`✅ Variant ${index + 1} converted to base64`);
+      console.log(`✅ Variant ${selectedVariantIndex + 1} confirmed and converted to base64`);
       setTargetImg(base64);
       setStep(2);
     } catch (e) {
@@ -690,7 +656,7 @@ export default function Home() {
         setTimeout(() => {
           setShowScreenerSurvey(false);
           setIsProcessingFaceSwap(false);
-          setStep(5);
+          setStep(4);
           console.log('✅ Face Swap completado - mostrando resultado');
         }, 1000);
       } else {
@@ -710,7 +676,7 @@ export default function Home() {
   const processGroupFaceSwap = async (isGuest = false) => {
     setIsProcessingFaceSwap(true);
     setProcessingProgress(0);
-    setStep(4);
+    setStep(3);
 
     try {
       console.log('👥 Starting group face swap with', groupImages.length, 'faces');
@@ -785,7 +751,7 @@ export default function Home() {
     // Si es guest mode
     if (isGuestMode) {
       if (guestTrialAvailable) {
-        setStep(4);
+        setStep(3);
         await processFaceSwapOnServer(true); // Guest trial
       } else {
         // Ya usó su trial - mostrar modal de login
@@ -800,7 +766,7 @@ export default function Home() {
       return;
     }
 
-    setStep(4);
+    setStep(3);
     await processFaceSwapOnServer(false); // Authenticated
   };
 
@@ -943,39 +909,6 @@ export default function Home() {
 
       <main className={`max-w-md mx-auto px-6 ${step > 0 ? 'pt-20' : 'pt-12'} pb-24 min-h-screen flex flex-col`}>
 
-        {step === 0 && (
-          <div className="flex flex-col flex-1">
-            {isSurveyLoading ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center">
-                <Sparkles className="w-12 h-12 text-pink-500 animate-pulse mb-4" />
-                <h2 className="text-2xl font-black italic">{t('survey.initial.calibrating')}</h2>
-              </div>
-            ) : (
-              <>
-                <div className="mb-12">
-                  <h1 className="text-5xl font-black tracking-tighter leading-none mb-4 uppercase italic">
-                    {t('survey.initial.title')}<br/>
-                    <span className="text-pink-600">{t('survey.initial.titleHighlight')}</span>
-                  </h1>
-                  <p className="text-gray-400 font-medium">{t('survey.initial.subtitle')}</p>
-                </div>
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold mb-6">{t(`survey.initial.questions.q${surveyIndex + 1}.question`)}</h2>
-                  <p className="text-gray-500 text-sm mb-4">{t(`survey.initial.questions.q${surveyIndex + 1}.subtitle`)}</p>
-                  <div className="grid gap-3">
-                    {SURVEY_QUESTIONS[surveyIndex].options.map((opt) => (
-                      <Button key={opt.id} variant="survey" onClick={() => handleSurveyOption(opt.id)}>
-                        <span className="text-2xl mr-4">{opt.icon}</span>
-                        <span className="font-bold text-lg">{t(`survey.initial.questions.q${surveyIndex + 1}.options.${opt.id}`)}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
         {step === 1 && (
           <div className="flex flex-col gap-6">
             {/* Hero Slideshow Section - Compact with Polaroid Style */}
@@ -1093,7 +1026,7 @@ export default function Home() {
               {getTemplateVariants(selectedTemplate).map((variantUrl, index) => (
                 <div
                   key={index}
-                  onClick={() => selectVariant(variantUrl, index)}
+                  onClick={() => selectVariant(index)}
                   className={`relative aspect-[3/4.5] rounded-2xl overflow-hidden border-2 cursor-pointer active:scale-95 transition-all ${
                     selectedVariantIndex === index
                       ? 'border-pink-500 shadow-xl shadow-pink-500/30'
@@ -1140,17 +1073,21 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Botón para volver */}
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setStep(1);
-                setSelectedTemplate(null);
-              }}
-              className="mt-auto"
-            >
-              <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
-            </Button>
+            {/* Botones de navegación */}
+            <div className="mt-auto flex flex-col gap-3">
+              <Button onClick={confirmVariantSelection} className="h-16 text-xl italic uppercase font-black">
+                {t('common.next')} <ChevronRight size={24} />
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setStep(1);
+                  setSelectedTemplate(null);
+                }}
+              >
+                <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -1162,77 +1099,76 @@ export default function Home() {
                 faceCount={selectedTemplate?.faceCount || 2}
                 onImagesSelected={(images) => {
                   setGroupImages(images);
-                  setStep(3);
+                  startProcessing();
                 }}
                 templatePreview={targetImg || undefined}
               />
             ) : (
-              // Single face upload - regular flow
+              // Single face upload - regular flow con template preview
               <>
-                <div className="text-center">
-                  <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.yourFace')}</h2>
-                  <p className="text-gray-500 font-medium">{t('faceSwap.steps.yourFaceDesc')}</p>
-                </div>
+                {/* Preview de imágenes - Template grande arriba, cara pequeña abajo */}
+                <div className="flex flex-col gap-4 items-center">
+                  {/* Template - Grande arriba */}
+                  {targetImg && (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
+                        <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
+                      </div>
+                      <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
+                    </div>
+                  )}
 
-                <div className="relative mx-auto w-full aspect-square max-w-[280px]">
-                  <div className={`w-full h-full rounded-[60px] border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'source')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
-                    {sourceImg ? (
-                      <img src={sourceImg} className="w-full h-full object-cover" alt="Selfie" />
-                    ) : (
-                      <Camera size={64} className="text-white/10" />
-                    )}
+                  {/* Icono de flecha hacia abajo */}
+                  <ChevronRight className="text-pink-500 rotate-90" size={32} />
+
+                  {/* Tu rostro - Upload abajo */}
+                  <div className="flex flex-col items-center gap-2 w-full">
+                    <p className="text-xs text-gray-400 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
+                    <div className="relative w-full max-w-[200px] aspect-square">
+                      <div className={`w-full h-full rounded-3xl border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            handleImageUpload(e, 'source');
+                          }}
+                          className="absolute inset-0 opacity-0 z-10 cursor-pointer"
+                        />
+                        {sourceImg ? (
+                          <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
+                        ) : (
+                          <>
+                            <Camera size={48} className="text-white/10 mb-2" />
+                            <p className="text-xs text-gray-500 font-bold">Toca para subir</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <Button onClick={() => setStep(3)} disabled={!sourceImg} className="mt-auto h-16 text-xl italic uppercase font-black">
-                  {t('common.next')} <ChevronRight size={24} />
-                </Button>
+                {/* Botones de navegación */}
+                <div className="mt-auto flex flex-col gap-3">
+                  <Button
+                    onClick={startProcessing}
+                    disabled={!sourceImg}
+                    className="h-16 bg-white text-black text-xl italic font-black uppercase"
+                  >
+                    {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setStep(1)}
+                  >
+                    <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+                  </Button>
+                </div>
               </>
             )}
           </div>
         )}
 
         {step === 3 && (
-          <div className="flex flex-col flex-1 gap-6">
-            <div className="text-center">
-              <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.readyToGenerate')}</h2>
-              <p className="text-gray-500 font-medium">{t('faceSwap.steps.readyToGenerateDesc')}</p>
-            </div>
-
-            {/* Preview de imágenes - Template grande arriba, cara pequeña abajo */}
-            <div className="flex flex-col gap-4 items-center">
-              {/* Template - Grande arriba */}
-              {targetImg && (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
-                    <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
-                  </div>
-                  <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
-                </div>
-              )}
-
-              {/* Icono de flecha hacia abajo */}
-              <ChevronRight className="text-pink-500 rotate-90" size={32} />
-
-              {/* Tu rostro - Pequeño abajo */}
-              {sourceImg && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10">
-                    <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
-                  </div>
-                  <p className="text-xs text-gray-400 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
-                </div>
-              )}
-            </div>
-
-            <Button onClick={startProcessing} className="mt-auto h-16 bg-white text-black text-xl italic font-black uppercase">
-              {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
-            </Button>
-          </div>
-        )}
-
-        {step === 4 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="relative w-48 h-48 mb-12">
               <svg className="w-full h-full transform -rotate-90">
@@ -1267,7 +1203,7 @@ export default function Home() {
           </div>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
           <div className="flex flex-col flex-1 animate-fade-in">
             <div className="relative aspect-[3/4.5] w-full rounded-[40px] overflow-hidden border border-white/10 mb-6">
               <img src={showComparison ? targetImg || '' : resultImage || ''} className="w-full h-full object-cover" alt="Result" />
