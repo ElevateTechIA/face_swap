@@ -109,14 +109,14 @@ export function PublicGalleryToggle({
                   ? t('gallery.public')
                   : showCaptionInput
                   ? 'Add Caption...'
-                  : t('gallery.private')}
+                  : 'Publish to Gallery'}
               </p>
               <p className="text-xs text-gray-500">
                 {isPublic
                   ? t('gallery.publicDesc')
                   : showCaptionInput
                   ? 'Fill caption below to publish'
-                  : t('gallery.privateDesc')}
+                  : 'Share your creation with the world'}
               </p>
             </div>
           </div>

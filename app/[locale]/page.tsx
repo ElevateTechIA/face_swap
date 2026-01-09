@@ -178,6 +178,28 @@ export default function Home() {
   const [dynamicTemplates, setDynamicTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
 
+  // Estado para mensajes durante el procesamiento
+  const [processingMessage, setProcessingMessage] = useState('');
+
+  // Mensajes coquetos que cambian durante el procesamiento
+  const flirtMessages = [
+    "✨ Working our magic on your photo...",
+    "💫 You're going to look amazing!",
+    "🎨 Adding some sparkle to your beauty...",
+    "🌟 Creating something special just for you...",
+    "💖 Almost there, gorgeous!",
+    "✨ Making you shine even brighter...",
+    "🔥 This is going to be fire!",
+    "💎 Polishing your masterpiece...",
+    "🎭 Transforming you into a star...",
+    "⚡ Adding that extra glow...",
+    "🌈 Bringing your vision to life...",
+    "💝 Can't wait to show you the result!",
+    "🎪 The magic is happening...",
+    "🎬 Lights, camera, transformation!",
+    "👑 Preparing your royal look..."
+  ];
+
   // Group photos state
   const [groupImages, setGroupImages] = useState<string[]>([]);
   const [isGroupPhoto, setIsGroupPhoto] = useState(false);
@@ -187,6 +209,31 @@ export default function Home() {
   useEffect(() => {
     loadTemplates();
   }, [user]); // Recargar cuando cambie el usuario
+
+  // Cambiar mensajes durante el procesamiento con timer real (~25 segundos)
+  useEffect(() => {
+    if (step === 4) {
+      // Iniciar con el primer mensaje
+      setProcessingMessage(flirtMessages[0]);
+      
+      // Calcular intervalo: ~25 segundos / 15 mensajes = ~1.67 segundos por mensaje
+      const messageInterval = 1700; // 1.7 segundos por mensaje
+      let currentIndex = 0;
+
+      const interval = setInterval(() => {
+        currentIndex++;
+        if (currentIndex < flirtMessages.length) {
+          setProcessingMessage(flirtMessages[currentIndex]);
+        } else {
+          // Cuando llegamos al final, volver a empezar si todavía estamos procesando
+          currentIndex = 0;
+          setProcessingMessage(flirtMessages[0]);
+        }
+      }, messageInterval);
+
+      return () => clearInterval(interval);
+    }
+  }, [step]);
 
   const loadTemplates = async () => {
     try {
@@ -287,6 +334,54 @@ export default function Home() {
     // El componente DynamicScreenerSurvey ya guarda las respuestas internamente
   };
 
+  // Función mejorada para descargar imágenes en móviles
+  const handleDownloadImage = async () => {
+    if (!resultImage) return;
+
+    try {
+      // Detectar si estamos en un dispositivo móvil
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile && navigator.share) {
+        // Usar Web Share API en móviles que lo soporten
+        try {
+          // Convertir base64 a blob
+          const response = await fetch(resultImage);
+          const blob = await response.blob();
+          const file = new File([blob], 'glamour-faceswap.jpg', { type: 'image/jpeg' });
+
+          await navigator.share({
+            files: [file],
+            title: 'My Glamour Face Swap',
+            text: 'Check out my amazing face swap!'
+          });
+          return;
+        } catch (shareError) {
+          console.log('Share API not available, falling back to download');
+        }
+      }
+
+      // Fallback: descargar directamente
+      const link = document.createElement('a');
+      link.href = resultImage;
+      link.download = `glamour-faceswap-${Date.now()}.jpg`;
+      
+      // En iOS, abrir en nueva pestaña si el download no funciona
+      if (isMobile && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+      }
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      alert('Error al descargar la imagen. Por favor, intenta de nuevo.');
+    }
+  };
+
   const generateCaption = async () => {
     if (!resultImage) return;
     setIsAiLoading(true);
@@ -379,7 +474,7 @@ export default function Home() {
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       console.log('🌐 Template is a URL, will be processed on server:', imageUrl);
       setTargetImg(imageUrl); // Guardar la URL directamente
-      setStep(2);
+      setStep(3);
       setProcessingProgress(0);
       return;
     }
@@ -389,7 +484,7 @@ export default function Home() {
       const base64 = await urlToBase64(imageUrl);
       console.log('✅ Template converted to base64:', base64.substring(0, 50) + '...');
       setTargetImg(base64);
-      setStep(2);
+      setStep(3);
     } catch (e) {
       console.error('❌ Error converting template to base64:', e);
       alert('Error al cargar la imagen del template. Por favor, intenta de nuevo.');
@@ -407,7 +502,7 @@ export default function Home() {
     if (variantUrl.startsWith('http://') || variantUrl.startsWith('https://')) {
       console.log(`✅ Variant ${index + 1} selected:`, variantUrl);
       setTargetImg(variantUrl);
-      setStep(2);
+      setStep(3);
       setProcessingProgress(0);
       return;
     }
@@ -417,7 +512,7 @@ export default function Home() {
       const base64 = await urlToBase64(variantUrl);
       console.log(`✅ Variant ${index + 1} converted to base64`);
       setTargetImg(base64);
-      setStep(2);
+      setStep(3);
     } catch (e) {
       console.error('❌ Error converting variant to base64:', e);
       alert('Error al cargar la variante. Por favor, intenta de nuevo.');
@@ -1016,45 +1111,6 @@ export default function Home() {
           </div>
         )}
 
-        {step === 2 && (
-          <div className="flex flex-col flex-1 gap-6">
-            {isGroupPhoto ? (
-              // Group photo upload - multiple faces
-              <MultiFaceUpload
-                faceCount={selectedTemplate?.faceCount || 2}
-                onImagesSelected={(images) => {
-                  setGroupImages(images);
-                  setStep(3);
-                }}
-                templatePreview={targetImg || undefined}
-              />
-            ) : (
-              // Single face upload - regular flow
-              <>
-                <div className="text-center">
-                  <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.yourFace')}</h2>
-                  <p className="text-gray-500 font-medium">{t('faceSwap.steps.yourFaceDesc')}</p>
-                </div>
-
-                <div className="relative mx-auto w-full aspect-square max-w-[280px]">
-                  <div className={`w-full h-full rounded-[60px] border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'source')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
-                    {sourceImg ? (
-                      <img src={sourceImg} className="w-full h-full object-cover" alt="Selfie" />
-                    ) : (
-                      <Camera size={64} className="text-white/10" />
-                    )}
-                  </div>
-                </div>
-
-                <Button onClick={() => setStep(3)} disabled={!sourceImg} className="mt-auto h-16 text-xl italic uppercase font-black">
-                  {t('common.next')} <ChevronRight size={24} />
-                </Button>
-              </>
-            )}
-          </div>
-        )}
-
         {step === 3 && (
           <div className="flex flex-col flex-1 gap-6">
             <div className="text-center">
@@ -1077,25 +1133,41 @@ export default function Home() {
               {/* Icono de flecha hacia abajo */}
               <ChevronRight className="text-pink-500 rotate-90" size={32} />
 
-              {/* Tu rostro - Pequeño abajo */}
-              {sourceImg && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10">
+              {/* Tu rostro - Clickeable para subir o cambiar */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10 cursor-pointer hover:border-pink-500/50 transition-all">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload(e, 'source')} 
+                    className="absolute inset-0 opacity-0 z-10 cursor-pointer" 
+                  />
+                  {sourceImg ? (
                     <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
-                  </div>
-                  <p className="text-xs text-gray-400 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-white/5">
+                      <Camera size={32} className="text-white/30" />
+                    </div>
+                  )}
                 </div>
-              )}
+                <p className="text-xs text-gray-400 font-bold uppercase">
+                  {sourceImg ? t('faceSwap.steps.yourFace') : 'Click to upload'}
+                </p>
+              </div>
             </div>
 
             {/* Botones de navegación */}
             <div className="mt-auto flex flex-col gap-3">
-              <Button onClick={startProcessing} className="h-16 bg-white text-black text-xl italic font-black uppercase">
+              <Button onClick={startProcessing} disabled={!sourceImg} className="h-16 bg-white text-black text-xl italic font-black uppercase">
                 {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
               </Button>
               <Button
                 variant="secondary"
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  setStep(1);
+                  setSelectedTemplate(null);
+                  setSourceImg(null);
+                }}
               >
                 <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
               </Button>
@@ -1132,7 +1204,9 @@ export default function Home() {
             ) : (
               <>
                 <h3 className="text-3xl font-black italic uppercase">{t('faceSwap.steps.processing')}</h3>
-                <p className="text-gray-500 text-sm mt-2">{t('survey.screener.processing')}</p>
+                <p className="text-pink-400 text-base mt-4 font-medium animate-pulse px-6">
+                  {processingMessage || flirtMessages[0]}
+                </p>
               </>
             )}
           </div>
@@ -1151,18 +1225,6 @@ export default function Home() {
               >
                 <RefreshCw size={24} />
               </button>
-            </div>
-
-            <div className="mb-6">
-              {!aiCaption ? (
-                <Button variant="ai" onClick={generateCaption} isLoading={isAiLoading}>
-                  ✨ Generar Pie de Foto
-                </Button>
-              ) : (
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 italic text-sm text-gray-300">
-                  &quot;{aiCaption}&quot;
-                </div>
-              )}
             </div>
 
             {/* Public Gallery Toggle - Solo para usuarios autenticados */}
@@ -1194,9 +1256,9 @@ export default function Home() {
                     <Download size={20} /> {t('common.download')}
                   </Button>
                 ) : (
-                  <a href={resultImage || ''} download="swap_result.png">
-                    <Button><Download size={20} /> {t('common.download')}</Button>
-                  </a>
+                  <Button onClick={handleDownloadImage}>
+                    <Download size={20} /> {t('common.download')}
+                  </Button>
                 )}
               </div>
               <div className="flex justify-center">
