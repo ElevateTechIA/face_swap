@@ -3,15 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth/AuthProvider';
-import { CreditsDisplay } from '@/app/components/CreditsDisplay';
 import { InsufficientCreditsModal } from '@/app/components/InsufficientCreditsModal';
 import { LoginGateModal } from '@/app/components/LoginGateModal';
 // import { DynamicScreenerSurvey } from '@/app/components/DynamicScreenerSurvey'; // TEMPORALMENTE DESHABILITADO
-import { LanguageSwitcher } from '@/app/components/LanguageSwitcher';
 import { ShareButton } from '@/app/components/ShareButton';
 import { ShareModal } from '@/app/components/modals/ShareModal';
 import { MobileMenu } from '@/app/components/MobileMenu';
 import { PublicGalleryToggle } from '@/app/components/PublicGalleryToggle';
+import { AppHeader } from '@/app/components/AppHeader';
 // StyleSelector removed - using default style only
 import { PromptStudio, type PromptInterpretation } from '@/app/components/PromptStudio';
 import { PromptSuggestions } from '@/app/components/PromptSuggestions';
@@ -22,7 +21,7 @@ import { processGroupSwap, type GroupSwapProgress } from '@/lib/group-photos/pro
 import { canUseGuestTrial, markGuestTrialAsUsed, getGuestTrialStatus } from '@/lib/guest-trial';
 import {
   Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
-  Grid, Flame, Layers, Play, Zap, LogOut, LogIn, History, Menu, Image
+  Grid, Flame, Layers, Play, Zap
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
@@ -119,7 +118,6 @@ export default function Home() {
   const [currentFaceSwapId, setCurrentFaceSwapId] = useState<string | null>(null);
   const [showComparison, setShowComparison] = useState(false);
 
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiCaption, setAiCaption] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
@@ -317,33 +315,6 @@ export default function Home() {
     }
   };
 
-  const analyzeStyle = async () => {
-    if (!sourceImg) return;
-    setIsAiLoading(true);
-    try {
-      const token = await getUserIdToken();
-      const response = await fetch('/api/ai/analyze-style', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ image: sourceImg }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAiAnalysis(data.analysis);
-      } else {
-        setAiAnalysis("¡Tienes un rostro increíble! Te sugerimos probar el estilo Glamour.");
-      }
-    } catch (e) {
-      setAiAnalysis("¡Tienes un rostro increíble! Te sugerimos probar el estilo Glamour.");
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
   const generateCaption = async () => {
     if (!resultImage) return;
     setIsAiLoading(true);
@@ -535,7 +506,6 @@ export default function Home() {
 
         if (type === 'source') {
           setSourceImg(result);
-          setAiAnalysis(null);
         } else {
           setTargetImg(result);
           setStep(2);
@@ -796,9 +766,10 @@ export default function Home() {
 
   // Función helper para generar variantes de un template
   const getTemplateVariants = (template: any): string[] => {
-    // Si el template tiene variantes definidas en Firebase, usarlas
+    // Si el template tiene variantes definidas en Firebase, incluir la imagen principal primero
     if (template.variants && template.variants.length > 0) {
-      return template.variants;
+      // IMPORTANTE: Incluir la imagen principal como primera opción, luego las variantes
+      return [template.url, ...template.variants];
     }
 
     // Si es una URL de Firebase Storage con parámetros de transformación, generar variantes
@@ -856,73 +827,24 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden">
       {step > 0 && (
-        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-14 bg-black/70 backdrop-blur-2xl border-b border-white/10 z-50 flex items-center justify-between px-4">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setStep(1)}>
-            <div className="w-8 h-8 bg-gradient-to-tr from-pink-500 to-indigo-600 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-black text-lg tracking-tighter italic uppercase">GLAMOUR</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Botón de Galería Pública */}
-            <button
-              onClick={() => router.push('/gallery')}
-              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-pink-500 transition-colors"
-              aria-label={t('gallery.title')}
-            >
-              <Image size={16} />
-            </button>
-
-            {isGuestMode ? (
-              // Guest mode - solo botón de login y menu
-              <>
-                <button
-                  onClick={async () => {
-                    setIsSigningIn(true);
-                    try {
-                      await signInWithGoogle();
-                    } catch (error) {
-                      console.error('Error al iniciar sesión:', error);
-                    } finally {
-                      setIsSigningIn(false);
-                    }
-                  }}
-                  disabled={isSigningIn}
-                  className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white text-sm font-bold active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isSigningIn ? (
-                    <RefreshCw className="animate-spin" size={14} />
-                  ) : (
-                    <>
-                      <LogIn size={14} />
-                      <span>{t('common.enter')}</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowMobileMenu(true)}
-                  className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-                  aria-label="Menú"
-                >
-                  <Menu size={18} />
-                </button>
-              </>
-            ) : (
-              // Usuario autenticado - mostrar créditos y menú
-              <>
-                <CreditsDisplay credits={userCredits} loading={loadingCredits} />
-                <button
-                  onClick={() => setShowMobileMenu(true)}
-                  className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-                  aria-label="Menú"
-                >
-                  <Menu size={18} />
-                </button>
-              </>
-            )}
-          </div>
-        </header>
+        <AppHeader
+          isGuestMode={isGuestMode}
+          userCredits={userCredits}
+          loadingCredits={loadingCredits}
+          isSigningIn={isSigningIn}
+          onSignIn={async () => {
+            setIsSigningIn(true);
+            try {
+              await signInWithGoogle();
+            } catch (error) {
+              console.error('Error al iniciar sesión:', error);
+            } finally {
+              setIsSigningIn(false);
+            }
+          }}
+          onMenuClick={() => setShowMobileMenu(true)}
+          onLogoClick={() => setStep(1)}
+        />
       )}
 
       {/* Modal de créditos insuficientes */}
@@ -1058,7 +980,7 @@ export default function Home() {
                             title={template.title}
                             onClick={() => selectTemplate(template)}
                             className="flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl border border-white/5"
-                            interval={3000}
+                            interval={1200}
                             transition={template.transition || 'fade'}
                           />
                         ))}
@@ -1090,7 +1012,7 @@ export default function Home() {
                               title={template.title}
                               onClick={() => selectTemplate(template)}
                               className="flex-shrink-0 w-[140px] aspect-[3/4.5] rounded-2xl border border-white/5"
-                              interval={3000}
+                              interval={1200}
                               transition={template.transition || 'fade'}
                             />
                           ))}
@@ -1244,21 +1166,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {sourceImg && (
-                  <div className="animate-fade-in">
-                    {!aiAnalysis ? (
-                      <Button variant="ai" onClick={analyzeStyle} isLoading={isAiLoading}>
-                        ✨ Analizar Rasgos
-                      </Button>
-                    ) : (
-                      <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl p-4 text-sm text-indigo-200 italic">
-                        <Sparkles size={14} className="inline mr-2" />
-                        &quot;{aiAnalysis}&quot;
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <Button onClick={() => setStep(3)} disabled={!sourceImg} className="mt-auto h-16 text-xl italic uppercase font-black">
                   {t('common.next')} <ChevronRight size={24} />
                 </Button>
@@ -1274,28 +1181,28 @@ export default function Home() {
               <p className="text-gray-500 font-medium">{t('faceSwap.steps.readyToGenerateDesc')}</p>
             </div>
 
-            {/* Preview de imágenes */}
-            <div className="flex gap-4 items-center justify-center">
-              {/* Tu rostro */}
-              {sourceImg && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-32 h-32 rounded-2xl overflow-hidden border-2 border-white/10">
-                    <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
+            {/* Preview de imágenes - Template grande arriba, cara pequeña abajo */}
+            <div className="flex flex-col gap-4 items-center">
+              {/* Template - Grande arriba */}
+              {targetImg && (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
+                    <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
                   </div>
-                  <p className="text-xs text-gray-500 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
+                  <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
                 </div>
               )}
 
-              {/* Icono de flecha */}
-              <ChevronRight className="text-pink-500" size={32} />
+              {/* Icono de flecha hacia abajo */}
+              <ChevronRight className="text-pink-500 rotate-90" size={32} />
 
-              {/* Template */}
-              {targetImg && (
+              {/* Tu rostro - Pequeño abajo */}
+              {sourceImg && (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="w-32 h-32 rounded-2xl overflow-hidden border-2 border-pink-500/50">
-                    <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10">
+                    <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
                   </div>
-                  <p className="text-xs text-gray-500 font-bold uppercase">{selectedTemplate?.title || 'Template'}</p>
+                  <p className="text-xs text-gray-400 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
                 </div>
               )}
             </div>

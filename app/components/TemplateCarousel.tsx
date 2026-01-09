@@ -7,7 +7,7 @@ type TransitionType = 'fade' | 'slide' | 'zoom' | 'flip' | 'blur' | 'rotate';
 interface TemplateCarouselProps {
   images: string[]; // Array de URLs de las imágenes
   title: string;
-  interval?: number; // Intervalo en milisegundos (default 3000)
+  interval?: number; // Intervalo en milisegundos (default 1200)
   transition?: TransitionType; // Tipo de transición
   className?: string;
   onClick?: () => void;
@@ -16,7 +16,7 @@ interface TemplateCarouselProps {
 export const TemplateCarousel: React.FC<TemplateCarouselProps> = ({
   images,
   title,
-  interval = 3000,
+  interval = 1200,
   transition = 'fade', // Default fade
   className = '',
   onClick,
@@ -86,49 +86,49 @@ export const TemplateCarousel: React.FC<TemplateCarouselProps> = ({
 
     switch (transition) {
       case 'fade':
-        return `${baseClasses} transition-opacity duration-700 ease-in-out ${
+        return `${baseClasses} transition-opacity duration-300 ease-in-out ${
           isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
         }`;
-      
+
       case 'slide':
-        return `${baseClasses} transition-transform duration-700 ease-in-out ${
-          isActive 
-            ? 'translate-x-0 z-10' 
-            : index < currentIndex 
-              ? '-translate-x-full z-0' 
+        return `${baseClasses} transition-transform duration-300 ease-in-out ${
+          isActive
+            ? 'translate-x-0 z-10'
+            : index < currentIndex
+              ? '-translate-x-full z-0'
               : 'translate-x-full z-0'
         }`;
-      
+
       case 'zoom':
-        return `${baseClasses} transition-all duration-700 ease-in-out ${
-          isActive 
-            ? 'opacity-100 scale-100 z-10' 
+        return `${baseClasses} transition-all duration-300 ease-in-out ${
+          isActive
+            ? 'opacity-100 scale-100 z-10'
             : 'opacity-0 scale-125 z-0'
         }`;
-      
+
       case 'flip':
-        return `${baseClasses} transition-all duration-700 ease-in-out ${
-          isActive 
-            ? 'opacity-100 rotateY-0 z-10' 
+        return `${baseClasses} transition-all duration-300 ease-in-out ${
+          isActive
+            ? 'opacity-100 rotateY-0 z-10'
             : 'opacity-0 z-0'
         } ${!isActive && '[transform:rotateY(90deg)]'}`;
-      
+
       case 'blur':
-        return `${baseClasses} transition-all duration-700 ease-in-out ${
-          isActive 
-            ? 'opacity-100 blur-0 scale-100 z-10' 
+        return `${baseClasses} transition-all duration-300 ease-in-out ${
+          isActive
+            ? 'opacity-100 blur-0 scale-100 z-10'
             : 'opacity-0 blur-md scale-95 z-0'
         }`;
-      
+
       case 'rotate':
-        return `${baseClasses} transition-all duration-700 ease-in-out ${
-          isActive 
-            ? 'opacity-100 rotate-0 scale-100 z-10' 
+        return `${baseClasses} transition-all duration-300 ease-in-out ${
+          isActive
+            ? 'opacity-100 rotate-0 scale-100 z-10'
             : 'opacity-0 rotate-12 scale-90 z-0'
         }`;
-      
+
       default:
-        return `${baseClasses} transition-opacity duration-700 ease-in-out ${
+        return `${baseClasses} transition-opacity duration-300 ease-in-out ${
           isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
         }`;
     }
