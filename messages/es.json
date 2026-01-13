@@ -457,5 +457,14 @@
       "popular": "Populares",
       "featured": "Destacados"
     }
+  },
+  "errorBoundary": {
+    "title": "¡Ups! Algo salió mal",
+    "description": "Encontramos un error inesperado. No te preocupes, nuestro equipo ha sido notificado y estamos trabajando en ello.",
+    "tryAgain": "Intentar de Nuevo",
+    "goHome": "Ir al Inicio",
+    "needHelp": "¿Necesitas ayuda?",
+    "contactSupport": "Contactar Soporte",
+    "errorId": "ID del Error"
   }
 }
