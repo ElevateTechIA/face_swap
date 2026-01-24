@@ -43,15 +43,6 @@ export function ImagePreviewModal({ isOpen, onClose, imageUrl, title, onDownload
           </button>
         </div>
 
-        {/* Título opcional */}
-        {title && (
-          <div className="absolute top-4 left-4 z-10">
-            <h3 className="text-white font-bold text-lg bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
-              {title}
-            </h3>
-          </div>
-        )}
-
         {/* Imagen */}
         <img
           src={imageUrl}

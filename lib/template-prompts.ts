@@ -7,40 +7,20 @@
  */
 
 export const TEMPLATE_PROMPTS: Record<string, string> = {
-  'Midnight Celebration': `Take the face from image 2 and swap it onto the person in image 1. The result must show image 1's exact body, clothes, hair, hands, and background with only the face replaced. Match image 1's lighting and head angle. Keep image 2's facial features, skin tone, and any makeup/glasses/piercings. Blend naturally at face edges.`,
+  'Midnight Celebration': `FACE SWAP ONLY - NOT image generation. Use image 1 as exact base. Preserve its EXACT: framing, composition, zoom level, crop, camera angle, visible area. Replace ONLY facial features (eyes, nose, mouth, facial skin) with face from image 2. DO NOT modify: hairstyle, clothing, body, hands, background, zoom, crop. DO NOT recompose or reframe. Output = image 1 with face replaced. Transfer face characteristics from image 2.`,
 
-  'The Champagne Toast': `Based on the first image, the scene shows an elegant person in sophisticated New Year's attire raising a champagne glass in a celebratory toast. The setting features warm, luxurious lighting with golden bokeh effects suggesting an upscale celebration venue. The atmosphere is festive and refined.
+  'The Champagne Toast': `FACE SWAP ONLY - NOT image generation. Use image 1 as exact base. Preserve its EXACT: framing, composition, zoom level, crop, camera angle. Replace ONLY facial features (eyes, nose, mouth, facial skin) with face from image 2. DO NOT modify: hairstyle, champagne glass, elegant attire, body, hands, background, bokeh lighting, zoom, crop. DO NOT recompose. Output = image 1 with face replaced.`,
 
-The face in this scene is replaced with the face from the second image (the user's photo). Maintain exactly: skin tone, facial structure, eyes, nose, mouth, any makeup, eyebrows, beauty marks, piercings, facial hair, or eyewear from the second image.
+  'Red Velvet Euphoria': `FACE SWAP ONLY - NOT image generation. Use image 1 as exact base. Preserve its EXACT: framing, composition, zoom level, crop, camera angle. Replace ONLY facial features (eyes, nose, mouth, facial skin) with face from image 2. DO NOT modify: hairstyle, red velvet clothing, body, hands, background, lighting, zoom, crop. DO NOT recompose. Output = image 1 with face replaced.`,
 
-The warm golden ambient lighting from the celebration venue must illuminate the new face naturally, casting soft shadows that match the scene's lighting direction. Highlights should appear on prominent facial features while maintaining natural skin texture. The face integrates seamlessly at all edges. Everything else in the first image - hair, clothing, the champagne glass, hands, body posture, and background - stays exactly as it was.`,
+  'City Lights Glam': `FACE SWAP ONLY - NOT image generation. Use image 1 as exact base. Preserve its EXACT: framing, composition, zoom level, crop, camera angle. Replace ONLY facial features (eyes, nose, mouth, facial skin) with face from image 2. DO NOT modify: hairstyle, clothing, body, hands, city lights background, bokeh, zoom, crop. DO NOT recompose. Output = image 1 with face replaced.`,
 
-  'Red Velvet Euphoria': `Based on the first image, the scene features a person in luxurious red velvet attire against an opulent backdrop suggesting celebration and elegance. The lighting is rich and warm, creating a glamorous, high-fashion aesthetic with deep red tones dominating the color palette.
+  'Confetti Party': `FACE SWAP ONLY - NOT image generation. Use image 1 as exact base. Preserve its EXACT: framing, composition, zoom level, crop, camera angle. Replace ONLY facial features (eyes, nose, mouth, facial skin) with face from image 2. DO NOT modify: hairstyle, party attire, body, hands, confetti, background, zoom, crop. DO NOT recompose. Output = image 1 with face replaced.`,
 
-The face in this glamorous scene is replaced with the face from the second image (the user's photo). Keep intact: exact skin tone, all facial features including eyes, nose, mouth, facial structure, any makeup application, eyebrows, moles, piercings, facial hair, or glasses present in the second image.
-
-The warm, luxurious red-toned lighting of the scene must illuminate the new face, creating depth through highlights and shadows that match the environment. The lighting should enhance the facial features naturally while maintaining realistic skin texture. Seamless blending at hairline, jaw, and neck is essential. All other elements from the first image - hair, red velvet clothing, accessories, body, hands, and background - remain completely unaltered.`,
-
-  'City Lights Glam': `Based on the first image, the scene shows a glamorous figure against a backdrop of blurred city lights at night, creating a sophisticated urban atmosphere. The lighting features cool-toned bokeh effects from the cityscape, mixed with strategic portrait lighting that creates an editorial fashion photography look.
-
-The face in this urban glamour scene is replaced with the face from the second image (the user's photo). Preserve exactly: skin tone, facial features (eyes, nose, mouth, bone structure), makeup, eyebrows, any freckles, moles, piercings, facial hair, or glasses from the second image.
-
-The cool-toned city lights and portrait lighting must illuminate the new face, creating highlights that emphasize the facial contours and natural shadows that add dimension. The lighting should feel cinematic and match the urban night environment. Perfect blending at all facial boundaries is required. Everything else in the first image - hairstyle, clothing, accessories, body posture, hands, and the entire city lights background - stays exactly unchanged.`,
-
-  'Confetti Party': `Based on the first image, the scene captures a joyful person celebrating in a shower of colorful confetti. The setting is energetic and festive with dynamic lighting that catches the falling confetti particles. The atmosphere is playful and celebratory with vibrant colors and movement.
-
-The face in this festive scene is replaced with the face from the second image (the user's photo). Maintain exactly: skin tone, all facial characteristics including eyes, nose, mouth, facial structure, any makeup, eyebrows, beauty marks, piercings, facial hair, or eyewear from the second image.
-
-The dynamic party lighting, reflecting off the confetti, must illuminate the new face creating natural highlights and playful light variations. The lighting should capture the energetic mood while maintaining realistic shadows and skin texture. The face must blend seamlessly into the scene. All other elements from the first image - hair, party attire, confetti, hands, body, background, and any props - remain completely unchanged.`,
-
-  'Elegant Countdown': `Based on the first image, the scene shows a sophisticated person in an elegant setting prepared for the midnight countdown. The atmosphere suggests refined celebration with subtle, tasteful decorations and sophisticated lighting. The mood is anticipatory and classy.
-
-The face in this elegant scene is replaced with the face from the second image (the user's photo). Preserve exactly: skin tone, facial features (eyes, nose, mouth, structure), any makeup application, eyebrows, moles, freckles, piercings, facial hair, or glasses present in the second image.
-
-The refined, elegant lighting of the countdown setting must illuminate the new face with balanced, flattering light that creates natural dimension through subtle highlights and shadows. The skin should maintain realistic texture while looking polished. Seamless integration at all facial edges is critical. Everything else from the first image - hairstyle, elegant clothing, any accessories, body, hands, and the sophisticated background - stays exactly as in the original.`,
+  'Elegant Countdown': `FACE SWAP ONLY - NOT image generation. Use image 1 as exact base. Preserve its EXACT: framing, composition, zoom level, crop, camera angle. Replace ONLY facial features (eyes, nose, mouth, facial skin) with face from image 2. DO NOT modify: hairstyle, elegant clothing, body, hands, background, lighting, zoom, crop. DO NOT recompose. Output = image 1 with face replaced.`,
 
   // Default prompt for other templates
-  'default': `Based on the first image, the scene shows a person in a specific setting with particular lighting and atmosphere. The face of the person in this scene is replaced with the face from the second image (the user's photo). Preserve exactly: skin tone, all facial features including eyes, nose, mouth, facial structure, any makeup, eyebrows, moles, freckles, piercings, facial hair, or glasses from the second image. The lighting from the first image's environment must illuminate the new face naturally, creating realistic highlights and shadows that integrate the face seamlessly. Everything else in the first image - hair, clothing, body, hands, accessories, and background - remains completely unchanged. This is a face swap, not image generation.`
+  'default': `FACE SWAP ONLY - NOT image generation. Use image 1 as exact base template. Preserve its EXACT: framing, composition, zoom level, crop, camera angle, visible area. Replace ONLY the facial features (eyes, nose, mouth, facial skin) with those from image 2. CRITICAL: DO NOT change hairstyle, clothing, body, hands, background, zoom level, crop, camera angle. DO NOT recompose, reframe, or generate new scene. Output must be image 1 with ONLY face replaced. Transfer skin tone and facial characteristics from image 2.`
 };
 
 /**

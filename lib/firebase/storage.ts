@@ -53,6 +53,62 @@ export async function uploadFaceSwapImage(
 }
 
 /**
+ * Sube una imagen temporal para usar en Replicate API
+ * @param imageData - Data URI de la imagen en formato base64 (data:image/png;base64,...)
+ * @param prefix - Prefijo para el nombre del archivo (source, target, etc.)
+ * @returns URL pública de la imagen subida
+ */
+export async function uploadTempImage(
+  imageData: string,
+  prefix: string = 'temp'
+): Promise<string> {
+  try {
+    // Si ya es una URL, retornarla directamente
+    if (imageData.startsWith('http://') || imageData.startsWith('https://')) {
+      return imageData;
+    }
+
+    // Extraer el base64 del data URI
+    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Obtener el bucket de Storage
+    const storage = getAdminStorage();
+    const bucket = storage.bucket();
+
+    // Definir la ruta del archivo temporal con timestamp único
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const filePath = `temp/${prefix}_${timestamp}_${random}.png`;
+    const file = bucket.file(filePath);
+
+    // Subir el archivo
+    await file.save(buffer, {
+      metadata: {
+        contentType: 'image/png',
+        metadata: {
+          temporary: 'true',
+          uploadedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    // Hacer el archivo público
+    await file.makePublic();
+
+    // Obtener la URL pública
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+
+    console.log(`✅ Temp image uploaded: ${publicUrl}`);
+    return publicUrl;
+
+  } catch (error: any) {
+    console.error('❌ Error uploading temp image:', error.message);
+    throw new Error(`Error uploading temp image: ${error.message}`);
+  }
+}
+
+/**
  * Elimina una imagen de Face Swap de Firebase Storage
  * @param userId - ID del usuario
  * @param faceSwapId - ID del face swap

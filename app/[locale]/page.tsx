@@ -95,43 +95,6 @@ const HeroSlideshow: React.FC<{ templates: any[] }> = ({ templates }) => {
 };
 
 
-// --- Constantes de Encuesta (Onboarding) ---
-const SURVEY_QUESTIONS = [
-  {
-    id: 1,
-    question: "¿Cuál es tu objetivo principal?",
-    subtitle: "Personalizaremos la IA según tu meta.",
-    options: [
-      { id: 'fun', text: "Divertirme y reír", icon: "😂" },
-      { id: 'beauty', text: "Mejorar mis fotos", icon: "✨" },
-      { id: 'content', text: "Crear contenido", icon: "📸" },
-      { id: 'explore', text: "Probar estilos nuevos", icon: "🎨" }
-    ]
-  },
-  {
-    id: 2,
-    question: "¿Qué estilo te define mejor?",
-    subtitle: "Para sugerirte los mejores filtros.",
-    options: [
-      { id: 'chic', text: "Chic & Glamour", icon: "💎" },
-      { id: 'urban', text: "Urbano & Street", icon: "👟" },
-      { id: 'vintage', text: "Retro & Vintage", icon: "🎞️" },
-      { id: 'fantasy', text: "Fantasía & Cosplay", icon: "🦄" }
-    ]
-  },
-  {
-    id: 3,
-    question: "¿Con quién te identificas?",
-    subtitle: "Ajustaremos los modelos base.",
-    options: [
-      { id: 'female', text: "Femenino", icon: "👩" },
-      { id: 'male', text: "Masculino", icon: "👨" },
-      { id: 'nb', text: "No Binario / Otro", icon: "🌈" }
-    ]
-  }
-];
-
-
 // --- Plantillas Fallback (se usan si no hay templates dinámicos de Firebase) ---
 const TEMPLATES = [
   { id: 't1', url: '/templates/Midnight Celebration.jpg', title: 'Midnight Celebration', category: 'cinematic', trending: true },
@@ -215,6 +178,28 @@ export default function Home() {
   const [dynamicTemplates, setDynamicTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
 
+  // Estado para mensajes durante el procesamiento
+  const [processingMessage, setProcessingMessage] = useState('');
+
+  // Mensajes coquetos que cambian durante el procesamiento
+  const flirtMessages = [
+    "✨ Working our magic on your photo...",
+    "💫 You're going to look amazing!",
+    "🎨 Adding some sparkle to your beauty...",
+    "🌟 Creating something special just for you...",
+    "💖 Almost there, gorgeous!",
+    "✨ Making you shine even brighter...",
+    "🔥 This is going to be fire!",
+    "💎 Polishing your masterpiece...",
+    "🎭 Transforming you into a star...",
+    "⚡ Adding that extra glow...",
+    "🌈 Bringing your vision to life...",
+    "💝 Can't wait to show you the result!",
+    "🎪 The magic is happening...",
+    "🎬 Lights, camera, transformation!",
+    "👑 Preparing your royal look..."
+  ];
+
   // Group photos state
   const [groupImages, setGroupImages] = useState<string[]>([]);
   const [isGroupPhoto, setIsGroupPhoto] = useState(false);
@@ -224,6 +209,31 @@ export default function Home() {
   useEffect(() => {
     loadTemplates();
   }, [user]); // Recargar cuando cambie el usuario
+
+  // Cambiar mensajes durante el procesamiento con timer real (~25 segundos)
+  useEffect(() => {
+    if (step === 4) {
+      // Iniciar con el primer mensaje
+      setProcessingMessage(flirtMessages[0]);
+      
+      // Calcular intervalo: ~25 segundos / 15 mensajes = ~1.67 segundos por mensaje
+      const messageInterval = 1700; // 1.7 segundos por mensaje
+      let currentIndex = 0;
+
+      const interval = setInterval(() => {
+        currentIndex++;
+        if (currentIndex < flirtMessages.length) {
+          setProcessingMessage(flirtMessages[currentIndex]);
+        } else {
+          // Cuando llegamos al final, volver a empezar si todavía estamos procesando
+          currentIndex = 0;
+          setProcessingMessage(flirtMessages[0]);
+        }
+      }, messageInterval);
+
+      return () => clearInterval(interval);
+    }
+  }, [step]);
 
   const loadTemplates = async () => {
     try {
@@ -350,6 +360,54 @@ export default function Home() {
     // El componente DynamicScreenerSurvey ya guarda las respuestas internamente
   };
 
+  // Función mejorada para descargar imágenes en móviles
+  const handleDownloadImage = async () => {
+    if (!resultImage) return;
+
+    try {
+      // Detectar si estamos en un dispositivo móvil
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile && navigator.share) {
+        // Usar Web Share API en móviles que lo soporten
+        try {
+          // Convertir base64 a blob
+          const response = await fetch(resultImage);
+          const blob = await response.blob();
+          const file = new File([blob], 'glamour-faceswap.jpg', { type: 'image/jpeg' });
+
+          await navigator.share({
+            files: [file],
+            title: 'My Glamour Face Swap',
+            text: 'Check out my amazing face swap!'
+          });
+          return;
+        } catch (shareError) {
+          console.log('Share API not available, falling back to download');
+        }
+      }
+
+      // Fallback: descargar directamente
+      const link = document.createElement('a');
+      link.href = resultImage;
+      link.download = `glamour-faceswap-${Date.now()}.jpg`;
+      
+      // En iOS, abrir en nueva pestaña si el download no funciona
+      if (isMobile && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+      }
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      alert('Error al descargar la imagen. Por favor, intenta de nuevo.');
+    }
+  };
+
   const generateCaption = async () => {
     if (!resultImage) return;
     setIsAiLoading(true);
@@ -442,7 +500,7 @@ export default function Home() {
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       console.log('🌐 Template is a URL, will be processed on server:', imageUrl);
       setTargetImg(imageUrl); // Guardar la URL directamente
-      setStep(2);
+      setStep(3);
       setProcessingProgress(0);
       return;
     }
@@ -452,7 +510,7 @@ export default function Home() {
       const base64 = await urlToBase64(imageUrl);
       console.log('✅ Template converted to base64:', base64.substring(0, 50) + '...');
       setTargetImg(base64);
-      setStep(2);
+      setStep(3);
     } catch (e) {
       console.error('❌ Error converting template to base64:', e);
       alert('Error al cargar la imagen del template. Por favor, intenta de nuevo.');
@@ -462,23 +520,15 @@ export default function Home() {
     setProcessingProgress(0);
   };
 
-  const selectVariant = (index: number) => {
-    // Solo marcar la variante seleccionada, no avanzar automáticamente
-    setSelectedVariantIndex(index);
-    console.log(`✅ Variant ${index + 1} selected`);
-  };
-
-  const confirmVariantSelection = async () => {
-    const variants = getTemplateVariants(selectedTemplate);
-    const variantUrl = variants[selectedVariantIndex];
-
+  const selectVariant = async (variantUrl: string, index: number) => {
     setProcessingProgress(10);
+    setSelectedVariantIndex(index);
 
     // Si es una URL de Firebase Storage (https://), enviarla directamente
     if (variantUrl.startsWith('http://') || variantUrl.startsWith('https://')) {
-      console.log(`✅ Confirming variant ${selectedVariantIndex + 1}:`, variantUrl);
+      console.log(`✅ Variant ${index + 1} selected:`, variantUrl);
       setTargetImg(variantUrl);
-      setStep(2);
+      setStep(3);
       setProcessingProgress(0);
       return;
     }
@@ -486,9 +536,9 @@ export default function Home() {
     // Si es una ruta local, convertir a base64
     try {
       const base64 = await urlToBase64(variantUrl);
-      console.log(`✅ Variant ${selectedVariantIndex + 1} confirmed and converted to base64`);
+      console.log(`✅ Variant ${index + 1} converted to base64`);
       setTargetImg(base64);
-      setStep(2);
+      setStep(3);
     } catch (e) {
       console.error('❌ Error converting variant to base64:', e);
       alert('Error al cargar la variante. Por favor, intenta de nuevo.');
@@ -920,11 +970,11 @@ export default function Home() {
                     <HeroSlideshow templates={templatesSource} />
                   )}
                 </div>
-                
+
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
               </div>
-              
+
               {/* Text in Polaroid Bottom Space */}
               <div className="absolute bottom-1 left-0 right-0 text-center">
                 <h2 className="text-2xl font-black italic text-white">
@@ -1026,7 +1076,7 @@ export default function Home() {
               {getTemplateVariants(selectedTemplate).map((variantUrl, index) => (
                 <div
                   key={index}
-                  onClick={() => selectVariant(index)}
+                  onClick={() => selectVariant(variantUrl, index)}
                   className={`relative aspect-[3/4.5] rounded-2xl overflow-hidden border-2 cursor-pointer active:scale-95 transition-all ${
                     selectedVariantIndex === index
                       ? 'border-pink-500 shadow-xl shadow-pink-500/30'
@@ -1073,16 +1123,76 @@ export default function Home() {
               ))}
             </div>
 
+            {/* Botón para volver */}
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setStep(1);
+                setSelectedTemplate(null);
+              }}
+              className="mt-auto"
+            >
+              <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+            </Button>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="flex flex-col flex-1 gap-6">
+            <div className="text-center">
+              <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.readyToGenerate')}</h2>
+              <p className="text-gray-500 font-medium">{t('faceSwap.steps.readyToGenerateDesc')}</p>
+            </div>
+
+            {/* Preview de imágenes - Template grande arriba, cara pequeña abajo */}
+            <div className="flex flex-col gap-4 items-center">
+              {/* Template - Grande arriba */}
+              {targetImg && (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
+                    <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
+                  </div>
+                  <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
+                </div>
+              )}
+
+              {/* Icono de flecha hacia abajo */}
+              <ChevronRight className="text-pink-500 rotate-90" size={32} />
+
+              {/* Tu rostro - Clickeable para subir o cambiar */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10 cursor-pointer hover:border-pink-500/50 transition-all">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={(e) => handleImageUpload(e, 'source')} 
+                    className="absolute inset-0 opacity-0 z-10 cursor-pointer" 
+                  />
+                  {sourceImg ? (
+                    <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-white/5">
+                      <Camera size={32} className="text-white/30" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 font-bold uppercase">
+                  {sourceImg ? t('faceSwap.steps.yourFace') : 'Click to upload'}
+                </p>
+              </div>
+            </div>
+
             {/* Botones de navegación */}
             <div className="mt-auto flex flex-col gap-3">
-              <Button onClick={confirmVariantSelection} className="h-16 text-xl italic uppercase font-black">
-                {t('common.next')} <ChevronRight size={24} />
+              <Button onClick={startProcessing} disabled={!sourceImg} className="h-16 bg-white text-black text-xl italic font-black uppercase">
+                {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => {
                   setStep(1);
                   setSelectedTemplate(null);
+                  setSourceImg(null);
                 }}
               >
                 <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
@@ -1091,84 +1201,7 @@ export default function Home() {
           </div>
         )}
 
-        {step === 2 && (
-          <div className="flex flex-col flex-1 gap-6">
-            {isGroupPhoto ? (
-              // Group photo upload - multiple faces
-              <MultiFaceUpload
-                faceCount={selectedTemplate?.faceCount || 2}
-                onImagesSelected={(images) => {
-                  setGroupImages(images);
-                  startProcessing();
-                }}
-                templatePreview={targetImg || undefined}
-              />
-            ) : (
-              // Single face upload - regular flow con template preview
-              <>
-                {/* Preview de imágenes - Template grande arriba, cara pequeña abajo */}
-                <div className="flex flex-col gap-4 items-center">
-                  {/* Template - Grande arriba */}
-                  {targetImg && (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
-                        <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
-                      </div>
-                      <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
-                    </div>
-                  )}
-
-                  {/* Icono de flecha hacia abajo */}
-                  <ChevronRight className="text-pink-500 rotate-90" size={32} />
-
-                  {/* Tu rostro - Upload abajo */}
-                  <div className="flex flex-col items-center gap-2 w-full">
-                    <p className="text-xs text-gray-400 font-bold uppercase">{t('faceSwap.steps.yourFace')}</p>
-                    <div className="relative w-full max-w-[200px] aspect-square">
-                      <div className={`w-full h-full rounded-3xl border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-500 ${sourceImg ? 'border-pink-500' : 'border-white/10 bg-white/5'}`}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            handleImageUpload(e, 'source');
-                          }}
-                          className="absolute inset-0 opacity-0 z-10 cursor-pointer"
-                        />
-                        {sourceImg ? (
-                          <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
-                        ) : (
-                          <>
-                            <Camera size={48} className="text-white/10 mb-2" />
-                            <p className="text-xs text-gray-500 font-bold">Toca para subir</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Botones de navegación */}
-                <div className="mt-auto flex flex-col gap-3">
-                  <Button
-                    onClick={startProcessing}
-                    disabled={!sourceImg}
-                    className="h-16 bg-white text-black text-xl italic font-black uppercase"
-                  >
-                    {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setStep(1)}
-                  >
-                    <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {step === 3 && (
+        {step === 4 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="relative w-48 h-48 mb-12">
               <svg className="w-full h-full transform -rotate-90">
@@ -1197,7 +1230,9 @@ export default function Home() {
             ) : (
               <>
                 <h3 className="text-3xl font-black italic uppercase">{t('faceSwap.steps.processing')}</h3>
-                <p className="text-gray-500 text-sm mt-2">{t('survey.screener.processing')}</p>
+                <p className="text-pink-400 text-base mt-4 font-medium animate-pulse px-6">
+                  {processingMessage || flirtMessages[0]}
+                </p>
               </>
             )}
           </div>
@@ -1216,18 +1251,6 @@ export default function Home() {
               >
                 <RefreshCw size={24} />
               </button>
-            </div>
-
-            <div className="mb-6">
-              {!aiCaption ? (
-                <Button variant="ai" onClick={generateCaption} isLoading={isAiLoading}>
-                  ✨ Generar Pie de Foto
-                </Button>
-              ) : (
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 italic text-sm text-gray-300">
-                  &quot;{aiCaption}&quot;
-                </div>
-              )}
             </div>
 
             {/* Public Gallery Toggle - Solo para usuarios autenticados */}
@@ -1259,9 +1282,9 @@ export default function Home() {
                     <Download size={20} /> {t('common.download')}
                   </Button>
                 ) : (
-                  <a href={resultImage || ''} download="swap_result.png">
-                    <Button><Download size={20} /> {t('common.download')}</Button>
-                  </a>
+                  <Button onClick={handleDownloadImage}>
+                    <Download size={20} /> {t('common.download')}
+                  </Button>
                 )}
               </div>
               <div className="flex justify-center">

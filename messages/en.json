@@ -453,5 +453,14 @@
       "popular": "Popular",
       "featured": "Featured"
     }
+  },
+  "errorBoundary": {
+    "title": "Oops! Something went wrong",
+    "description": "We encountered an unexpected error. Don't worry, our team has been notified and we're working on it.",
+    "tryAgain": "Try Again",
+    "goHome": "Go Home",
+    "needHelp": "Need help?",
+    "contactSupport": "Contact Support",
+    "errorId": "Error ID"
   }
 }
