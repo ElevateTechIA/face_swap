@@ -74,21 +74,24 @@ function calculateExactMatchScore(template: Template, userProfile: UserProfile):
   let score = 0;
   const maxScore = RECOMMENDATION_WEIGHTS.exactMatch;
 
+  // Validar que metadata existe
+  if (!template.metadata) return score;
+
   // Occasion match (más importante - 40% del peso)
   const occasionMatch = userProfile.preferredOccasions?.some(occ =>
-    template.metadata.occasion.includes(occ)
+    Array.isArray(template.metadata.occasion) && template.metadata.occasion.includes(occ)
   );
   if (occasionMatch) score += maxScore * 0.4;
 
   // Mood match (30% del peso)
   const moodMatch = userProfile.preferredMood?.some(mood =>
-    template.metadata.mood.includes(mood)
+    Array.isArray(template.metadata.mood) && template.metadata.mood.includes(mood)
   );
   if (moodMatch) score += maxScore * 0.3;
 
   // Style match (30% del peso)
   const styleMatch = userProfile.preferredStyle?.some(style =>
-    template.metadata.style.includes(style)
+    Array.isArray(template.metadata.style) && template.metadata.style.includes(style)
   );
   if (styleMatch) score += maxScore * 0.3;
 
@@ -102,18 +105,23 @@ function calculatePartialMatchScore(template: Template, userProfile: UserProfile
   let score = 0;
   const maxScore = RECOMMENDATION_WEIGHTS.partialMatch;
 
+  // Validar que metadata existe
+  if (!template.metadata) return score;
+
   // Body type match (50% del peso)
   const bodyTypeMatch = userProfile.preferredBodyType?.some(body =>
-    template.metadata.bodyType.includes(body)
+    Array.isArray(template.metadata.bodyType) && template.metadata.bodyType.includes(body)
   );
   if (bodyTypeMatch) score += maxScore * 0.5;
 
   // Color palette preference (30% del peso)
   // Asumimos que usuarios con mood 'energetic' prefieren 'vibrant', etc.
   if (userProfile.preferredMood?.includes('energetic') &&
+      Array.isArray(template.metadata.colorPalette) &&
       template.metadata.colorPalette.includes('vibrant')) {
     score += maxScore * 0.3;
   } else if (userProfile.preferredMood?.includes('relaxed') &&
+             Array.isArray(template.metadata.colorPalette) &&
              template.metadata.colorPalette.includes('pastel')) {
     score += maxScore * 0.3;
   }
@@ -121,6 +129,7 @@ function calculatePartialMatchScore(template: Template, userProfile: UserProfile
   // Setting preference (20% del peso)
   // Templates outdoor para usuarios que prefieren ocasiones casual
   if (userProfile.preferredOccasions?.includes('casual') &&
+      Array.isArray(template.metadata.setting) &&
       template.metadata.setting.includes('outdoor')) {
     score += maxScore * 0.2;
   }
@@ -146,7 +155,7 @@ function calculatePopularityScore(template: Template): number {
  */
 function calculateQualityScore(template: Template): number {
   const maxScore = RECOMMENDATION_WEIGHTS.quality;
-  const qualityScore = template.metadata.qualityScore || 50; // Default 50/100
+  const qualityScore = template.metadata?.qualityScore || 50; // Default 50/100
 
   // Normalizar quality score (0-100 -> 0-maxScore)
   return (qualityScore / 100) * maxScore;
@@ -281,7 +290,10 @@ export function getTemplatesByOccasion(
   occasion: string
 ): Template[] {
   return templates.filter(t =>
-    t.isActive && t.metadata.occasion.includes(occasion as any)
+    t.isActive &&
+    t.metadata?.occasion &&
+    Array.isArray(t.metadata.occasion) &&
+    t.metadata.occasion.includes(occasion as any)
   );
 }
 

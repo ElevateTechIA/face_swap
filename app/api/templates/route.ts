@@ -134,9 +134,13 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('❌ Error en GET /api/templates:', error.message);
+    console.error('Error stack:', error.stack);
 
     return NextResponse.json(
-      { error: 'Error al obtener templates' },
+      {
+        error: 'Error al obtener templates',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     );
   }
