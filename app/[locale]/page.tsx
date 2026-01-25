@@ -882,9 +882,9 @@ export default function Home() {
   // Crear objeto dinámico con todas las categorías
   const templatesByCategory: Record<string, any[]> = {};
 
-  // Para trending, mostrar templates que tengan 'trending' en sus categorías
+  // Para trending, mostrar templates que tengan 'trending' en sus categorías, pero excluir new-year
   const trendingTemplates = templatesSource.filter(t =>
-    t.categories?.includes('trending') || false
+    (t.categories?.includes('trending') || false) && !t.categories?.includes('new-year')
   );
 
   if (trendingTemplates.length > 0) {
