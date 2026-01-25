@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Sparkles, Image, Menu, LogIn, RefreshCw } from 'lucide-react';
 import { CreditsDisplay } from './CreditsDisplay';
+import { ThemeSelector } from './ThemeSelector';
 
 interface AppHeaderProps {
   isGuestMode?: boolean;
@@ -34,13 +35,16 @@ export function AppHeader({
         className="flex items-center gap-2 cursor-pointer"
         onClick={onLogoClick || (() => router.push('/'))}
       >
-        <div className="w-8 h-8 bg-gradient-to-tr from-pink-500 to-indigo-600 rounded-xl flex items-center justify-center">
+        <div className="w-8 h-8 bg-gradient-primary rounded-xl flex items-center justify-center">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <span className="font-black text-lg tracking-tighter italic uppercase">GLAMOUR</span>
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Theme Selector */}
+        <ThemeSelector />
+
         {/* Botón de Galería Pública */}
         <button
           onClick={() => router.push('/gallery')}
@@ -56,7 +60,7 @@ export function AppHeader({
             <button
               onClick={onSignIn}
               disabled={isSigningIn}
-              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white text-sm font-bold active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-full bg-gradient-primary text-white text-sm font-bold active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {isSigningIn ? (
                 <RefreshCw className="animate-spin" size={14} />

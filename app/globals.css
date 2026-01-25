@@ -5,6 +5,21 @@
 :root {
   --background: #050505;
   --foreground: #ffffff;
+
+  /* Theme CSS Variables - Default (Glamour) */
+  --color-primary: #ec4899;
+  --color-primary-from: #ec4899;
+  --color-primary-to: #a855f7;
+  --color-accent: #f97316;
+  --color-accent-light: #fb923c;
+  --color-bg-primary: #050505;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-tertiary: #2a2a2a;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-light: rgba(255, 255, 255, 0.05);
+  --color-shadow: rgba(236, 72, 153, 0.3);
 }
 
 body {
@@ -55,5 +70,26 @@ body {
 
   .animate-slide-in-right {
     animation: slide-in-right 0.3s ease-out forwards;
+  }
+
+  /* Theme-based utility classes */
+  .bg-gradient-primary {
+    background: linear-gradient(to right, var(--color-primary-from), var(--color-primary-to));
+  }
+
+  .text-primary {
+    color: var(--color-primary);
+  }
+
+  .border-primary {
+    border-color: var(--color-primary);
+  }
+
+  .shadow-primary {
+    box-shadow: 0 10px 40px var(--color-shadow);
+  }
+
+  .hover-primary:hover {
+    background-color: var(--color-primary);
   }
 }
