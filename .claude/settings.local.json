@@ -27,7 +27,8 @@
       "Bash(git push:*)",
       "Bash(head:*)",
       "Bash(grep:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(kill:*)"
     ]
   }
 }
