@@ -1,5 +1,6 @@
 // Template metadata types for dynamic template management
 
+export type Category = 'trending' | 'editorial' | 'new-year' | 'cinematic' | 'party' | 'birthday' | 'casual' | 'professional' | 'date' | 'wedding' | 'graduation' | 'vacation';
 export type BodyType = 'athletic' | 'slim' | 'curvy' | 'plus-size' | 'average';
 export type StyleTag = 'elegant' | 'casual' | 'professional' | 'party' | 'romantic' | 'edgy' | 'vintage' | 'modern';
 export type Mood = 'happy' | 'confident' | 'relaxed' | 'energetic' | 'mysterious' | 'playful';
@@ -50,6 +51,9 @@ export interface Template {
 
   // AI generation
   prompt: string; // Template-specific Gemini prompt
+
+  // Categorization
+  categories: Category[]; // Categories where this template appears (e.g., ['trending', 'party', 'new-year'])
 
   // Group photo support
   faceCount?: number; // Number of people in template (1 for solo, 2+ for group)

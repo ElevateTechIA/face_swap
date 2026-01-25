@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { X, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
-import { Template, TemplateMetadata, BodyType, StyleTag, Mood, Occasion, Framing, Lighting, ColorPalette, TransitionType } from '@/types/template';
+import { Template, TemplateMetadata, BodyType, StyleTag, Mood, Occasion, Framing, Lighting, ColorPalette, TransitionType, Category } from '@/types/template';
 import { User } from 'firebase/auth';
 import { compressImage, compressImages, validatePayloadSize } from '@/lib/utils/image-compression';
 
@@ -33,6 +33,9 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
   const [isActive, setIsActive] = useState(template?.isActive ?? true);
   const [isPremium, setIsPremium] = useState(template?.isPremium ?? false);
   const [transition, setTransition] = useState<TransitionType>(template?.transition || 'fade');
+
+  // Categories state (default to 'trending')
+  const [categories, setCategories] = useState<Category[]>(template?.categories || ['trending']);
 
   // Metadata state
   const [bodyType, setBodyType] = useState<BodyType[]>(template?.metadata.bodyType || []);
@@ -151,6 +154,11 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
       return;
     }
 
+    if (categories.length === 0) {
+      alert('Por favor selecciona al menos una categoría');
+      return;
+    }
+
     if (bodyType.length === 0 || style.length === 0 || mood.length === 0 || occasion.length === 0) {
       alert('Por favor selecciona al menos una opción en cada categoría de metadata');
       return;
@@ -178,6 +186,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
         title,
         description,
         prompt,
+        categories,
         metadata,
         isActive,
         isPremium,
@@ -457,6 +466,28 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
                 className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none resize-none font-mono text-xs sm:text-sm"
                 placeholder="Instrucciones para Gemini..."
               />
+            </div>
+
+            {/* Categories Section */}
+            <div className="border-t border-white/10 pt-4 sm:pt-6">
+              <h3 className="text-lg sm:text-xl font-black mb-3 sm:mb-4">Categorías *</h3>
+              <p className="text-xs text-gray-400 mb-3">Selecciona las categorías donde aparecerá este template. Por defecto aparece en "Trending".</p>
+              <div className="flex flex-wrap gap-2">
+                {(['trending', 'editorial', 'new-year', 'cinematic', 'party', 'birthday', 'casual', 'professional', 'date', 'wedding', 'graduation', 'vacation'] as Category[]).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => toggleArrayValue(categories, cat, setCategories)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      categories.includes(cat)
+                        ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-pink-500/30'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                    }`}
+                  >
+                    {cat === 'new-year' ? 'New Year' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Metadata Section */}

@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Face Clone - AI Face Swap",
-  description: "Nano Banana Pro Engine Enabled",
+  title: "Glamour - AI Photo Magic",
+  description: "Transform your photos with AI-powered face swap technology",
 };
 
 export default function RootLayout({

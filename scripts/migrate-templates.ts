@@ -207,6 +207,7 @@ async function migrateTemplates() {
           description: metadata.description,
           imageUrl,
           prompt: metadata.prompt,
+          categories: ['trending'], // Default category
           metadata: metadata.metadata,
           isActive: true,
           isPremium: metadata.isPremium || false,

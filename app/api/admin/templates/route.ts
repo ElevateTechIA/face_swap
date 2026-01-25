@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
       imageData, // Base64 image
       variants, // Array of base64 images (optional, max 3)
       prompt,
+      categories = ['trending'], // Default to trending
       metadata,
       isActive = true,
       isPremium = false,
@@ -70,6 +71,14 @@ export async function POST(request: NextRequest) {
     if (!title || !description || !imageData || !prompt || !metadata) {
       return NextResponse.json(
         { error: 'Faltan campos requeridos' },
+        { status: 400 }
+      );
+    }
+
+    // Validar que categories sea un array y no esté vacío
+    if (!Array.isArray(categories) || categories.length === 0) {
+      return NextResponse.json(
+        { error: 'Debe seleccionar al menos una categoría' },
         { status: 400 }
       );
     }
@@ -118,6 +127,7 @@ export async function POST(request: NextRequest) {
       description,
       imageUrl,
       prompt,
+      categories,
       metadata,
       isActive,
       isPremium,
@@ -174,6 +184,7 @@ export async function PUT(request: NextRequest) {
       imageData, // Optional - solo si se actualiza la imagen
       variants, // Optional - array of base64 images or URLs
       prompt,
+      categories,
       metadata,
       isActive,
       isPremium,
@@ -205,6 +216,16 @@ export async function PUT(request: NextRequest) {
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
     if (prompt !== undefined) updates.prompt = prompt;
+    if (categories !== undefined) {
+      // Validar que categories sea un array y no esté vacío
+      if (!Array.isArray(categories) || categories.length === 0) {
+        return NextResponse.json(
+          { error: 'Debe seleccionar al menos una categoría' },
+          { status: 400 }
+        );
+      }
+      updates.categories = categories;
+    }
     if (metadata !== undefined) updates.metadata = metadata;
     if (isActive !== undefined) updates.isActive = isActive;
     if (isPremium !== undefined) updates.isPremium = isPremium;

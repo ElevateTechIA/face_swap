@@ -25,7 +25,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 
 // Hero Slideshow Component
-const HeroSlideshow: React.FC<{ templates: any[] }> = ({ templates }) => {
+const HeroSlideshow: React.FC<{ templates: any[]; onTemplateClick?: (template: any) => void }> = ({ templates, onTemplateClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleImages, setVisibleImages] = useState<number[]>([]);
 
@@ -50,7 +50,7 @@ const HeroSlideshow: React.FC<{ templates: any[] }> = ({ templates }) => {
     const interval = setInterval(() => {
       setVisibleImages([]);
       setCurrentIndex((prev) => (prev + 3) % randomTemplates.length);
-      
+
       // Stagger the appearance of new images
       setTimeout(() => setVisibleImages([0]), 100);
       setTimeout(() => setVisibleImages([0, 1]), 300);
@@ -77,7 +77,8 @@ const HeroSlideshow: React.FC<{ templates: any[] }> = ({ templates }) => {
       {displayTemplates.map((template, index) => (
         <div
           key={`${currentIndex}-${index}`}
-          className={`flex-1 transition-all duration-500 transform ${
+          onClick={() => onTemplateClick?.(template)}
+          className={`flex-1 transition-all duration-500 transform cursor-pointer hover:scale-105 active:scale-95 ${
             visibleImages.includes(index)
               ? 'opacity-100 scale-100'
               : 'opacity-0 scale-95'
@@ -97,12 +98,12 @@ const HeroSlideshow: React.FC<{ templates: any[] }> = ({ templates }) => {
 
 // --- Plantillas Fallback (se usan si no hay templates dinámicos de Firebase) ---
 const TEMPLATES = [
-  { id: 't1', url: '/templates/Midnight Celebration.jpg', title: 'Midnight Celebration', category: 'cinematic', trending: true },
-  { id: 't2', url: '/templates/The Champagne Toast.jpg', title: 'The Champagne Toast', category: 'editorial', trending: true },
-  { id: 't3', url: '/templates/Red Velvet Euphoria.jpg', title: 'Red Velvet Euphoria', category: 'editorial', trending: true },
-  { id: 't4', url: '/templates/City Lights Glam.jpg', title: 'City Lights Glam', category: 'editorial', trending: false },
-  { id: 't5', url: '/templates/Confetti Party.jpg', title: 'Confetti Party', category: 'cinematic', trending: false },
-  { id: 't6', url: '/templates/Elegant Countdown.jpg', title: 'Elegant Countdown', category: 'editorial', trending: false },
+  { id: 't1', url: '/templates/Midnight Celebration.jpg', title: 'Midnight Celebration', category: 'cinematic', categories: ['trending', 'cinematic'], usageCount: 0 },
+  { id: 't2', url: '/templates/The Champagne Toast.jpg', title: 'The Champagne Toast', category: 'editorial', categories: ['trending', 'editorial'], usageCount: 0 },
+  { id: 't3', url: '/templates/Red Velvet Euphoria.jpg', title: 'Red Velvet Euphoria', category: 'editorial', categories: ['trending', 'editorial'], usageCount: 0 },
+  { id: 't4', url: '/templates/City Lights Glam.jpg', title: 'City Lights Glam', category: 'editorial', categories: ['editorial'], usageCount: 0 },
+  { id: 't5', url: '/templates/Confetti Party.jpg', title: 'Confetti Party', category: 'cinematic', categories: ['cinematic', 'party'], usageCount: 0 },
+  { id: 't6', url: '/templates/Elegant Countdown.jpg', title: 'Elegant Countdown', category: 'editorial', categories: ['editorial', 'new-year'], usageCount: 0 },
 ];
 
 interface ButtonProps {
@@ -706,7 +707,7 @@ export default function Home() {
         setTimeout(() => {
           setShowScreenerSurvey(false);
           setIsProcessingFaceSwap(false);
-          setStep(4);
+          setStep(5); // Show result screen
           console.log('✅ Face Swap completado - mostrando resultado');
         }, 1000);
       } else {
@@ -726,7 +727,7 @@ export default function Home() {
   const processGroupFaceSwap = async (isGuest = false) => {
     setIsProcessingFaceSwap(true);
     setProcessingProgress(0);
-    setStep(3);
+    setStep(4); // Show loader immediately
 
     try {
       console.log('👥 Starting group face swap with', groupImages.length, 'faces');
@@ -801,7 +802,7 @@ export default function Home() {
     // Si es guest mode
     if (isGuestMode) {
       if (guestTrialAvailable) {
-        setStep(3);
+        setStep(4); // Show loader immediately
         await processFaceSwapOnServer(true); // Guest trial
       } else {
         // Ya usó su trial - mostrar modal de login
@@ -816,7 +817,7 @@ export default function Home() {
       return;
     }
 
-    setStep(3);
+    setStep(4); // Show loader immediately
     await processFaceSwapOnServer(false); // Authenticated
   };
 
@@ -825,12 +826,13 @@ export default function Home() {
     id: t.id,
     url: t.imageUrl,
     title: t.title,
-    category: t.metadata?.occasion?.[0] || 'all',
+    category: t.categories?.[0] || t.metadata?.occasion?.[0] || 'all', // Use first category, fallback to occasion for backwards compatibility
+    categories: t.categories || [t.metadata?.occasion?.[0] || 'all'], // Support multiple categories
     usageCount: t.usageCount || 0,
     faceCount: t.faceCount || 1,
     isGroup: t.isGroup || false,
     variants: t.variants || [] // Array de URLs de variantes del template
-  })) : TEMPLATES.map(t => ({ ...t, usageCount: 0 }));
+  })) : TEMPLATES;
 
   // Función helper para generar variantes de un template
   const getTemplateVariants = (template: any): string[] => {
@@ -856,8 +858,9 @@ export default function Home() {
   };
 
   // Agrupar templates por categoría para carruseles (dinámico)
-  // Extraer todas las categorías únicas
-  const uniqueCategories = Array.from(new Set(templatesSource.map(t => t.category).filter(Boolean)));
+  // Extraer todas las categorías únicas de todos los templates (incluyendo múltiples categorías por template)
+  const allCategories = templatesSource.flatMap(t => t.categories || [t.category]).filter(Boolean);
+  const uniqueCategories = Array.from(new Set(allCategories)).filter(cat => cat !== 'trending'); // Trending se maneja por separado
 
   // Mapeo de categorías a íconos y colores
   const categoryConfig: Record<string, { icon: any; color: string }> = {
@@ -866,22 +869,36 @@ export default function Home() {
     'new-year': { icon: Sparkles, color: 'text-yellow-500' },
     cinematic: { icon: Play, color: 'text-blue-500' },
     party: { icon: Zap, color: 'text-green-500' },
+    birthday: { icon: Sparkles, color: 'text-yellow-400' },
+    casual: { icon: Camera, color: 'text-gray-400' },
+    professional: { icon: Grid, color: 'text-blue-400' },
+    date: { icon: Sparkles, color: 'text-pink-400' },
+    wedding: { icon: Sparkles, color: 'text-purple-400' },
+    graduation: { icon: Sparkles, color: 'text-blue-300' },
+    vacation: { icon: Camera, color: 'text-green-400' },
     default: { icon: Grid, color: 'text-gray-400' }
   };
 
   // Crear objeto dinámico con todas las categorías
-  // Para trending, mostrar los 6 templates más usados
-  const trendingTemplates = [...templatesSource]
-    .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
-    .slice(0, 6);
-  
-  const templatesByCategory: Record<string, any[]> = {
-    trending: trendingTemplates,
-  };
+  const templatesByCategory: Record<string, any[]> = {};
+
+  // Para trending, mostrar templates que tengan 'trending' en sus categorías
+  const trendingTemplates = templatesSource.filter(t =>
+    t.categories?.includes('trending') || false
+  );
+
+  if (trendingTemplates.length > 0) {
+    templatesByCategory.trending = trendingTemplates;
+  }
 
   // Agregar carruseles para cada categoría única encontrada
   uniqueCategories.forEach(category => {
-    templatesByCategory[category] = templatesSource.filter(t => t.category === category);
+    const categoryTemplates = templatesSource.filter(t =>
+      t.categories?.includes(category) || t.category === category
+    );
+    if (categoryTemplates.length > 0) {
+      templatesByCategory[category] = categoryTemplates;
+    }
   });
 
   templatesByCategory.all = templatesSource;
@@ -967,7 +984,7 @@ export default function Home() {
                 {/* Slideshow */}
                 <div className="absolute inset-0">
                   {templatesSource.length > 0 && (
-                    <HeroSlideshow templates={templatesSource} />
+                    <HeroSlideshow templates={templatesSource} onTemplateClick={selectTemplate} />
                   )}
                 </div>
 
@@ -1238,7 +1255,7 @@ export default function Home() {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div className="flex flex-col flex-1 animate-fade-in">
             <div className="relative aspect-[3/4.5] w-full rounded-[40px] overflow-hidden border border-white/10 mb-6">
               <img src={showComparison ? targetImg || '' : resultImage || ''} className="w-full h-full object-cover" alt="Result" />
