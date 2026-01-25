@@ -36,12 +36,45 @@ export async function GET(request: NextRequest) {
       .where('isActive', '==', true)
       .get();
 
-    let templates: Template[] = templatesSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || doc.data().createdAt,
-      updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || doc.data().updatedAt,
-    } as Template));
+    let templates: Template[] = templatesSnapshot.docs.map(doc => {
+      const data = doc.data();
+
+      // Asegurar que siempre exista el campo categories
+      let categories = data.categories || [];
+
+      // Si no tiene categories, inferirlo de metadata.occasion
+      if (!categories || categories.length === 0) {
+        categories = ['trending']; // Default
+
+        // Intentar inferir de metadata.occasion
+        if (data.metadata?.occasion && Array.isArray(data.metadata.occasion)) {
+          const occasionToCategory: Record<string, string> = {
+            'new-year': 'new-year',
+            'birthday': 'birthday',
+            'wedding': 'wedding',
+            'casual': 'casual',
+            'professional': 'professional',
+            'date': 'date',
+            'party': 'party',
+          };
+
+          for (const occasion of data.metadata.occasion) {
+            const cat = occasionToCategory[occasion];
+            if (cat && !categories.includes(cat)) {
+              categories.push(cat);
+            }
+          }
+        }
+      }
+
+      return {
+        id: doc.id,
+        ...data,
+        categories, // Asegurar que siempre esté presente
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      } as Template;
+    });
 
     // Si hay búsqueda, filtrar por texto
     if (searchQuery) {
