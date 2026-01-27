@@ -1,4 +1,4 @@
-export type ThemeId = 'glamour' | 'ocean';
+export type ThemeId = 'glamour' | 'ocean' | 'pink-boxer';
 
 export interface Theme {
   id: ThemeId;
@@ -64,23 +64,48 @@ export const themes: Record<ThemeId, Theme> = {
     description: 'Blue & Cyan waves',
     colors: {
       primary: '#06b6d4',
-      primaryFrom: '#06b6d4', // cyan-500
-      primaryTo: '#3b82f6',   // blue-500
+      primaryFrom: '#22d3ee', // cyan-400
+      primaryTo: '#06b6d4',   // cyan-500
 
-      accent: '#0ea5e9',
-      accentLight: '#38bdf8',
+      accent: '#0ea5e9',      // sky-500
+      accentLight: '#7dd3fc', // sky-300
 
-      bgPrimary: '#020617',
-      bgSecondary: '#0f172a',
-      bgTertiary: '#1e293b',
+      bgPrimary: '#ecfeff',   // cyan-50
+      bgSecondary: '#cffafe', // cyan-100
+      bgTertiary: '#a5f3fc',  // cyan-200
 
-      textPrimary: '#f1f5f9',
-      textSecondary: '#94a3b8',
+      textPrimary: '#164e63', // cyan-900
+      textSecondary: '#0e7490', // cyan-800
 
-      border: 'rgba(148, 163, 184, 0.2)',
-      borderLight: 'rgba(148, 163, 184, 0.1)',
+      border: 'rgba(6, 182, 212, 0.3)', // cyan-500 with opacity
+      borderLight: 'rgba(34, 211, 238, 0.2)', // cyan-400 with opacity
 
-      shadow: 'rgba(6, 182, 212, 0.3)',
+      shadow: 'rgba(6, 182, 212, 0.4)',
+    },
+  },
+  'pink-boxer': {
+    id: 'pink-boxer',
+    name: 'Pink Boxer',
+    description: 'Full Pink theme',
+    colors: {
+      primary: '#ec4899',
+      primaryFrom: '#f9a8d4', // pink-300
+      primaryTo: '#ec4899',   // pink-500
+
+      accent: '#f472b6',      // pink-400
+      accentLight: '#fbcfe8', // pink-200
+
+      bgPrimary: '#fdf2f8',   // pink-50
+      bgSecondary: '#fce7f3', // pink-100
+      bgTertiary: '#fbcfe8',  // pink-200
+
+      textPrimary: '#831843', // pink-900
+      textSecondary: '#9f1239', // rose-800
+
+      border: 'rgba(236, 72, 153, 0.3)', // pink-500 with opacity
+      borderLight: 'rgba(249, 168, 212, 0.2)', // pink-300 with opacity
+
+      shadow: 'rgba(236, 72, 153, 0.4)',
     },
   },
 };

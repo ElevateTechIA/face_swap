@@ -55,6 +55,9 @@ export interface Template {
   // Categorization
   categories: Category[]; // Categories where this template appears (e.g., ['trending', 'party', 'new-year'])
 
+  // Multi-tenant support
+  websiteUrl?: string; // Optional: Filter templates by website domain (e.g., "glamour-ai.com")
+
   // Group photo support
   faceCount?: number; // Number of people in template (1 for solo, 2+ for group)
   isGroup?: boolean; // True if template supports multiple faces

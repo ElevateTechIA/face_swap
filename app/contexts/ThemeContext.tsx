@@ -31,6 +31,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const theme = themes[themeId];
     const root = document.documentElement;
 
+    // Helper function to convert hex to RGB
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result
+        ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+        : '0, 0, 0';
+    };
+
     // Apply CSS variables
     root.style.setProperty('--color-primary', theme.colors.primary);
     root.style.setProperty('--color-primary-from', theme.colors.primaryFrom);
@@ -45,6 +53,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--color-border', theme.colors.border);
     root.style.setProperty('--color-border-light', theme.colors.borderLight);
     root.style.setProperty('--color-shadow', theme.colors.shadow);
+
+    // Set RGB versions for opacity support
+    root.style.setProperty('--color-bg-primary-rgb', hexToRgb(theme.colors.bgPrimary));
+    root.style.setProperty('--color-bg-secondary-rgb', hexToRgb(theme.colors.bgSecondary));
+    root.style.setProperty('--color-bg-tertiary-rgb', hexToRgb(theme.colors.bgTertiary));
 
     // Save to localStorage
     localStorage.setItem('app-theme', themeId);

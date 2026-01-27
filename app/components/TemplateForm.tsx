@@ -30,6 +30,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
   const [title, setTitle] = useState(template?.title || '');
   const [description, setDescription] = useState(template?.description || '');
   const [prompt, setPrompt] = useState(template?.prompt || '');
+  const [websiteUrl, setWebsiteUrl] = useState(template?.websiteUrl || '');
   const [isActive, setIsActive] = useState(template?.isActive ?? true);
   const [isPremium, setIsPremium] = useState(template?.isPremium ?? false);
   const [transition, setTransition] = useState<TransitionType>(template?.transition || 'fade');
@@ -46,6 +47,32 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
   const [lighting, setLighting] = useState<Lighting>(template?.metadata.lighting || 'natural');
   const [colorPalette, setColorPalette] = useState<ColorPalette[]>(template?.metadata.colorPalette || []);
   const [setting, setSetting] = useState<('indoor' | 'outdoor' | 'studio')[]>(template?.metadata.setting || []);
+
+  // Brands state
+  const [brands, setBrands] = useState<Array<{id: string; name: string; domain: string}>>([]);
+
+  // Load brands on mount
+  React.useEffect(() => {
+    loadBrands();
+  }, []);
+
+  const loadBrands = async () => {
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch('/api/admin/brands', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBrands(data.brands || []);
+      }
+    } catch (error) {
+      console.error('Error loading brands:', error);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -191,6 +218,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
         isActive,
         isPremium,
         transition,
+        websiteUrl: websiteUrl || null, // Include websiteUrl (null if empty for shared templates)
       };
 
       // Comprimir y agregar imagen principal si es nueva
@@ -466,6 +494,31 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
                 className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none resize-none font-mono text-xs sm:text-sm"
                 placeholder="Instrucciones para Gemini..."
               />
+            </div>
+
+            {/* Website Selector */}
+            <div>
+              <label className="block text-xs sm:text-sm font-bold mb-2">
+                Website (Opcional)
+                <span className="text-gray-500 font-normal ml-2">
+                  Selecciona para un sitio específico o deja en blanco para compartir
+                </span>
+              </label>
+              <select
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none text-sm sm:text-base"
+              >
+                <option value="">🌐 Todos los sitios (compartido)</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.domain}>
+                    {brand.name} ({brand.domain})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-2">
+                💡 Selecciona un sitio específico para filtrar este template solo para ese dominio. Si seleccionas "Todos los sitios", aparecerá en todas las marcas.
+              </p>
             </div>
 
             {/* Categories Section */}

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
+import { useBrand } from '@/app/contexts/BrandContext';
 
 // Hero Slideshow Component
 const HeroSlideshow: React.FC<{ templates: any[]; onTemplateClick?: (template: any) => void }> = ({ templates, onTemplateClick }) => {
@@ -139,6 +140,7 @@ export default function Home() {
   const locale = useLocale();
   const { user, loading: authLoading, signInWithGoogle, signOutUser, getUserIdToken } = useAuth();
   const t = useTranslations();
+  const { brand } = useBrand();
   const [step, setStep] = useState(-1); // -1 = login, 0 = encuesta, 1 = templates, 1.5 = variant selection, 2+ = app
   const [sourceImg, setSourceImg] = useState<string | null>(null);
   const [targetImg, setTargetImg] = useState<string | null>(null);
@@ -209,7 +211,7 @@ export default function Home() {
   // Cargar templates dinámicos desde Firebase
   useEffect(() => {
     loadTemplates();
-  }, [user]); // Recargar cuando cambie el usuario
+  }, [user, brand.domain]); // Recargar cuando cambie el usuario o el dominio
 
   // Cambiar mensajes durante el procesamiento con timer real (~25 segundos)
   useEffect(() => {
@@ -246,6 +248,12 @@ export default function Home() {
       // Construir URL con parámetros
       const params = new URLSearchParams();
       params.set('mode', mode);
+
+      // Filtrar templates por websiteUrl si existe en la configuración de marca
+      if (brand.domain && brand.domain !== 'localhost') {
+        params.set('websiteUrl', brand.domain);
+        console.log(`🔍 Loading templates for brand: ${brand.name} (${brand.domain})`);
+      }
 
       const headers: Record<string, string> = {};
       if (user && mode === 'recommended') {
@@ -979,7 +987,7 @@ export default function Home() {
         {step === 1 && (
           <div className="flex flex-col gap-6">
             {/* Hero Slideshow Section - Compact with Polaroid Style */}
-            <div className="relative w-full bg-gray-800 p-3 pb-8 rounded-2xl shadow-2xl">
+            <div className="relative w-full bg-theme-bg-secondary p-3 pb-8 rounded-2xl shadow-2xl">
               <div className="relative w-full h-64 overflow-hidden">
                 {/* Slideshow */}
                 <div className="absolute inset-0">
@@ -989,7 +997,7 @@ export default function Home() {
                 </div>
 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-theme-bg-primary/60 via-transparent to-transparent pointer-events-none" />
               </div>
 
               {/* Text in Polaroid Bottom Space */}
@@ -1062,13 +1070,13 @@ export default function Home() {
               </div>
 
               {/* Upload Scene Card - Al final */}
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-black border border-white/10 p-6 flex items-center justify-between group active:scale-95 transition-all">
+              <div className="relative overflow-hidden rounded-3xl bg-theme-bg-secondary border border-theme p-6 flex items-center justify-between group active:scale-95 transition-all">
                 <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'target')} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
                 <div className="flex flex-col gap-1">
                   <p className="text-lg font-black italic uppercase">{t('templates.uploadScene')}</p>
                   <p className="text-xs text-gray-500">{t('templates.uploadSceneDesc')}</p>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-pink-600 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-primary flex items-center justify-center">
                   <Upload size={20} className="text-white" />
                 </div>
               </div>

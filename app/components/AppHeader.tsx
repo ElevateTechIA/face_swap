@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Sparkles, Image, Menu, LogIn, RefreshCw } from 'lucide-react';
 import { CreditsDisplay } from './CreditsDisplay';
 import { ThemeSelector } from './ThemeSelector';
+import { useBrand } from '@/app/contexts/BrandContext';
 
 interface AppHeaderProps {
   isGuestMode?: boolean;
@@ -28,17 +29,26 @@ export function AppHeader({
 }: AppHeaderProps) {
   const router = useRouter();
   const t = useTranslations();
+  const { brand } = useBrand();
 
   return (
-    <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-14 bg-black/70 backdrop-blur-2xl border-b border-white/10 z-50 flex items-center justify-between px-4">
+    <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-14 bg-theme-bg-secondary/70 backdrop-blur-2xl border-b border-theme z-50 flex items-center justify-between px-4">
       <div
         className="flex items-center gap-2 cursor-pointer"
         onClick={onLogoClick || (() => router.push('/'))}
       >
-        <div className="w-8 h-8 bg-gradient-primary rounded-xl flex items-center justify-center">
-          <Sparkles className="w-4 h-4 text-white" />
-        </div>
-        <span className="font-black text-lg tracking-tighter italic uppercase">GLAMOUR</span>
+        {brand.logo && brand.logo.startsWith('http') ? (
+          // Custom logo from Firebase Storage
+          <div className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center">
+            <img src={brand.logo} alt={brand.name} className="w-full h-full object-contain" />
+          </div>
+        ) : (
+          // Default gradient icon
+          <div className="w-8 h-8 bg-gradient-primary rounded-xl flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+        )}
+        <span className="font-black text-lg tracking-tighter italic uppercase">{brand.name}</span>
       </div>
 
       <div className="flex items-center gap-2">

@@ -28,7 +28,8 @@
       "Bash(head:*)",
       "Bash(grep:*)",
       "Bash(npx jest:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(wc:*)"
     ]
   }
 }
