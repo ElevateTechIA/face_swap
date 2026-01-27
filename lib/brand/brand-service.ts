@@ -10,9 +10,10 @@ export async function getBrandConfigByDomain(domain: string): Promise<BrandConfi
     const { getAdminFirestore } = await import('@/lib/firebase/admin');
     const db = getAdminFirestore();
 
-    // Normalize domain (remove www., protocol, trailing slash)
+    // Normalize domain (remove www., protocol, port, trailing slash)
     const normalizedDomain = domain
       .replace(/^(https?:\/\/)?(www\.)?/, '')
+      .replace(/:\d+$/, '') // Remove port (e.g., :3000)
       .replace(/\/$/, '')
       .toLowerCase();
 

@@ -175,6 +175,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing brand ID' }, { status: 400 });
     }
 
+    // Obtener el dominio actual antes de actualizar
+    const currentBrandDoc = await db.collection('brandConfigs').doc(id).get();
+    const currentDomain = currentBrandDoc.data()?.domain;
+
     // Actualizar configuración
     const updateData: any = {
       updatedAt: new Date(),
@@ -214,6 +218,38 @@ export async function PUT(request: NextRequest) {
     }
 
     await db.collection('brandConfigs').doc(id).update(updateData);
+
+    // Si el dominio cambió, actualizar todos los templates asociados
+    if (domain && currentDomain && domain !== currentDomain) {
+      console.log(`🔄 Actualizando templates de ${currentDomain} a ${domain}...`);
+
+      const templatesSnapshot = await db
+        .collection('templates')
+        .where('websiteUrl', '==', currentDomain)
+        .get();
+
+      const batch = db.batch();
+      let updatedTemplatesCount = 0;
+
+      templatesSnapshot.docs.forEach(doc => {
+        batch.update(doc.ref, {
+          websiteUrl: domain,
+          updatedAt: new Date(),
+        });
+        updatedTemplatesCount++;
+      });
+
+      if (updatedTemplatesCount > 0) {
+        await batch.commit();
+        console.log(`✅ ${updatedTemplatesCount} templates actualizados con el nuevo dominio`);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Brand configuration updated successfully',
+        templatesUpdated: updatedTemplatesCount,
+      });
+    }
 
     return NextResponse.json({
       success: true,

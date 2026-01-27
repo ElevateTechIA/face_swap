@@ -174,11 +174,16 @@ export function BrandConfigForm({ brand, onClose, onSuccess, user }: BrandConfig
                   onChange={(e) => setDomain(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-pink-500/50 focus:outline-none"
                   placeholder="Ej: glamour-ai.com (sin https://)"
-                  disabled={!!brand} // No permitir cambiar dominio al editar
                 />
-                <p className="text-xs text-gray-500 mt-2">
-                  ⚠️ Ingresa solo el dominio sin "https://" ni "www" (ej: miapp.com)
-                </p>
+                {brand ? (
+                  <p className="text-xs text-yellow-500 mt-2">
+                    ⚠️ Cambiar el dominio actualizará todos los templates asociados a esta marca
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 Ingresa solo el dominio sin "https://" ni "www" (ej: miapp.com)
+                  </p>
+                )}
               </div>
 
               {/* Name */}
