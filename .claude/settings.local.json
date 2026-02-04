@@ -29,7 +29,8 @@
       "Bash(grep:*)",
       "Bash(npx jest:*)",
       "Bash(kill:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(gh api:*)"
     ]
   }
 }

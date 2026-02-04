@@ -1,8 +1,10 @@
 import { BrandConfig, DEFAULT_BRAND } from '@/types/brand';
 
 /**
- * Get brand configuration based on domain
+ * Get brand configuration based on environment variable
  * This function will be called on the server side to fetch brand config from Firestore
+ *
+ * Uses NEXT_PUBLIC_BRAND_NAME environment variable to determine which brand to load
  */
 export async function getBrandConfigByDomain(domain: string): Promise<BrandConfig> {
   try {
@@ -10,42 +12,21 @@ export async function getBrandConfigByDomain(domain: string): Promise<BrandConfi
     const { getAdminFirestore } = await import('@/lib/firebase/admin');
     const db = getAdminFirestore();
 
-    // Normalize domain (remove www., protocol, port, trailing slash)
-    const normalizedDomain = domain
-      .replace(/^(https?:\/\/)?(www\.)?/, '')
-      .replace(/:\d+$/, '') // Remove port (e.g., :3000)
-      .replace(/\/$/, '')
-      .toLowerCase();
+    // Get brand name from environment variable
+    const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'GLAMOUR';
 
-    console.log(`🔍 Looking up brand config for domain: ${normalizedDomain}`);
+    console.log(`🔍 Loading brand config: ${brandName} (from env: NEXT_PUBLIC_BRAND_NAME)`);
 
-    // First, try exact match
-    let brandSnapshot = await db
+    // Load brand by name
+    const brandSnapshot = await db
       .collection('brandConfigs')
-      .where('domain', '==', normalizedDomain)
+      .where('name', '==', brandName)
       .where('isActive', '==', true)
       .limit(1)
       .get();
 
-    // If no exact match and it's a Vercel URL with 'glow' in it, use GLOW brand
-    if (brandSnapshot.empty && normalizedDomain.includes('vercel.app') && normalizedDomain.includes('glow')) {
-      console.log(`🔄 Detected GLOW deployment (Vercel URL with 'glow'), loading GLOW brand...`);
-
-      // Get GLOW brand by name
-      brandSnapshot = await db
-        .collection('brandConfigs')
-        .where('name', '==', 'GLOW')
-        .where('isActive', '==', true)
-        .limit(1)
-        .get();
-
-      if (!brandSnapshot.empty) {
-        console.log(`✅ Loaded GLOW brand for Vercel deployment`);
-      }
-    }
-
     if (brandSnapshot.empty) {
-      console.log(`⚠️ No brand config found for ${normalizedDomain}, using default`);
+      console.log(`⚠️ Brand "${brandName}" not found in Firestore, using default`);
       return DEFAULT_BRAND;
     }
 
@@ -67,6 +48,9 @@ export async function getBrandConfigByDomain(domain: string): Promise<BrandConfi
     };
 
     console.log(`✅ Brand config loaded: ${brandConfig.name}`);
+    console.log(`   Domain in Firestore: ${brandConfig.domain}`);
+    console.log(`   Logo: ${brandConfig.logo ? 'Yes' : 'No'}`);
+
     return brandConfig;
   } catch (error) {
     console.error('❌ Error loading brand config:', error);
