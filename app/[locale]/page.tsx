@@ -211,7 +211,7 @@ export default function Home() {
   // Cargar templates dinámicos desde Firebase
   useEffect(() => {
     loadTemplates();
-  }, [user, brand.domain]); // Recargar cuando cambie el usuario o el dominio
+  }, [user, brand.name]); // Reload when user or brand changes
 
   // Cambiar mensajes durante el procesamiento con timer real (~25 segundos)
   useEffect(() => {
@@ -249,10 +249,9 @@ export default function Home() {
       const params = new URLSearchParams();
       params.set('mode', mode);
 
-      // Filtrar templates por marca
-      if (brand.name && brand.name !== 'GLAMOUR') {
+      // Filter templates by brand
+      if (brand.name) {
         params.set('brandName', brand.name);
-        console.log(`🔍 Loading templates for brand: ${brand.name}`);
       }
 
       const headers: Record<string, string> = {};
@@ -299,30 +298,6 @@ export default function Home() {
     }
   }, [user, authLoading]);
 
-
-  const loadPreferences = async () => {
-    try {
-      const token = await getUserIdToken();
-      if (!token) {
-        setStep(-1);
-        return;
-      }
-      const response = await fetch('/api/preferences', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Ir directo a la app (encuesta desactivada temporalmente)
-        setStep(1);
-      } else if (response.status === 401) {
-        setStep(-1);
-      } else {
-        setStep(1); // Ir directo a templates
-      }
-    } catch (error) {
-      setStep(1); // Ir directo a templates
-    }
-  };
 
   const loadUserCredits = async () => {
     try {
@@ -933,8 +908,6 @@ export default function Home() {
     const countB = templatesByCategory[b]?.length || 0;
     return countB - countA;
   });
-
-  const filteredTemplates = templatesSource;
 
   // Loading state
   if (authLoading) {

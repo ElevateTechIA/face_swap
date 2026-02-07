@@ -13,15 +13,13 @@ export const runtime = 'nodejs';
 
 /**
  * GET /api/templates
- * Obtiene templates con recomendaciones personalizadas
  *
  * Query params:
  * - mode: 'recommended' | 'trending' | 'all' (default: 'all')
- * - occasion: filtrar por ocasión específica
- * - search: búsqueda por texto
- * - limit: número máximo de resultados
- * - brandName: filtrar templates por marca (usa NEXT_PUBLIC_BRAND_NAME)
- * - websiteUrl: filtrar templates por website (legacy, opcional)
+ * - occasion: filter by occasion
+ * - search: text search
+ * - limit: max results
+ * - brandName: filter templates by brand (resolves to domain via Firestore)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -31,13 +29,12 @@ export async function GET(request: NextRequest) {
     const searchQuery = searchParams.get('search');
     const limit = parseInt(searchParams.get('limit') || '50');
     const brandName = searchParams.get('brandName');
-    const websiteUrl = searchParams.get('websiteUrl');
 
     const db = getAdminFirestore();
 
-    // Resolve brand domain: if brandName is provided, look up its domain in Firestore
-    let filterDomain: string | null = websiteUrl;
-    if (brandName && !filterDomain) {
+    // Resolve brand name to its domain for template filtering
+    let filterDomain: string | null = null;
+    if (brandName) {
       const brandSnapshot = await db.collection('brandConfigs')
         .where('name', '==', brandName)
         .where('isActive', '==', true)
@@ -46,9 +43,6 @@ export async function GET(request: NextRequest) {
 
       if (!brandSnapshot.empty) {
         filterDomain = brandSnapshot.docs[0].data().domain;
-        console.log(`🔍 Brand "${brandName}" → domain: ${filterDomain}`);
-      } else {
-        console.log(`⚠️ Brand "${brandName}" not found in Firestore, showing all templates`);
       }
     }
 
@@ -99,13 +93,11 @@ export async function GET(request: NextRequest) {
       } as Template;
     });
 
-    // Filter by domain (resolved from brandName or websiteUrl)
-    // Show templates that match the domain OR have no websiteUrl (shared templates)
+    // Filter by brand domain: show templates matching the domain or shared (no websiteUrl)
     if (filterDomain) {
       templates = templates.filter(t =>
         !t.websiteUrl || t.websiteUrl === filterDomain
       );
-      console.log(`✅ Filtered to ${templates.length} templates for domain: ${filterDomain}`);
     }
 
     // Si hay búsqueda, filtrar por texto

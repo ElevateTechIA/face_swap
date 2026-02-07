@@ -1,12 +1,10 @@
 import { BrandConfig, DEFAULT_BRAND } from '@/types/brand';
 
 /**
- * Get brand configuration based on environment variable
- * This function will be called on the server side to fetch brand config from Firestore
- *
- * Uses NEXT_PUBLIC_BRAND_NAME environment variable to determine which brand to load
+ * Get brand configuration based on NEXT_PUBLIC_BRAND_NAME environment variable.
+ * Called server-side to fetch brand config from Firestore.
  */
-export async function getBrandConfigByDomain(domain: string): Promise<BrandConfig> {
+export async function getBrandConfig(): Promise<BrandConfig> {
   try {
     // Import Firestore admin dynamically to avoid edge runtime issues
     const { getAdminFirestore } = await import('@/lib/firebase/admin');
@@ -66,19 +64,3 @@ export async function getBrandConfigByDomain(domain: string): Promise<BrandConfi
   }
 }
 
-/**
- * Get current domain from request headers
- */
-export function getDomainFromRequest(headers: Headers): string {
-  const host = headers.get('host') || 'localhost';
-  return host;
-}
-
-/**
- * Client-side hook to get brand config
- */
-export function useBrandConfig(): BrandConfig {
-  // This will be populated by the BrandProvider context
-  // For now, return default
-  return DEFAULT_BRAND;
-}
