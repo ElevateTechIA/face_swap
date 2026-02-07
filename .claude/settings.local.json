@@ -30,7 +30,10 @@
       "Bash(npx jest:*)",
       "Bash(kill:*)",
       "Bash(wc:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)"
     ]
   }
 }
