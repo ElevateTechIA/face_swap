@@ -50,7 +50,7 @@ IMPORTANTE: Responde con un OBJETO JSON (no un array), con esta estructura exact
 {
   "title": "Un título corto y descriptivo (máx 50 caracteres)",
   "description": "Descripción detallada de la escena (máx 150 caracteres)",
-  "prompt": "Un prompt detallado para Gemini que describa cómo hacer el face swap manteniendo la iluminación, pose, ropa y ambiente de la imagen original. Debe instruir claramente sobre qué mantener de la imagen template y qué reemplazar (solo el rostro).",
+  "prompt": "A detailed face swap prompt for Gemini. The prompt will be sent along with two images: the first image is the TEMPLATE (reference scene), the second image is the USER'S FACE to swap in. The prompt must instruct Gemini to recreate the template scene but with the user's face, skin tone, and hairstyle from the second image.",
   "bodyType": ["athletic", "slim", "curvy", "plus-size", "average"],
   "style": ["elegant", "casual", "professional", "party", "romantic", "edgy", "vintage", "modern"],
   "mood": ["happy", "confident", "relaxed", "energetic", "mysterious", "playful"],
@@ -72,16 +72,17 @@ Analiza cuidadosamente:
 - El encuadre (close-up, cuerpo completo, etc)
 
 Para el "prompt" de Gemini, genera instrucciones técnicas específicas que:
-1. Describan la escena completa (pose, ropa, fondo, iluminación)
-2. Indiquen claramente que solo se reemplaza el rostro
-3. Especifiquen cómo mantener la iluminación y sombras naturales
-4. Mencionen qué elementos NO deben cambiar (pelo, ropa, cuerpo, fondo)
+1. Clarify that the FIRST image is the template/reference scene and the SECOND image is the user's face
+2. Describe the scene completely (pose, outfit, background, lighting) WITHOUT hardcoding specific hair color or skin tone
+3. Instruct to replace the face AND adapt the hairstyle and skin tone to match the user's (second image)
+4. Specify that the user's natural skin tone should blend naturally with the scene's lighting
+5. Specify that the user's hairstyle from the second image should replace the template's hairstyle
+6. Maintain everything else from the template: pose, outfit, accessories, background, composition, and lighting
 
 Responde SOLO con el objeto JSON (no array), sin explicaciones adicionales.`;
 
     // Usar API REST de Gemini como en los otros endpoints
-    // Usando gemini-2.0-flash-exp que tiene capacidades de visión y funciona correctamente
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [{
@@ -101,7 +102,7 @@ Responde SOLO con el objeto JSON (no array), sin explicaciones adicionales.`;
         temperature: 0.4,
         topK: 32,
         topP: 0.95,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 4096,
         responseMimeType: "application/json"
       }
     };
@@ -122,8 +123,14 @@ Responde SOLO con el objeto JSON (no array), sin explicaciones adicionales.`;
     const data = await geminiResponse.json();
     console.log('✅ Respuesta recibida de Gemini AI');
 
-    // Extraer el JSON de la respuesta
-    const responseText = data.candidates[0].content.parts[0].text;
+    // Extraer el JSON de la respuesta - filtrar thinking parts (gemini-2.5 incluye thought parts)
+    const parts = data.candidates[0].content.parts;
+    let responseText = '';
+    for (const part of parts) {
+      if (part.text && !part.thought) {
+        responseText = part.text;
+      }
+    }
     console.log('📝 Texto de respuesta (primeros 200 chars):', responseText.substring(0, 200));
 
     let analysis;

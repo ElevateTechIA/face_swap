@@ -374,6 +374,15 @@ export default function Home() {
     if (!resultImage) return;
 
     try {
+      // Generar nombre de archivo con el título del template y fecha
+      const templateSlug = (selectedTemplate?.title || 'faceswap')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      const now = new Date();
+      const dateStr = `${now.toISOString().slice(0, 10)}-${now.toTimeString().slice(0, 8).replace(/:/g, '')}`; // YYYY-MM-DD-HHmmss
+      const fileName = `${templateSlug}-${dateStr}.jpg`;
+
       // Detectar si estamos en un dispositivo móvil
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -383,11 +392,11 @@ export default function Home() {
           // Convertir base64 a blob
           const response = await fetch(resultImage);
           const blob = await response.blob();
-          const file = new File([blob], 'glamour-faceswap.jpg', { type: 'image/jpeg' });
+          const file = new File([blob], fileName, { type: 'image/jpeg' });
 
           await navigator.share({
             files: [file],
-            title: 'My Glamour Face Swap',
+            title: selectedTemplate?.title || 'Face Swap',
             text: 'Check out my amazing face swap!'
           });
           return;
@@ -399,7 +408,7 @@ export default function Home() {
       // Fallback: descargar directamente
       const link = document.createElement('a');
       link.href = resultImage;
-      link.download = `glamour-faceswap-${Date.now()}.jpg`;
+      link.download = fileName;
       
       // En iOS, abrir en nueva pestaña si el download no funciona
       if (isMobile && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {

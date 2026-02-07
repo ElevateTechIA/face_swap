@@ -408,7 +408,7 @@ export async function POST(request: NextRequest) {
       console.log(`📸 Target MIME type: ${targetMimeType}`);
       console.log(`📸 Source MIME type: ${sourceMimeType}`);
 
-      const geminiPrompt = `${prompt}\n\nIMPORTANT: You must maintain the EXACT composition, framing, and dimensions of the reference template image. Only replace the face with the provided face image. Do not crop, zoom, or change the scene composition in any way.`;
+      const geminiPrompt = `${prompt}\n\nCRITICAL INSTRUCTIONS:\n- The FIRST image is the template/reference scene. The SECOND image is the user's face.\n- ONLY replace the face. Keep EVERYTHING else from the template PIXEL-PERFECT: exact same crop, framing, zoom level, camera angle, pose, body position, outfit, accessories, background, and all objects in the scene.\n- Use the user's natural skin tone and hairstyle from the second image, adapted to the template's lighting.\n- Do NOT keep the template's hair or skin tone — use the user's.\n- The output image MUST have the EXACT same framing and field of view as the template. Do NOT zoom in, zoom out, crop differently, or shift the composition. Every element must be in the same position as the template.`;
 
       // Usar API REST con responseModalities: ["IMAGE"] para generación de imágenes
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
