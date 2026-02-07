@@ -20,7 +20,8 @@ export const runtime = 'nodejs';
  * - occasion: filtrar por ocasión específica
  * - search: búsqueda por texto
  * - limit: número máximo de resultados
- * - websiteUrl: filtrar templates por website (opcional)
+ * - brandName: filtrar templates por marca (usa NEXT_PUBLIC_BRAND_NAME)
+ * - websiteUrl: filtrar templates por website (legacy, opcional)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -29,21 +30,31 @@ export async function GET(request: NextRequest) {
     const occasion = searchParams.get('occasion');
     const searchQuery = searchParams.get('search');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const brandName = searchParams.get('brandName');
     const websiteUrl = searchParams.get('websiteUrl');
 
     const db = getAdminFirestore();
 
+    // Resolve brand domain: if brandName is provided, look up its domain in Firestore
+    let filterDomain: string | null = websiteUrl;
+    if (brandName && !filterDomain) {
+      const brandSnapshot = await db.collection('brandConfigs')
+        .where('name', '==', brandName)
+        .where('isActive', '==', true)
+        .limit(1)
+        .get();
+
+      if (!brandSnapshot.empty) {
+        filterDomain = brandSnapshot.docs[0].data().domain;
+        console.log(`🔍 Brand "${brandName}" → domain: ${filterDomain}`);
+      } else {
+        console.log(`⚠️ Brand "${brandName}" not found in Firestore, showing all templates`);
+      }
+    }
+
     // Obtener todos los templates activos
     let templatesQuery = db.collection('templates')
       .where('isActive', '==', true);
-
-    // Si se especifica websiteUrl, filtrar por ese dominio
-    // Los templates pueden tener websiteUrl específico o no tenerlo (compartidos)
-    if (websiteUrl) {
-      console.log(`🔍 Filtering templates for website: ${websiteUrl}`);
-      // Note: Firestore doesn't support OR queries directly, so we'll filter in memory
-      // We want templates where websiteUrl matches OR websiteUrl is null/undefined
-    }
 
     const templatesSnapshot = await templatesQuery.get();
 
@@ -88,13 +99,13 @@ export async function GET(request: NextRequest) {
       } as Template;
     });
 
-    // Filter by websiteUrl if specified
-    // Show templates that match the websiteUrl OR have no websiteUrl (shared templates)
-    if (websiteUrl) {
+    // Filter by domain (resolved from brandName or websiteUrl)
+    // Show templates that match the domain OR have no websiteUrl (shared templates)
+    if (filterDomain) {
       templates = templates.filter(t =>
-        !t.websiteUrl || t.websiteUrl === websiteUrl
+        !t.websiteUrl || t.websiteUrl === filterDomain
       );
-      console.log(`✅ Filtered to ${templates.length} templates for ${websiteUrl}`);
+      console.log(`✅ Filtered to ${templates.length} templates for domain: ${filterDomain}`);
     }
 
     // Si hay búsqueda, filtrar por texto

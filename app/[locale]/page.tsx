@@ -249,10 +249,10 @@ export default function Home() {
       const params = new URLSearchParams();
       params.set('mode', mode);
 
-      // Filtrar templates por websiteUrl si existe en la configuración de marca
-      if (brand.domain && brand.domain !== 'localhost') {
-        params.set('websiteUrl', brand.domain);
-        console.log(`🔍 Loading templates for brand: ${brand.name} (${brand.domain})`);
+      // Filtrar templates por marca
+      if (brand.name && brand.name !== 'GLAMOUR') {
+        params.set('brandName', brand.name);
+        console.log(`🔍 Loading templates for brand: ${brand.name}`);
       }
 
       const headers: Record<string, string> = {};
