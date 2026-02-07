@@ -26,8 +26,12 @@ export async function getBrandConfigByDomain(domain: string): Promise<BrandConfi
       .get();
 
     if (brandSnapshot.empty) {
-      console.log(`⚠️ Brand "${brandName}" not found in Firestore, using default`);
-      return DEFAULT_BRAND;
+      console.log(`⚠️ Brand "${brandName}" not found in Firestore, creating default with name: ${brandName}`);
+      // Return a default brand with the requested name from env
+      return {
+        ...DEFAULT_BRAND,
+        name: brandName,
+      };
     }
 
     const brandDoc = brandSnapshot.docs[0];

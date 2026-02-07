@@ -17,6 +17,14 @@ const brandConfigs: Omit<BrandConfig, 'id'>[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    domain: 'localhost',
+    name: 'GLOW',
+    logo: '/logo.png', // Nails brand logo
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
   // Add more brand configurations here as needed
   // Example:
   // {
@@ -37,15 +45,15 @@ async function seedBrandConfigs() {
     const db = getAdminFirestore();
 
     for (const config of brandConfigs) {
-      // Check if brand config already exists
+      // Check if brand config already exists by name
       const existingBrand = await db
         .collection('brandConfigs')
-        .where('domain', '==', config.domain)
+        .where('name', '==', config.name)
         .limit(1)
         .get();
 
       if (!existingBrand.empty) {
-        console.log(`⚠️ Brand config for "${config.domain}" already exists, skipping...`);
+        console.log(`⚠️ Brand config for "${config.name}" already exists, skipping...`);
         continue;
       }
 

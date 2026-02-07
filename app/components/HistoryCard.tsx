@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Download, RefreshCw, ZoomIn, Trash2 } from 'lucide-react';
+import { Download, RefreshCw, ZoomIn, Trash2, Share2 } from 'lucide-react';
 import { ImagePreviewModal } from './modals/ImagePreviewModal';
+import { ShareModal } from './modals/ShareModal';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/auth/AuthProvider';
 
@@ -23,6 +24,7 @@ export function HistoryCard({ faceSwap, onDelete }: HistoryCardProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const handleDownload = async () => {
     try {
@@ -171,6 +173,16 @@ export function HistoryCard({ faceSwap, onDelete }: HistoryCardProps) {
           <button
             onClick={(e) => {
               e.stopPropagation();
+              setShowShareModal(true);
+            }}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-500/80 backdrop-blur-sm border border-blue-400/50 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation hover:bg-blue-600"
+            aria-label="Compartir"
+          >
+            <Share2 size={14} className="text-white sm:w-4 sm:h-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
               setShowPreview(true);
             }}
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation"
@@ -215,6 +227,15 @@ export function HistoryCard({ faceSwap, onDelete }: HistoryCardProps) {
         imageUrl={faceSwap.resultImageUrl}
         title={faceSwap.style}
         onDownload={handleDownload}
+      />
+
+      {/* Modal de compartir */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        type="image"
+        resultImage={faceSwap.resultImageUrl}
+        caption={`¡Mira mi Face Swap con estilo ${faceSwap.style}!`}
       />
 
       {/* Modal de confirmación de eliminación */}
