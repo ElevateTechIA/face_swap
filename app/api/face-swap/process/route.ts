@@ -656,6 +656,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: 'Error procesando Face Swap',
+        details: error.message || 'Unknown error',
         code: 'PROCESSING_ERROR',
       },
       { status: 500 }

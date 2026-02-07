@@ -682,8 +682,15 @@ export default function Home() {
       console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
-        const error = await response.json();
+        let error: any = {};
+        try {
+          error = await response.json();
+        } catch (parseErr) {
+          console.error('❌ Could not parse error response');
+        }
         console.error('❌ Error response:', error);
+        console.error('❌ Error details:', error.details || 'none');
+        console.error('❌ Status:', response.status);
         if (error.code === 'INSUFFICIENT_CREDITS') {
           setShowInsufficientCreditsModal(true);
           setStep(3);
