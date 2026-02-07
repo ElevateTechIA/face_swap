@@ -41,6 +41,14 @@ export default function HistoryPage() {
       }
 
       const token = await getUserIdToken();
+
+      // Handle case where token is null
+      if (!token) {
+        console.error('No se pudo obtener el token de autenticación');
+        router.push('/');
+        return;
+      }
+
       const url = loadMore && lastId
         ? `/api/history?limit=20&startAfter=${lastId}`
         : '/api/history?limit=20';
@@ -68,6 +76,15 @@ export default function HistoryPage() {
 
     } catch (error) {
       console.error('Error loading history:', error);
+
+      // Show more detailed error information
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.error('Failed to fetch - possible causes:');
+        console.error('1. API route not responding');
+        console.error('2. Network error');
+        console.error('3. Server not running');
+        console.error('4. CORS issue');
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);

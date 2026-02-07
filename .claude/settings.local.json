@@ -33,7 +33,8 @@
       "Bash(gh api:*)",
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(npx vercel:*)"
     ]
   }
 }
