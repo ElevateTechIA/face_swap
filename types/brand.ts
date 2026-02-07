@@ -28,11 +28,11 @@ export interface BrandConfig {
   createdBy?: string; // Admin user ID
 }
 
-// Default brand configuration (fallback)
+// Default brand configuration (fallback) - reads from env variable
 export const DEFAULT_BRAND: BrandConfig = {
   id: 'default',
   domain: 'localhost',
-  name: 'GLAMOUR',
+  name: process.env.NEXT_PUBLIC_BRAND_NAME || 'GLAMOUR',
   logo: '/logo.png',
   isActive: true,
   createdAt: new Date(),

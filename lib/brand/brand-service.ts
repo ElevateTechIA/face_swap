@@ -58,7 +58,11 @@ export async function getBrandConfigByDomain(domain: string): Promise<BrandConfi
     return brandConfig;
   } catch (error) {
     console.error('❌ Error loading brand config:', error);
-    return DEFAULT_BRAND;
+    const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'GLAMOUR';
+    return {
+      ...DEFAULT_BRAND,
+      name: brandName,
+    };
   }
 }
 
