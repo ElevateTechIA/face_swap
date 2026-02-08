@@ -49,7 +49,7 @@ export function AppHeader({
           </div>
         )}
         <span className="font-black text-lg tracking-tighter italic uppercase">
-          {brand.name} <span className="text-[10px] text-pink-500">v2.3.1</span>
+          {brand.name} <span className="text-[10px] text-pink-500">v2.4.0</span>
         </span>
       </div>
 
