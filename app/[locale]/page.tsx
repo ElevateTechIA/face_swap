@@ -1281,6 +1281,9 @@ export default function Home() {
                     {t('groupPhotos.processing.almostDone')}
                   </p>
                 )}
+                <p className="text-pink-400 text-base mt-4 font-medium animate-pulse px-6">
+                  {processingMessage || flirtMessages[0]}
+                </p>
               </>
             ) : (
               <>
