@@ -24,6 +24,7 @@ import {
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useBrand } from '@/app/contexts/BrandContext';
+import { toast } from 'sonner';
 
 // Hero Slideshow Component
 const HeroSlideshow: React.FC<{ templates: any[]; onTemplateClick?: (template: any) => void }> = ({ templates, onTemplateClick }) => {
@@ -397,7 +398,7 @@ export default function Home() {
       
     } catch (error) {
       console.error('Error downloading image:', error);
-      alert('Error al descargar la imagen. Por favor, intenta de nuevo.');
+      toast.error('Error al descargar la imagen. Por favor, intenta de nuevo.');
     }
   };
 
@@ -515,7 +516,7 @@ export default function Home() {
       setStep(3);
     } catch (e) {
       console.error('❌ Error converting template to base64:', e);
-      alert('Error al cargar la imagen del template. Por favor, intenta de nuevo.');
+      toast.error('Error al cargar la imagen del template. Por favor, intenta de nuevo.');
       setProcessingProgress(0);
       return; // No avanzar si falló la conversión
     }
@@ -543,7 +544,7 @@ export default function Home() {
       setStep(3);
     } catch (e) {
       console.error('❌ Error converting variant to base64:', e);
-      alert('Error al cargar la variante. Por favor, intenta de nuevo.');
+      toast.error('Error al cargar la variante. Por favor, intenta de nuevo.');
       setProcessingProgress(0);
       return;
     }
@@ -555,7 +556,7 @@ export default function Home() {
     if (file) {
       // Validar tipo de archivo
       if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecciona un archivo de imagen válido.');
+        toast.warning('Por favor, selecciona un archivo de imagen válido.');
         return;
       }
 
@@ -568,7 +569,7 @@ export default function Home() {
         // Validar que el resultado sea un data URL válido
         if (!result || !result.includes(',')) {
           console.error('❌ FileReader produced invalid result');
-          alert('Error al cargar la imagen. Por favor, intenta con otra imagen.');
+          toast.error('Error al cargar la imagen. Por favor, intenta con otra imagen.');
           return;
         }
 
@@ -584,7 +585,7 @@ export default function Home() {
 
       reader.onerror = () => {
         console.error('❌ FileReader error:', reader.error);
-        alert('Error al leer la imagen. Por favor, intenta de nuevo.');
+        toast.error('Error al leer la imagen. Por favor, intenta de nuevo.');
       };
 
       reader.readAsDataURL(file);
@@ -602,7 +603,7 @@ export default function Home() {
 
     // Validar que las imágenes estén presentes
     if (!sourceImg || !targetImg) {
-      alert('Error: Imágenes no cargadas correctamente');
+      toast.error('Error: Imágenes no cargadas correctamente');
       setIsProcessingFaceSwap(false);
       setProcessingProgress(0);
       return;
@@ -616,7 +617,7 @@ export default function Home() {
       console.error('❌ Invalid image format detected');
       console.error('sourceImg starts with:', sourceImg.substring(0, 50));
       console.error('targetImg starts with:', targetImg.substring(0, 50));
-      alert('Error: Formato de imagen inválido. Por favor, intenta subir las imágenes de nuevo.');
+      toast.error('Error: Formato de imagen inválido. Por favor, intenta subir las imágenes de nuevo.');
       setIsProcessingFaceSwap(false);
       setProcessingProgress(0);
       setShowScreenerSurvey(false);
@@ -724,7 +725,7 @@ export default function Home() {
     } catch (error: any) {
       clearInterval(progressInterval);
       console.error('❌ Error en Face Swap:', error);
-      alert('Error procesando imagen. Por favor, intenta de nuevo.');
+      toast.error('Error procesando imagen. Por favor, intenta de nuevo.');
       setShowScreenerSurvey(false);
       setIsProcessingFaceSwap(false);
       setProcessingProgress(0);
@@ -740,12 +741,22 @@ export default function Home() {
     try {
       console.log('👥 Starting group face swap with', groupImages.length, 'faces');
 
+      // Build auth headers for the face swap API
+      const authHeaders: Record<string, string> = {};
+      if (isGuest) {
+        authHeaders['X-Guest-Trial'] = 'true';
+      } else {
+        const token = await getUserIdToken();
+        if (token) authHeaders['Authorization'] = `Bearer ${token}`;
+      }
+
       const result = await processGroupSwap({
         templateUrl: targetImg!,
         userImages: groupImages,
         style: selectedStyle.id,
         slots: selectedTemplate?.slots,
         templateTitle: selectedTemplate?.title,
+        authHeaders,
         onProgress: (progress) => {
           console.log('Group swap progress:', progress);
           setGroupSwapProgress(progress);
@@ -775,7 +786,7 @@ export default function Home() {
 
     } catch (error: any) {
       console.error('❌ Group face swap error:', error);
-      alert('Error procesando foto grupal: ' + error.message);
+      toast.error('Error procesando foto grupal: ' + error.message);
       setStep(3);
     } finally {
       setIsProcessingFaceSwap(false);

@@ -21,6 +21,7 @@ export interface GroupSwapParams {
   style?: string;
   slots?: TemplateSlot[];
   templateTitle?: string;
+  authHeaders?: Record<string, string>;
   onProgress?: (progress: GroupSwapProgress) => void;
 }
 
@@ -34,6 +35,7 @@ export async function processGroupSwap({
   style,
   slots,
   templateTitle,
+  authHeaders,
   onProgress
 }: GroupSwapParams): Promise<string> {
   const totalFaces = userImages.length;
@@ -54,10 +56,13 @@ export async function processGroupSwap({
       // Call face swap API for this face
       const response = await fetch('/api/face-swap/process', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
         body: JSON.stringify({
-          templateUrl: currentTemplate,
-          userImageUrl: userImages[i],
+          sourceImage: userImages[i],
+          targetImage: currentTemplate,
           style: style || 'natural',
           isGroupSwap: true,
           faceIndex: i,
