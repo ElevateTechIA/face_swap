@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Upload, X, Users, Check, User, Baby, Dog } from 'lucide-react';
 import { toast } from 'sonner';
 import { validateImage } from '@/lib/security/image-validator';
+import { compressImage } from '@/lib/utils/image-compression';
 import { TemplateSlot, SlotSubjectType } from '@/types/template';
 import { SLOT_TYPE_CONFIGS } from '@/lib/slots/slot-config';
 
@@ -115,7 +116,7 @@ export function MultiFaceUpload({
     ));
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const uploadedImages = faceSlots
       .filter(slot => slot.image !== null)
       .map(slot => slot.image!);
@@ -125,7 +126,15 @@ export function MultiFaceUpload({
       return;
     }
 
-    onImagesSelected(uploadedImages);
+    // Compress images to avoid Vercel payload limit (4.5MB)
+    try {
+      const compressed = await Promise.all(
+        uploadedImages.map(img => compressImage(img, 800, 1080))
+      );
+      onImagesSelected(compressed);
+    } catch {
+      onImagesSelected(uploadedImages);
+    }
   };
 
   const uploadedCount = faceSlots.filter(slot => slot.image !== null).length;
