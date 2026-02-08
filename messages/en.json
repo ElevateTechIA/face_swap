@@ -205,6 +205,23 @@
     "errors": {
       "generic": "Error processing Face Swap",
       "tryAgain": "Try again"
+    },
+    "processingTips": {
+      "tip1": "Working our magic on your photo...",
+      "tip2": "Tip: Use a clear, front-facing photo for best results",
+      "tip3": "You're going to look amazing!",
+      "tip4": "Tip: Good lighting makes a huge difference in quality",
+      "tip5": "Creating something special just for you...",
+      "tip6": "Tip: Take a fresh selfie instead of using old photos",
+      "tip7": "Almost there, gorgeous!",
+      "tip8": "Tip: Avoid sunglasses or hands covering your face",
+      "tip9": "Making you shine even brighter...",
+      "tip10": "Tip: The bigger your face in the photo, the better the result",
+      "tip11": "This is going to be fire!",
+      "tip12": "Tip: Photos from messaging apps lose quality — use originals",
+      "tip13": "Polishing your masterpiece...",
+      "tip14": "Tip: A neutral expression works best for accurate swaps",
+      "tip15": "Preparing your royal look..."
     }
   },
   "admin": {

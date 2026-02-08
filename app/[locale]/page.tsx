@@ -185,23 +185,23 @@ export default function Home() {
   // Estado para mensajes durante el procesamiento
   const [processingMessage, setProcessingMessage] = useState('');
 
-  // Mensajes coquetos que cambian durante el procesamiento
+  // Mensajes con tips que cambian durante el procesamiento
   const flirtMessages = [
-    "✨ Working our magic on your photo...",
-    "💫 You're going to look amazing!",
-    "🎨 Adding some sparkle to your beauty...",
-    "🌟 Creating something special just for you...",
-    "💖 Almost there, gorgeous!",
-    "✨ Making you shine even brighter...",
-    "🔥 This is going to be fire!",
-    "💎 Polishing your masterpiece...",
-    "🎭 Transforming you into a star...",
-    "⚡ Adding that extra glow...",
-    "🌈 Bringing your vision to life...",
-    "💝 Can't wait to show you the result!",
-    "🎪 The magic is happening...",
-    "🎬 Lights, camera, transformation!",
-    "👑 Preparing your royal look..."
+    `✨ ${t('faceSwap.processingTips.tip1')}`,
+    `📸 ${t('faceSwap.processingTips.tip2')}`,
+    `💫 ${t('faceSwap.processingTips.tip3')}`,
+    `💡 ${t('faceSwap.processingTips.tip4')}`,
+    `🌟 ${t('faceSwap.processingTips.tip5')}`,
+    `🤳 ${t('faceSwap.processingTips.tip6')}`,
+    `💖 ${t('faceSwap.processingTips.tip7')}`,
+    `🕶️ ${t('faceSwap.processingTips.tip8')}`,
+    `✨ ${t('faceSwap.processingTips.tip9')}`,
+    `🔍 ${t('faceSwap.processingTips.tip10')}`,
+    `🔥 ${t('faceSwap.processingTips.tip11')}`,
+    `📱 ${t('faceSwap.processingTips.tip12')}`,
+    `💎 ${t('faceSwap.processingTips.tip13')}`,
+    `😊 ${t('faceSwap.processingTips.tip14')}`,
+    `👑 ${t('faceSwap.processingTips.tip15')}`
   ];
 
   // Group photos state

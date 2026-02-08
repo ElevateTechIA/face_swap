@@ -209,6 +209,23 @@
     "errors": {
       "generic": "Error al procesar Face Swap",
       "tryAgain": "Intenta de nuevo"
+    },
+    "processingTips": {
+      "tip1": "Trabajando nuestra magia en tu foto...",
+      "tip2": "Tip: Usa una foto clara y de frente para mejores resultados",
+      "tip3": "¡Te vas a ver increíble!",
+      "tip4": "Tip: La buena iluminación hace una gran diferencia en la calidad",
+      "tip5": "Creando algo especial solo para ti...",
+      "tip6": "Tip: Toma un selfie nuevo en vez de usar fotos viejas",
+      "tip7": "¡Ya casi, hermosa!",
+      "tip8": "Tip: Evita lentes de sol o manos cubriendo tu rostro",
+      "tip9": "Haciéndote brillar aún más...",
+      "tip10": "Tip: Entre más grande tu rostro en la foto, mejor el resultado",
+      "tip11": "¡Esto va a quedar increíble!",
+      "tip12": "Tip: Fotos de WhatsApp pierden calidad — usa las originales",
+      "tip13": "Puliendo tu obra maestra...",
+      "tip14": "Tip: Una expresión neutral funciona mejor para swaps precisos",
+      "tip15": "Preparando tu look de reina..."
     }
   },
   "admin": {
