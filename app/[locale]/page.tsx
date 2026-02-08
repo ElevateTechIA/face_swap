@@ -467,12 +467,21 @@ export default function Home() {
     setProcessingProgress(10);
     setSelectedTemplate(template);
 
-    // Check if this is a group photo template
-    const isGroup = template.isGroup || (template.faceCount && template.faceCount > 1);
+    // Debug: log template slot data
+    console.log('🔍 Template selected:', template.title);
+    console.log('🔍 Template slots:', JSON.stringify(template.slots));
+    console.log('🔍 Template isGroup:', template.isGroup, 'faceCount:', template.faceCount);
+
+    // Check if this is a multi-slot / group photo template
+    const isGroup = (template.slots && template.slots.length > 1) ||
+                    template.isGroup ||
+                    (template.faceCount && template.faceCount > 1);
     setIsGroupPhoto(isGroup || false);
 
+    console.log('🔍 isGroup resolved to:', isGroup);
+
     if (isGroup) {
-      console.log(`👥 Group template selected: ${template.faceCount || 2} faces required`);
+      console.log(`👥 Group template selected: ${template.faceCount || template.slots?.length || 2} faces required`);
     }
 
     // Verificar si el template tiene variantes (más de 1)
@@ -735,6 +744,8 @@ export default function Home() {
         templateUrl: targetImg!,
         userImages: groupImages,
         style: selectedStyle.id,
+        slots: selectedTemplate?.slots,
+        templateTitle: selectedTemplate?.title,
         onProgress: (progress) => {
           console.log('Group swap progress:', progress);
           setGroupSwapProgress(progress);
@@ -830,7 +841,8 @@ export default function Home() {
     usageCount: t.usageCount || 0,
     faceCount: t.faceCount || 1,
     isGroup: t.isGroup || false,
-    variants: t.variants || [] // Array de URLs de variantes del template
+    variants: t.variants || [],
+    slots: t.slots || [],
   })) : TEMPLATES;
 
   // Función helper para generar variantes de un template
@@ -841,18 +853,7 @@ export default function Home() {
       return [template.url, ...template.variants];
     }
 
-    // Si es una URL de Firebase Storage con parámetros de transformación, generar variantes
-    if (template.url.includes('firebasestorage.googleapis.com')) {
-      // Firebase Storage permite transformaciones de imagen con parámetros
-      return [
-        template.url,
-        template.url, // Variante 2 (cuando implementes transformaciones en Firebase)
-        template.url  // Variante 3 (cuando implementes transformaciones en Firebase)
-      ];
-    }
-
-    // Por ahora, usar la misma imagen para todas las variantes
-    // TODO: Cuando subas templates a Firebase, añade un campo 'variants' con URLs de diferentes ángulos/versiones
+    // Single image - no variants
     return [template.url];
   };
 
@@ -1153,65 +1154,94 @@ export default function Home() {
 
         {step === 3 && (
           <div className="flex flex-col flex-1 gap-6">
-            <div className="text-center">
-              <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.readyToGenerate')}</h2>
-              <p className="text-gray-500 font-medium">{t('faceSwap.steps.readyToGenerateDesc')}</p>
-            </div>
-
-            {/* Preview de imágenes - Template grande arriba, cara pequeña abajo */}
-            <div className="flex flex-col gap-4 items-center">
-              {/* Template - Grande arriba */}
-              {targetImg && (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
-                    <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
-                  </div>
-                  <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
+            {isGroupPhoto ? (
+              /* Multi-slot upload for group/multi-subject templates */
+              <>
+                <MultiFaceUpload
+                  slots={selectedTemplate?.slots}
+                  faceCount={selectedTemplate?.faceCount || 2}
+                  onImagesSelected={(images) => {
+                    setGroupImages(images);
+                    setSourceImg(images[0]);
+                  }}
+                  templatePreview={targetImg || undefined}
+                />
+                <div className="flex flex-col gap-3">
+                  <Button onClick={startProcessing} disabled={groupImages.length === 0} className="h-16 bg-white text-black text-xl italic font-black uppercase">
+                    {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setStep(1);
+                      setSelectedTemplate(null);
+                      setGroupImages([]);
+                      setSourceImg(null);
+                    }}
+                  >
+                    <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+                  </Button>
                 </div>
-              )}
+              </>
+            ) : (
+              /* Single face upload (existing flow) */
+              <>
+                <div className="text-center">
+                  <h2 className="text-4xl font-black mb-2 italic uppercase">{t('faceSwap.steps.readyToGenerate')}</h2>
+                  <p className="text-gray-500 font-medium">{t('faceSwap.steps.readyToGenerateDesc')}</p>
+                </div>
 
-              {/* Icono de flecha hacia abajo */}
-              <ChevronRight className="text-pink-500 rotate-90" size={32} />
-
-              {/* Tu rostro - Clickeable para subir o cambiar */}
-              <div className="flex flex-col items-center gap-2">
-                <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10 cursor-pointer hover:border-pink-500/50 transition-all">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={(e) => handleImageUpload(e, 'source')} 
-                    className="absolute inset-0 opacity-0 z-10 cursor-pointer" 
-                  />
-                  {sourceImg ? (
-                    <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-white/5">
-                      <Camera size={32} className="text-white/30" />
+                <div className="flex flex-col gap-4 items-center">
+                  {targetImg && (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
+                        <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
+                      </div>
+                      <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
                     </div>
                   )}
-                </div>
-                <p className="text-xs text-gray-400 font-bold uppercase">
-                  {sourceImg ? t('faceSwap.steps.yourFace') : 'Click to upload'}
-                </p>
-              </div>
-            </div>
 
-            {/* Botones de navegación */}
-            <div className="mt-auto flex flex-col gap-3">
-              <Button onClick={startProcessing} disabled={!sourceImg} className="h-16 bg-white text-black text-xl italic font-black uppercase">
-                {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setStep(1);
-                  setSelectedTemplate(null);
-                  setSourceImg(null);
-                }}
-              >
-                <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
-              </Button>
-            </div>
+                  <ChevronRight className="text-pink-500 rotate-90" size={32} />
+
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10 cursor-pointer hover:border-pink-500/50 transition-all">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'source')}
+                        className="absolute inset-0 opacity-0 z-10 cursor-pointer"
+                      />
+                      {sourceImg ? (
+                        <img src={sourceImg} className="w-full h-full object-cover" alt="Your face" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-white/5">
+                          <Camera size={32} className="text-white/30" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 font-bold uppercase">
+                      {sourceImg ? t('faceSwap.steps.yourFace') : 'Click to upload'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-auto flex flex-col gap-3">
+                  <Button onClick={startProcessing} disabled={!sourceImg} className="h-16 bg-white text-black text-xl italic font-black uppercase">
+                    {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setStep(1);
+                      setSelectedTemplate(null);
+                      setSourceImg(null);
+                    }}
+                  >
+                    <ChevronRight size={20} className="rotate-180" /> {t('common.back')}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
 

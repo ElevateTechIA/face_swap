@@ -65,6 +65,9 @@ export async function POST(request: NextRequest) {
       metadata,
       isActive = true,
       isPremium = false,
+      slots,
+      websiteUrl,
+      transition,
     } = body;
 
     // Validaciones básicas
@@ -122,7 +125,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear el template
-    const newTemplate: Omit<Template, 'id'> = {
+    const newTemplate: any = {
       title,
       description,
       imageUrl,
@@ -133,19 +136,38 @@ export async function POST(request: NextRequest) {
       isPremium,
       usageCount: 0,
       averageRating: 0,
-      createdAt: FieldValue.serverTimestamp() as any,
-      updatedAt: FieldValue.serverTimestamp() as any,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       createdBy: adminUserId,
     };
 
+    // Save websiteUrl if provided
+    if (websiteUrl) {
+      newTemplate.websiteUrl = websiteUrl;
+    }
+
+    // Save transition if provided
+    if (transition) {
+      newTemplate.transition = transition;
+    }
+
     // Agregar variantes si existen
     if (variantUrls.length > 0) {
-      (newTemplate as any).variants = variantUrls;
+      newTemplate.variants = variantUrls;
+    }
+
+    // Add slots if provided
+    if (slots && Array.isArray(slots) && slots.length > 0) {
+      newTemplate.slots = slots;
+      newTemplate.isGroup = slots.length > 1;
+      newTemplate.faceCount = slots.length;
+      newTemplate.maxFaces = slots.length;
+      console.log(`📋 Slots saved: ${slots.length} slots`, JSON.stringify(slots));
     }
 
     await newTemplateRef.set(newTemplate);
 
-    console.log(`✅ Template creado: ${templateId} - ${title}`);
+    console.log(`✅ Template creado: ${templateId} - ${title} (slots: ${slots?.length || 0})`);
 
     return NextResponse.json({
       success: true,
@@ -188,6 +210,9 @@ export async function PUT(request: NextRequest) {
       metadata,
       isActive,
       isPremium,
+      slots,
+      websiteUrl,
+      transition,
     } = body;
 
     if (!templateId) {
@@ -229,6 +254,16 @@ export async function PUT(request: NextRequest) {
     if (metadata !== undefined) updates.metadata = metadata;
     if (isActive !== undefined) updates.isActive = isActive;
     if (isPremium !== undefined) updates.isPremium = isPremium;
+    if (websiteUrl !== undefined) updates.websiteUrl = websiteUrl || null;
+    if (transition !== undefined) updates.transition = transition;
+    if (slots !== undefined) {
+      updates.slots = slots;
+      if (Array.isArray(slots) && slots.length > 0) {
+        updates.isGroup = slots.length > 1;
+        updates.faceCount = slots.length;
+        updates.maxFaces = slots.length;
+      }
+    }
 
     // Si se proporciona nueva imagen, subirla
     if (imageData) {

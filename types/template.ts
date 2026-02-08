@@ -10,6 +10,15 @@ export type Lighting = 'natural' | 'studio' | 'dramatic' | 'soft' | 'neon';
 export type ColorPalette = 'warm' | 'cool' | 'neutral' | 'vibrant' | 'pastel';
 export type TransitionType = 'fade' | 'slide' | 'zoom' | 'flip' | 'blur' | 'rotate';
 
+// Template slot types for multi-subject templates
+export type SlotSubjectType = 'person' | 'woman' | 'man' | 'girl' | 'boy' | 'baby' | 'pet';
+
+export interface TemplateSlot {
+  type: SlotSubjectType;
+  label?: string;       // Custom label, e.g., "Papa", "Tu mascota"
+  position?: number;    // Order in template (0-indexed), defaults to array index
+}
+
 export interface TemplateMetadata {
   // Physical attributes
   bodyType: BodyType[];
@@ -58,10 +67,13 @@ export interface Template {
   // Multi-tenant support
   websiteUrl?: string; // Optional: Filter templates by website domain (e.g., "glamour-ai.com")
 
-  // Group photo support
-  faceCount?: number; // Number of people in template (1 for solo, 2+ for group)
-  isGroup?: boolean; // True if template supports multiple faces
-  maxFaces?: number; // Maximum faces supported (default: faceCount)
+  // Template slots (preferred for multi-subject templates)
+  slots?: TemplateSlot[];
+
+  // Group photo support (legacy, auto-derived from slots when present)
+  faceCount?: number;
+  isGroup?: boolean;
+  maxFaces?: number;
 
   // Metadata for recommendations
   metadata: TemplateMetadata;
@@ -78,6 +90,20 @@ export interface Template {
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string; // Admin user ID
+}
+
+// Helpers for slot-based templates
+export function getTemplateSlots(template: Pick<Template, 'slots' | 'faceCount'>): TemplateSlot[] {
+  if (template.slots && template.slots.length > 0) return template.slots;
+  const count = template.faceCount || 1;
+  return Array.from({ length: count }, (_, i) => ({ type: 'person' as SlotSubjectType, position: i }));
+}
+
+export function isMultiSlotTemplate(template: Pick<Template, 'slots' | 'faceCount' | 'isGroup'>): boolean {
+  if (template.slots && template.slots.length > 1) return true;
+  if (template.isGroup) return true;
+  if (template.faceCount && template.faceCount > 1) return true;
+  return false;
 }
 
 // User profile for personalization

@@ -1,62 +1,88 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Upload, X, Users, Check } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
+import { Upload, X, Users, Check, User, Baby, Dog } from 'lucide-react';
 import { toast } from 'sonner';
 import { validateImage } from '@/lib/security/image-validator';
+import { TemplateSlot, SlotSubjectType } from '@/types/template';
+import { SLOT_TYPE_CONFIGS } from '@/lib/slots/slot-config';
+
+function SlotIcon({ type, ...props }: { type: SlotSubjectType } & React.ComponentProps<typeof User>) {
+  switch (type) {
+    case 'pet': return <Dog {...props} />;
+    case 'baby': return <Baby {...props} />;
+    default: return <User {...props} />;
+  }
+}
 
 interface FaceSlot {
   id: number;
   image: string | null;
   file: File | null;
   label: string;
+  slotType: SlotSubjectType;
+  color: string;
 }
 
 interface MultiFaceUploadProps {
-  faceCount: number;
+  slots?: TemplateSlot[];
+  faceCount?: number;
   onImagesSelected: (images: string[]) => void;
   templatePreview?: string;
 }
 
 export function MultiFaceUpload({
+  slots,
   faceCount,
   onImagesSelected,
   templatePreview
 }: MultiFaceUploadProps) {
   const t = useTranslations();
+  const locale = useLocale();
+
+  const effectiveSlots = useMemo<TemplateSlot[]>(() => {
+    if (slots && slots.length > 0) return slots;
+    const count = faceCount || 2;
+    return Array.from({ length: count }, (_, i) => ({
+      type: 'person' as SlotSubjectType,
+      position: i,
+    }));
+  }, [slots, faceCount]);
+
   const [faceSlots, setFaceSlots] = useState<FaceSlot[]>(
-    Array.from({ length: faceCount }, (_, i) => ({
-      id: i,
-      image: null,
-      file: null,
-      label: `Person ${i + 1}`
-    }))
+    effectiveSlots.map((slot, i) => {
+      const config = SLOT_TYPE_CONFIGS[slot.type];
+      const lang = (locale === 'es' ? 'es' : 'en') as 'en' | 'es';
+      return {
+        id: i,
+        image: null,
+        file: null,
+        label: slot.label || config.defaultLabel[lang],
+        slotType: slot.type,
+        color: config.color,
+      };
+    })
   );
 
   const handleFileSelect = async (slotId: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error(t('upload.errors.invalidType'));
       return;
     }
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error(t('upload.errors.tooLarge'));
       return;
     }
 
-    // Read file as data URL
     const reader = new FileReader();
     reader.onload = async (e) => {
       const imageUrl = e.target?.result as string;
 
-      // 🔒 SECURITY: Validate image
-      console.log('🔒 Validating image...');
       const validation = await validateImage(imageUrl, {
         maxSizeBytes: 10 * 1024 * 1024,
         maxWidth: 4096,
@@ -66,19 +92,10 @@ export function MultiFaceUpload({
       });
 
       if (!validation.valid) {
-        console.error('❌ Image validation failed:', validation.errors);
         toast.error(validation.errors[0]);
         return;
       }
 
-      // Show warnings if any
-      if (validation.warnings.length > 0) {
-        console.warn('⚠️ Image warnings:', validation.warnings);
-      }
-
-      console.log('✅ Image validated');
-
-      // Use sanitized image (EXIF removed)
       const cleanImage = validation.sanitizedImage || imageUrl;
 
       setFaceSlots(prev => prev.map(slot =>
@@ -103,8 +120,8 @@ export function MultiFaceUpload({
       .filter(slot => slot.image !== null)
       .map(slot => slot.image!);
 
-    if (uploadedImages.length !== faceCount) {
-      toast.error(t('groupPhotos.errors.notAllUploaded', { count: faceCount }));
+    if (uploadedImages.length !== effectiveSlots.length) {
+      toast.error(t('groupPhotos.errors.notAllUploaded', { count: effectiveSlots.length }));
       return;
     }
 
@@ -112,7 +129,13 @@ export function MultiFaceUpload({
   };
 
   const uploadedCount = faceSlots.filter(slot => slot.image !== null).length;
-  const allUploaded = uploadedCount === faceCount;
+  const allUploaded = uploadedCount === effectiveSlots.length;
+
+  const getSlotHint = (type: SlotSubjectType): string => {
+    if (type === 'pet') return t('groupPhotos.slotHint.pet');
+    if (type === 'baby') return t('groupPhotos.slotHint.baby');
+    return t('groupPhotos.slotHint.default');
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -125,11 +148,11 @@ export function MultiFaceUpload({
           </h2>
         </div>
         <p className="text-sm text-gray-400">
-          {t('groupPhotos.subtitle', { count: faceCount })}
+          {t('groupPhotos.subtitle', { count: effectiveSlots.length })}
         </p>
       </div>
 
-      {/* Template Preview (Optional) */}
+      {/* Template Preview */}
       {templatePreview && (
         <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/10">
           <img
@@ -151,7 +174,7 @@ export function MultiFaceUpload({
         <div className="flex items-center gap-2">
           <Users size={20} className="text-pink-500" />
           <span className="text-sm font-bold">
-            {t('groupPhotos.progress', { uploaded: uploadedCount, total: faceCount })}
+            {t('groupPhotos.progress', { uploaded: uploadedCount, total: effectiveSlots.length })}
           </span>
         </div>
         {allUploaded && (
@@ -172,29 +195,26 @@ export function MultiFaceUpload({
             />
 
             {!slot.image ? (
-              // Empty slot - upload button
               <label
                 htmlFor={`face-upload-${slot.id}`}
                 className="flex flex-col items-center justify-center aspect-[3/4] rounded-2xl border-2 border-dashed border-white/20 hover:border-pink-500/50 bg-white/5 cursor-pointer transition-all active:scale-95"
               >
-                <Upload size={32} className="text-gray-500 mb-2" />
+                <SlotIcon type={slot.slotType} size={32} className={`${slot.color} mb-2`} />
                 <p className="text-sm font-bold text-gray-300">
-                  {t('groupPhotos.person', { number: slot.id + 1 })}
+                  {slot.label}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {t('upload.tapToUpload')}
+                <p className="text-xs text-gray-500 mt-1 text-center px-2">
+                  {getSlotHint(slot.slotType)}
                 </p>
               </label>
             ) : (
-              // Uploaded slot - show preview
               <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-pink-500">
                 <img
                   src={slot.image}
-                  alt={`Person ${slot.id + 1}`}
+                  alt={slot.label}
                   className="w-full h-full object-cover"
                 />
 
-                {/* Remove button */}
                 <button
                   onClick={() => handleRemove(slot.id)}
                   className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/80 flex items-center justify-center hover:bg-red-600 transition-all active:scale-95"
@@ -203,11 +223,13 @@ export function MultiFaceUpload({
                   <X size={16} className="text-white" />
                 </button>
 
-                {/* Label */}
                 <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-xs font-bold text-center">
-                    {t('groupPhotos.person', { number: slot.id + 1 })}
-                  </p>
+                  <div className="flex items-center justify-center gap-1">
+                    <SlotIcon type={slot.slotType} size={12} className={slot.color} />
+                    <p className="text-xs font-bold text-center">
+                      {slot.label}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

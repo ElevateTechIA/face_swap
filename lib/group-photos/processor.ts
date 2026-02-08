@@ -5,6 +5,8 @@
  * Process: Swap face 1 → result1, then swap face 2 onto result1 → result2, etc.
  */
 
+import { TemplateSlot } from '@/types/template';
+
 export interface GroupSwapProgress {
   currentFace: number;
   totalFaces: number;
@@ -15,8 +17,10 @@ export interface GroupSwapProgress {
 
 export interface GroupSwapParams {
   templateUrl: string;
-  userImages: string[]; // Array of base64 or URLs
+  userImages: string[];
   style?: string;
+  slots?: TemplateSlot[];
+  templateTitle?: string;
   onProgress?: (progress: GroupSwapProgress) => void;
 }
 
@@ -28,6 +32,8 @@ export async function processGroupSwap({
   templateUrl,
   userImages,
   style,
+  slots,
+  templateTitle,
   onProgress
 }: GroupSwapParams): Promise<string> {
   const totalFaces = userImages.length;
@@ -55,7 +61,10 @@ export async function processGroupSwap({
           style: style || 'natural',
           isGroupSwap: true,
           faceIndex: i,
-          totalFaces
+          totalFaces,
+          templateTitle,
+          slotType: slots?.[i]?.type,
+          slotLabel: slots?.[i]?.label,
         })
       });
 

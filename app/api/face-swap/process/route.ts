@@ -172,7 +172,9 @@ export async function POST(request: NextRequest) {
       isGuestTrial: requestIsGuest,
       isGroupSwap,
       faceIndex,
-      totalFaces
+      totalFaces,
+      slotType,
+      slotLabel,
     } = body;
 
     // Detectar si es guest trial
@@ -408,7 +410,18 @@ export async function POST(request: NextRequest) {
       console.log(`📸 Target MIME type: ${targetMimeType}`);
       console.log(`📸 Source MIME type: ${sourceMimeType}`);
 
-      const geminiPrompt = `${prompt}\n\nCRITICAL INSTRUCTIONS:\n- The FIRST image is the template/reference scene. The SECOND image is the user's face.\n- ONLY replace the face. Keep EVERYTHING else from the template PIXEL-PERFECT: exact same crop, framing, zoom level, camera angle, pose, body position, outfit, accessories, background, and all objects in the scene.\n- Use the user's natural skin tone and hairstyle from the second image, adapted to the template's lighting.\n- Do NOT keep the template's hair or skin tone — use the user's.\n- The output image MUST have the EXACT same framing and field of view as the template. Do NOT zoom in, zoom out, crop differently, or shift the composition. Every element must be in the same position as the template.`;
+      // Build slot-specific instructions for group swaps
+      let slotInstructions = '';
+      if (isGroupSwap && slotType) {
+        if (slotType === 'pet') {
+          slotInstructions = `\n\nSPECIAL INSTRUCTION: The second image contains a PET (animal). Replace the ${slotLabel || 'pet/animal'} in the template with the pet from the second image. Maintain the pet's natural appearance, breed characteristics, and coloring. Place the pet in the same position and scale as the original.`;
+        } else {
+          const subjectDesc = slotLabel || slotType;
+          slotInstructions = `\n\nCONTEXT: This is face ${(faceIndex || 0) + 1} of ${totalFaces} in a group swap. The subject for this slot is: ${subjectDesc} (type: ${slotType}). Replace this specific subject's face in the template with the face from the second image.`;
+        }
+      }
+
+      const geminiPrompt = `${prompt}\n\nCRITICAL INSTRUCTIONS:\n- The FIRST image is the template/reference scene. The SECOND image is the user's face.\n- ONLY replace the face. Keep EVERYTHING else from the template PIXEL-PERFECT: exact same crop, framing, zoom level, camera angle, pose, body position, outfit, accessories, background, and all objects in the scene.\n- Use the user's natural skin tone and hairstyle from the second image, adapted to the template's lighting.\n- Do NOT keep the template's hair or skin tone — use the user's.\n- The output image MUST have the EXACT same framing and field of view as the template. Do NOT zoom in, zoom out, crop differently, or shift the composition. Every element must be in the same position as the template.${slotInstructions}`;
 
       // Usar API REST con responseModalities: ["IMAGE"] para generación de imágenes
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;

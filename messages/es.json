@@ -413,6 +413,20 @@
       "almostDone": "¡Casi listo!",
       "completed": "¡Foto grupal completada!"
     },
+    "slotTypes": {
+      "person": "Persona",
+      "woman": "Mujer",
+      "man": "Hombre",
+      "girl": "Chica",
+      "boy": "Chico",
+      "baby": "Bebe",
+      "pet": "Mascota"
+    },
+    "slotHint": {
+      "pet": "Sube una foto clara de tu mascota",
+      "baby": "Sube una foto clara del bebe",
+      "default": "Sube una foto clara del rostro"
+    },
     "errors": {
       "notAllUploaded": "Por favor sube las {count} fotos",
       "processingFailed": "Error al procesar la foto grupal",

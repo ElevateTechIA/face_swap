@@ -58,7 +58,10 @@ IMPORTANTE: Responde con un OBJETO JSON (no un array), con esta estructura exact
   "framing": "close-up" | "medium" | "full-body" | "portrait",
   "lighting": "natural" | "studio" | "dramatic" | "soft" | "neon",
   "colorPalette": ["warm", "cool", "neutral", "vibrant", "pastel"],
-  "setting": ["indoor", "outdoor", "studio"]
+  "setting": ["indoor", "outdoor", "studio"],
+  "slots": [
+    { "type": "person" | "woman" | "man" | "girl" | "boy" | "baby" | "pet", "label": "optional descriptive label" }
+  ]
 }
 
 Analiza cuidadosamente:
@@ -70,6 +73,20 @@ Analiza cuidadosamente:
 - El mood y atmósfera general
 - El tipo de cuerpo que se vería mejor en esta escena
 - El encuadre (close-up, cuerpo completo, etc)
+
+For the "slots" array, identify ALL distinct subjects in the image:
+- Count every distinct person, animal, or baby visible
+- For each subject, determine the most specific type: woman, man, girl, boy, baby, or pet
+- If gender/age cannot be determined, use "person"
+- Include pets (dogs, cats, etc.) as "pet" type
+- Order slots left-to-right as they appear in the image
+- For a single person template, return an array with ONE slot
+- Add a label only for multi-subject templates (e.g., "Dad", "Mom", "Dog")
+- Examples:
+  - Single woman portrait → [{"type": "woman"}]
+  - Man and dog → [{"type": "man"}, {"type": "pet", "label": "Dog"}]
+  - Two women → [{"type": "woman"}, {"type": "woman"}]
+  - Family → [{"type": "man", "label": "Dad"}, {"type": "woman", "label": "Mom"}, {"type": "boy", "label": "Son"}]
 
 Para el "prompt" de Gemini, genera instrucciones técnicas específicas que:
 1. Clarify that the FIRST image is the template/reference scene and the SECOND image is the user's face
@@ -167,7 +184,22 @@ Responde SOLO con el objeto JSON (no array), sin explicaciones adicionales.`;
       }
     }
 
-    console.log('✅ Template analyzed successfully:', analysis.title);
+    // Validate and sanitize slots from AI analysis
+    const validSlotTypes = ['person', 'woman', 'man', 'girl', 'boy', 'baby', 'pet'];
+    if (analysis.slots && Array.isArray(analysis.slots)) {
+      analysis.slots = analysis.slots
+        .filter((s: any) => s && validSlotTypes.includes(s.type))
+        .map((s: any, i: number) => ({
+          type: s.type,
+          label: s.label || undefined,
+          position: i,
+        }));
+    } else {
+      // Default to single person slot
+      analysis.slots = [{ type: 'person', position: 0 }];
+    }
+
+    console.log('✅ Template analyzed successfully:', analysis.title, `(${analysis.slots.length} slots)`);
 
     return NextResponse.json({
       success: true,

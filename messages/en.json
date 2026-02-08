@@ -409,6 +409,20 @@
       "almostDone": "Almost done!",
       "completed": "Group photo completed!"
     },
+    "slotTypes": {
+      "person": "Person",
+      "woman": "Woman",
+      "man": "Man",
+      "girl": "Girl",
+      "boy": "Boy",
+      "baby": "Baby",
+      "pet": "Pet"
+    },
+    "slotHint": {
+      "pet": "Upload a clear photo of your pet",
+      "baby": "Upload a clear photo of the baby",
+      "default": "Upload a clear face photo"
+    },
     "errors": {
       "notAllUploaded": "Please upload all {count} photos",
       "processingFailed": "Failed to process group photo",

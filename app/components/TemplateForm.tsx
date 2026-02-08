@@ -2,9 +2,11 @@
 
 import React, { useState, useRef } from 'react';
 import { X, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
-import { Template, TemplateMetadata, BodyType, StyleTag, Mood, Occasion, Framing, Lighting, ColorPalette, TransitionType, Category } from '@/types/template';
+import { Template, TemplateMetadata, BodyType, StyleTag, Mood, Occasion, Framing, Lighting, ColorPalette, TransitionType, Category, TemplateSlot, SlotSubjectType } from '@/types/template';
+import { ALL_SLOT_TYPES } from '@/lib/slots/slot-config';
 import { User } from 'firebase/auth';
 import { compressImage, compressImages, validatePayloadSize } from '@/lib/utils/image-compression';
+import { toast } from 'sonner';
 
 interface TemplateFormProps {
   template?: Template | null;
@@ -47,6 +49,9 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
   const [lighting, setLighting] = useState<Lighting>(template?.metadata.lighting || 'natural');
   const [colorPalette, setColorPalette] = useState<ColorPalette[]>(template?.metadata.colorPalette || []);
   const [setting, setSetting] = useState<('indoor' | 'outdoor' | 'studio')[]>(template?.metadata.setting || []);
+
+  // Slots state
+  const [slots, setSlots] = useState<TemplateSlot[]>(template?.slots || []);
 
   // Brands state
   const [brands, setBrands] = useState<Array<{id: string; name: string; domain: string}>>([]);
@@ -120,7 +125,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
 
   const analyzeWithAI = async () => {
     if (!imageData) {
-      alert('Por favor sube una imagen primero');
+      toast.warning('Por favor sube una imagen primero');
       return;
     }
 
@@ -157,11 +162,14 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
       setLighting(analysis.lighting || 'natural');
       setColorPalette(analysis.colorPalette || []);
       setSetting(analysis.setting || []);
+      if (analysis.slots && Array.isArray(analysis.slots)) {
+        setSlots(analysis.slots);
+      }
 
-      alert('✅ Análisis completado! Los campos se han llenado automáticamente. Revisa y ajusta si es necesario.');
+      toast.success('Análisis completado! Los campos se han llenado automáticamente. Revisa y ajusta si es necesario.');
     } catch (error: any) {
       console.error('❌ Error al analizar imagen:', error);
-      alert(error.message || 'Error al analizar imagen con IA');
+      toast.error(error.message || 'Error al analizar imagen con IA');
     } finally {
       setAiAnalyzing(false);
     }
@@ -172,22 +180,22 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
 
     // Validaciones
     if (!title || !description || !prompt) {
-      alert('Por favor completa todos los campos requeridos');
+      toast.warning('Por favor completa todos los campos requeridos');
       return;
     }
 
     if (!template && !imageData) {
-      alert('Por favor sube una imagen');
+      toast.warning('Por favor sube una imagen');
       return;
     }
 
     if (categories.length === 0) {
-      alert('Por favor selecciona al menos una categoría');
+      toast.warning('Por favor selecciona al menos una categoría');
       return;
     }
 
     if (bodyType.length === 0 || style.length === 0 || mood.length === 0 || occasion.length === 0) {
-      alert('Por favor selecciona al menos una opción en cada categoría de metadata');
+      toast.warning('Por favor selecciona al menos una opción en cada categoría de metadata');
       return;
     }
 
@@ -218,7 +226,13 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
         isActive,
         isPremium,
         transition,
-        websiteUrl: websiteUrl || null, // Include websiteUrl (null if empty for shared templates)
+        websiteUrl: websiteUrl || null,
+        ...(slots.length > 0 ? {
+          slots,
+          isGroup: slots.length > 1,
+          faceCount: slots.length,
+          maxFaces: slots.length,
+        } : {}),
       };
 
       // Comprimir y agregar imagen principal si es nueva
@@ -262,7 +276,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
       console.log(`📦 Payload size: ${validation.sizeKB.toFixed(0)}KB / ${validation.maxKB}KB`);
 
       if (!validation.valid) {
-        alert(`Error: El tamaño total (${validation.sizeKB.toFixed(0)}KB) excede el límite de ${validation.maxKB}KB. Reduce el número de variantes o la calidad de las imágenes.`);
+        toast.error(`El tamaño total (${validation.sizeKB.toFixed(0)}KB) excede el límite de ${validation.maxKB}KB. Reduce el número de variantes o la calidad de las imágenes.`);
         setLoading(false);
         return;
       }
@@ -290,7 +304,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
       onSuccess();
     } catch (error: any) {
       console.error('Error saving template:', error);
-      alert(error.message || 'Error al guardar template');
+      toast.error(error.message || 'Error al guardar template');
     } finally {
       setLoading(false);
       setCompressionStatus('');
@@ -519,6 +533,62 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
               <p className="text-xs text-gray-500 mt-2">
                 💡 Selecciona un sitio específico para filtrar este template solo para ese dominio. Si seleccionas "Todos los sitios", aparecerá en todas las marcas.
               </p>
+            </div>
+
+            {/* Slots Section */}
+            <div className="border-t border-white/10 pt-4 sm:pt-6">
+              <h3 className="text-lg sm:text-xl font-black mb-2">Subjects in Template</h3>
+              <p className="text-xs text-gray-400 mb-3">
+                {slots.length === 0
+                  ? 'No slots defined — template uses single face swap. Add slots for multi-face templates.'
+                  : slots.length === 1
+                  ? 'Single-slot template — standard face upload screen.'
+                  : `${slots.length}-slot template — group upload screen with labeled slots.`}
+              </p>
+              <div className="flex flex-col gap-2 mb-3">
+                {slots.map((slot, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-white/5 rounded-lg p-2">
+                    <select
+                      value={slot.type}
+                      onChange={(e) => {
+                        const updated = [...slots];
+                        updated[i] = { ...updated[i], type: e.target.value as SlotSubjectType };
+                        setSlots(updated);
+                      }}
+                      className="bg-black/30 text-white border border-white/10 rounded-lg px-2 py-1 text-sm"
+                    >
+                      {ALL_SLOT_TYPES.map((t) => (
+                        <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Label (optional)"
+                      value={slot.label || ''}
+                      onChange={(e) => {
+                        const updated = [...slots];
+                        updated[i] = { ...updated[i], label: e.target.value || undefined };
+                        setSlots(updated);
+                      }}
+                      className="flex-1 bg-black/30 text-white border border-white/10 rounded-lg px-2 py-1 text-sm placeholder:text-gray-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSlots(slots.filter((_, j) => j !== i))}
+                      className="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/40 text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSlots([...slots, { type: 'person', position: slots.length }])}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-gray-400 hover:bg-white/10 transition-all"
+              >
+                + Add Slot
+              </button>
             </div>
 
             {/* Categories Section */}
