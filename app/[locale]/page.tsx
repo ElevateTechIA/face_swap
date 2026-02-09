@@ -220,8 +220,8 @@ export default function Home() {
       // Iniciar con el primer mensaje
       setProcessingMessage(flirtMessages[0]);
       
-      // Calcular intervalo: ~25 segundos / 15 mensajes = ~1.67 segundos por mensaje
-      const messageInterval = 1700; // 1.7 segundos por mensaje
+      // Intervalo más lento para que el usuario pueda leer los tips
+      const messageInterval = 3500; // 3.5 segundos por mensaje
       let currentIndex = 0;
 
       const interval = setInterval(() => {
@@ -579,7 +579,8 @@ export default function Home() {
           setSourceImg(result);
         } else {
           setTargetImg(result);
-          setStep(2);
+          setSelectedTemplate(null); // Clear any selected template since this is a custom upload
+          setStep(3); // Go directly to face upload + generate screen
         }
       };
 
@@ -750,6 +751,15 @@ export default function Home() {
         if (token) authHeaders['Authorization'] = `Bearer ${token}`;
       }
 
+      // Simulated gradual progress during group swap
+      let progressTarget = 0;
+      const progressInterval = setInterval(() => {
+        setProcessingProgress((prev) => {
+          if (prev >= progressTarget - 2) return prev; // Don't overshoot the target
+          return prev + 1;
+        });
+      }, 300);
+
       const result = await processGroupSwap({
         templateUrl: targetImg!,
         userImages: groupImages,
@@ -761,11 +771,14 @@ export default function Home() {
           console.log('Group swap progress:', progress);
           setGroupSwapProgress(progress);
 
-          // Update processing progress percentage
-          const percentage = Math.round((progress.currentFace / progress.totalFaces) * 100);
-          setProcessingProgress(percentage);
+          // Set target: each face gets an equal slice, cap at 95% until fully done
+          const faceSlice = 90 / progress.totalFaces;
+          progressTarget = Math.round(faceSlice * progress.currentFace) + 5;
+          setProcessingProgress((prev) => Math.max(prev, progressTarget - Math.round(faceSlice) + 5));
         }
       });
+
+      clearInterval(progressInterval);
 
       console.log('✅ Group face swap completed!');
       setResultImage(result);
@@ -1259,8 +1272,20 @@ export default function Home() {
         {step === 4 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="relative w-48 h-48 mb-12">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle cx="96" cy="96" r="86" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray={540} strokeDashoffset={540 - (540 * processingProgress) / 100} className="text-pink-600 transition-all duration-300" />
+              {/* Background track */}
+              <svg className="w-full h-full absolute inset-0 transform -rotate-90">
+                <circle cx="96" cy="96" r="86" strokeWidth="12" fill="transparent" className="stroke-white/10" />
+              </svg>
+              {/* Spinning glow */}
+              <svg className="w-full h-full absolute inset-0 animate-spin" style={{ animationDuration: '3s' }}>
+                <defs>
+                  <linearGradient id="spinGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgb(219, 39, 119)" stopOpacity="0.8" />
+                    <stop offset="50%" stopColor="rgb(219, 39, 119)" stopOpacity="0" />
+                    <stop offset="100%" stopColor="rgb(219, 39, 119)" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <circle cx="96" cy="96" r="86" strokeWidth="4" fill="transparent" stroke="url(#spinGradient)" />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-5xl font-black italic tracking-tighter">{processingProgress}%</span>
