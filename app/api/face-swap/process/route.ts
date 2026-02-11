@@ -349,15 +349,24 @@ export async function POST(request: NextRequest) {
         generatedDimensions.width !== templateDimensions.width ||
         generatedDimensions.height !== templateDimensions.height
       ) {
-        console.log(`⚠️ Dimensions mismatch! Resizing to match template...`);
-        resultImage = await resizeImageToExactDimensions(
-          resultImage,
-          templateDimensions.width,
-          templateDimensions.height
-        );
+        // Check aspect ratio difference — skip resize if too different (e.g. Gemini outputs square for landscape template)
+        const templateAR = templateDimensions.width / templateDimensions.height;
+        const generatedAR = generatedDimensions.width / generatedDimensions.height;
+        const arDifference = Math.abs(templateAR - generatedAR) / templateAR;
 
-        const finalDimensions = await getImageDimensions(resultImage);
-        console.log(`✅ Final image dimensions: ${finalDimensions.width}x${finalDimensions.height}px`);
+        if (arDifference > 0.3) {
+          console.log(`⚠️ Aspect ratio too different (template: ${templateAR.toFixed(2)}, generated: ${generatedAR.toFixed(2)}, diff: ${(arDifference * 100).toFixed(0)}%) — skipping resize to avoid extreme crop`);
+        } else {
+          console.log(`⚠️ Dimensions mismatch! Resizing to match template (AR diff: ${(arDifference * 100).toFixed(0)}%)...`);
+          resultImage = await resizeImageToExactDimensions(
+            resultImage,
+            templateDimensions.width,
+            templateDimensions.height
+          );
+
+          const finalDimensions = await getImageDimensions(resultImage);
+          console.log(`✅ Final image dimensions: ${finalDimensions.width}x${finalDimensions.height}px`);
+        }
       } else {
         console.log(`✅ Image dimensions match template perfectly!`);
       }
