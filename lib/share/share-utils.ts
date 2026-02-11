@@ -107,18 +107,29 @@ export async function shareViaWebAPI(data: {
 }
 
 /**
- * Convierte una imagen base64 a File para compartir
+ * Convierte una imagen (base64 data URL o remote URL) a File para compartir
  */
 export async function base64ToFile(
-  base64: string,
+  imageSource: string,
   filename: string = 'face-swap.png'
 ): Promise<File | null> {
   try {
-    const response = await fetch(base64);
-    const blob = await response.blob();
-    return new File([blob], filename, { type: 'image/png' });
+    let blob: Blob;
+
+    if (imageSource.startsWith('data:')) {
+      // Base64 data URL — fetch directly
+      const response = await fetch(imageSource);
+      blob = await response.blob();
+    } else {
+      // Remote URL (e.g. Firebase Storage) — use proxy to avoid CORS
+      const response = await fetch(`/api/download-image?url=${encodeURIComponent(imageSource)}`);
+      if (!response.ok) throw new Error('Failed to download image');
+      blob = await response.blob();
+    }
+
+    return new File([blob], filename, { type: blob.type || 'image/png' });
   } catch (error) {
-    console.error('Error convirtiendo base64 a File:', error);
+    console.error('Error convirtiendo imagen a File:', error);
     return null;
   }
 }

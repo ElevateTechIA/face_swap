@@ -1405,10 +1405,6 @@ export default function Home() {
         type="app"
       />
 
-      {/* Version badge */}
-      <div className="fixed bottom-4 right-4 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-xs text-gray-400 z-50">
-        v2.4.0
-      </div>
 
       <style jsx>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }

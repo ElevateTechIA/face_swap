@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
-import { X, History, Share2, LogOut, User, Globe, Image } from 'lucide-react';
+import { X, History, Share2, LogOut, User, Globe, Image, Palette } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useTheme } from '@/app/contexts/ThemeContext';
+import { themes } from '@/lib/themes/theme-config';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ export function MobileMenu({
 }: MobileMenuProps) {
   const router = useRouter();
   const t = useTranslations();
+  const { themeId, setTheme } = useTheme();
 
   if (!isOpen) return null;
 
@@ -34,7 +37,7 @@ export function MobileMenu({
       icon: Image,
       label: t('gallery.title') || 'Galería Pública',
       onClick: () => {
-        router.push('/gallery');
+        router.push(`/${currentLocale}/gallery`);
         onClose();
       },
       show: true,
@@ -43,7 +46,7 @@ export function MobileMenu({
       icon: History,
       label: t('history.title') || 'Historial',
       onClick: () => {
-        router.push('/history');
+        router.push(`/${currentLocale}/history`);
         onClose();
       },
       show: !!user,
@@ -112,6 +115,41 @@ export function MobileMenu({
                 </button>
               )
           )}
+
+          {/* Selector de tema */}
+          <div className="pt-3">
+            <p className="text-[10px] sm:text-xs text-gray-400 uppercase font-bold mb-2 px-4">
+              <Palette size={12} className="inline mr-1" />
+              Theme
+            </p>
+            <div className="space-y-1.5">
+              {Object.values(themes).map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => setTheme(theme.id)}
+                  className={`w-full p-2.5 rounded-xl transition-all border flex items-center gap-3 active:scale-95 touch-manipulation ${
+                    themeId === theme.id
+                      ? 'border-white/30 bg-white/10'
+                      : 'border-white/5 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex-shrink-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.colors.primaryFrom}, ${theme.colors.primaryTo})`,
+                    }}
+                  />
+                  <div className="text-left">
+                    <p className="font-bold text-xs text-white">{theme.name}</p>
+                    <p className="text-[10px] text-gray-400">{theme.description}</p>
+                  </div>
+                  {themeId === theme.id && (
+                    <div className="ml-auto w-2 h-2 rounded-full bg-white" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Selector de idioma */}
           <div className="pt-3">

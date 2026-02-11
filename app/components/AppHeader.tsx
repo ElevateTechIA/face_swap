@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Sparkles, Image, Menu, LogIn, RefreshCw } from 'lucide-react';
 import { CreditsDisplay } from './CreditsDisplay';
-import { ThemeSelector } from './ThemeSelector';
 import { useBrand } from '@/app/contexts/BrandContext';
 
 interface AppHeaderProps {
@@ -49,14 +48,11 @@ export function AppHeader({
           </div>
         )}
         <span className="font-black text-lg tracking-tighter italic uppercase">
-          {brand.name} <span className="text-[10px] text-pink-500">v2.4.0</span>
+          {brand.name}
         </span>
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Theme Selector */}
-        <ThemeSelector />
-
         {/* Botón de Galería Pública */}
         <button
           onClick={() => router.push('/gallery')}

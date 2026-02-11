@@ -11,6 +11,7 @@ import { useAuth } from '@/app/auth/AuthProvider';
 import { AppHeader } from '@/app/components/AppHeader';
 import { MobileMenu } from '@/app/components/MobileMenu';
 import { ShareModal } from '@/app/components/modals/ShareModal';
+import { ImagePreviewModal } from '@/app/components/modals/ImagePreviewModal';
 
 
 interface GalleryItem {
@@ -50,6 +51,7 @@ export default function PublicGalleryPage() {
 
   // Estados de Guest Mode
   const [isGuestMode, setIsGuestMode] = useState(false);
+  const [previewItem, setPreviewItem] = useState<GalleryItem | null>(null);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -241,7 +243,8 @@ export default function PublicGalleryPage() {
               {items.map(item => (
                 <div
                   key={item.id}
-                  className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 hover:border-pink-500/50 transition-all"
+                  className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 hover:border-pink-500/50 transition-all cursor-pointer"
+                  onClick={() => setPreviewItem(item)}
                 >
                   {/* Image */}
                   <img
@@ -267,7 +270,7 @@ export default function PublicGalleryPage() {
                       </span>
 
                       <button
-                        onClick={() => handleLike(item.id)}
+                        onClick={(e) => { e.stopPropagation(); handleLike(item.id); }}
                         className={`flex items-center gap-1 text-[10px] transition-colors active:scale-95 ${
                           likedItems.has(item.id)
                             ? 'text-pink-500'
@@ -339,6 +342,14 @@ export default function PublicGalleryPage() {
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         type="app"
+      />
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={!!previewItem}
+        onClose={() => setPreviewItem(null)}
+        imageUrl={previewItem?.imageUrl || ''}
+        title={previewItem?.caption || previewItem?.style}
       />
     </div>
   );
