@@ -89,10 +89,11 @@ async function resizeImageToExactDimensions(
       buffer = Buffer.from(base64Data, 'base64');
     }
 
-    // Redimensionar con fill para preservar todo el contenido sin recortar
+    // Redimensionar con cover para mantener aspect ratio sin distorsión
     const resizedBuffer = await sharp(buffer)
       .resize(targetWidth, targetHeight, {
-        fit: 'fill',
+        fit: 'cover',
+        position: 'center',
         kernel: 'lanczos3'
       })
       .jpeg({ quality: 95 }) // Alta calidad

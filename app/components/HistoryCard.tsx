@@ -139,7 +139,7 @@ export function HistoryCard({ faceSwap, onDelete }: HistoryCardProps) {
 
   if (imageError) {
     return (
-      <div className="aspect-[3/4] rounded-3xl border border-white/10 bg-white/5 flex items-center justify-center">
+      <div className="min-h-[200px] rounded-3xl border border-white/10 bg-white/5 flex items-center justify-center">
         <p className="text-gray-500 text-sm">Imagen no disponible</p>
       </div>
     );
@@ -147,12 +147,12 @@ export function HistoryCard({ faceSwap, onDelete }: HistoryCardProps) {
 
   return (
     <>
-      <div className="relative aspect-[3/4] rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-white/5 group hover:border-pink-500/50 transition-all">
+      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-white/5 group hover:border-pink-500/50 transition-all">
         {/* Image - Clickeable para preview */}
         <img
           src={faceSwap.resultImageUrl}
           alt={`Face swap ${faceSwap.style}`}
-          className="w-full h-full object-cover cursor-pointer"
+          className="w-full h-auto object-contain cursor-pointer"
           onError={() => setImageError(true)}
           onClick={() => setShowPreview(true)}
           loading="lazy"

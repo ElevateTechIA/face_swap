@@ -163,6 +163,9 @@ export function MobileMenu({
             <span className="font-bold text-sm sm:text-base">{t('common.signOut')}</span>
           </button>
         )}
+
+        {/* Version */}
+        <p className="text-center text-[10px] text-gray-600 mt-4">v2.4.0</p>
       </div>
     </div>
   );
