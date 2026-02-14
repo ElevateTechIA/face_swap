@@ -551,6 +551,28 @@ export default function Home() {
     setProcessingProgress(0);
   };
 
+  const compressImage = (dataUrl: string, maxWidth: number, quality: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas context failed'));
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = dataUrl;
+    });
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'source' | 'target') => {
     const file = e.target.files?.[0];
     if (file) {
@@ -563,7 +585,7 @@ export default function Home() {
       console.log(`📤 Uploading ${type} image:`, file.name, file.type, file.size, 'bytes');
 
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const result = event.target?.result as string;
 
         // Validar que el resultado sea un data URL válido
@@ -573,12 +595,14 @@ export default function Home() {
           return;
         }
 
-        console.log(`✅ ${type} image loaded:`, result.substring(0, 50) + '...');
+        // Compress to stay under Vercel's 4.5MB payload limit
+        const compressed = await compressImage(result, 1536, 0.8);
+        console.log(`✅ ${type} image loaded & compressed: ${Math.round(result.length / 1024)}KB → ${Math.round(compressed.length / 1024)}KB`);
 
         if (type === 'source') {
-          setSourceImg(result);
+          setSourceImg(compressed);
         } else {
-          setTargetImg(result);
+          setTargetImg(compressed);
           setSelectedTemplate(null); // Clear any selected template since this is a custom upload
           setStep(3); // Go directly to face upload + generate screen
         }
@@ -856,18 +880,21 @@ export default function Home() {
   };
 
   // Usar templates dinámicos si están disponibles, sino usar fallback hardcodeado
-  const templatesSource = dynamicTemplates.length > 0 ? dynamicTemplates.map(t => ({
-    id: t.id,
-    url: t.imageUrl,
-    title: t.title,
-    category: t.categories?.[0] || t.metadata?.occasion?.[0] || 'all', // Use first category, fallback to occasion for backwards compatibility
-    categories: t.categories || [t.metadata?.occasion?.[0] || 'all'], // Support multiple categories
-    usageCount: t.usageCount || 0,
-    faceCount: t.faceCount || 1,
-    isGroup: t.isGroup || false,
-    variants: t.variants || [],
-    slots: t.slots || [],
-  })) : TEMPLATES;
+  const MAX_FACES = 2; // Limit group photos to 2 faces max (Vercel 60s timeout)
+  const templatesSource = dynamicTemplates.length > 0 ? dynamicTemplates
+    .filter(t => (t.faceCount || 1) <= MAX_FACES)
+    .map(t => ({
+      id: t.id,
+      url: t.imageUrl,
+      title: t.title,
+      category: t.categories?.[0] || t.metadata?.occasion?.[0] || 'all',
+      categories: t.categories || [t.metadata?.occasion?.[0] || 'all'],
+      usageCount: t.usageCount || 0,
+      faceCount: t.faceCount || 1,
+      isGroup: t.isGroup || false,
+      variants: t.variants || [],
+      slots: t.slots || [],
+    })) : TEMPLATES;
 
   // Función helper para generar variantes de un template
   const getTemplateVariants = (template: any): string[] => {
