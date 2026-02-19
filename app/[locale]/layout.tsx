@@ -4,6 +4,9 @@ import {locales} from '@/i18n';
 import {BrandProvider} from '@/app/contexts/BrandContext';
 import {getBrandConfig} from '@/lib/brand/brand-service';
 
+// Force dynamic rendering so brand config is always fresh from Firestore
+export const dynamic = 'force-dynamic';
+
 type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;

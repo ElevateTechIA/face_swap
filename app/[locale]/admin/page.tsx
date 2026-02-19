@@ -469,7 +469,7 @@ export default function AdminPanel() {
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden">
                         {brand.logo && brand.logo.startsWith('http') ? (
-                          <img src={brand.logo} alt={brand.name} className="w-full h-full object-contain p-2" />
+                          <img src={`${brand.logo}${brand.logo.includes('?') ? '&' : '?'}v=${brand.updatedAt ? new Date(brand.updatedAt).getTime() : '1'}`} alt={brand.name} className="w-full h-full object-contain p-2" />
                         ) : (
                           <Globe size={32} className="text-gray-400" />
                         )}

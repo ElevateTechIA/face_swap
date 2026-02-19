@@ -37,9 +37,9 @@ export function AppHeader({
         onClick={onLogoClick || (() => router.push('/'))}
       >
         {brand.logo && brand.logo.startsWith('http') ? (
-          // Custom logo from Firebase Storage
+          // Custom logo from Firebase Storage (cache-bust with updatedAt)
           <div className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center">
-            <img src={brand.logo} alt={brand.name} className="w-full h-full object-contain" />
+            <img src={`${brand.logo}${brand.logo.includes('?') ? '&' : '?'}v=${brand.updatedAt ? new Date(brand.updatedAt).getTime() : '1'}`} alt={brand.name} className="w-full h-full object-contain" />
           </div>
         ) : (
           // Default gradient icon
