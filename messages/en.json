@@ -196,7 +196,7 @@
       "generate": "CREATE FACE SWAP",
       "newSwap": "NEW FACE SWAP",
       "viewHistory": "View History",
-      "chooseModel": "Choose Model"
+      "chooseModel": "Choose AI Model"
     },
     "guestTrial": {
       "title": "Free Trial",
