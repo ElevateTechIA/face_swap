@@ -1304,7 +1304,7 @@ export default function Home() {
                       <div className="w-full max-w-[280px] aspect-[3/4.5] rounded-3xl overflow-hidden border-2 border-pink-500/50 shadow-xl shadow-pink-500/20">
                         <img src={targetImg} className="w-full h-full object-cover" alt="Template" />
                       </div>
-                      <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
+                      <p className="text-sm text-pink-500 font-black uppercase tracking-wider text-center">{selectedTemplate?.title || 'Template'}</p>
                     </div>
                   )}
 
