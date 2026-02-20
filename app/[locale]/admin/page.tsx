@@ -8,6 +8,7 @@ import { Template } from '@/types/template';
 import { BrandConfig } from '@/types/brand';
 import { TemplateForm } from '@/app/components/TemplateForm';
 import { BrandConfigForm } from '@/app/components/BrandConfigForm';
+import { toast } from 'sonner';
 
 export default function AdminPanel() {
   const { user, loading: authLoading } = useAuth();
@@ -127,7 +128,7 @@ export default function AdminPanel() {
       await loadTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
-      alert('Error al eliminar template');
+      toast.error('Error al eliminar template');
     }
   };
 
@@ -152,7 +153,7 @@ export default function AdminPanel() {
       await loadTemplates();
     } catch (error) {
       console.error('Error toggling active:', error);
-      alert('Error al actualizar template');
+      toast.error('Error al actualizar template');
     }
   };
 
@@ -189,7 +190,7 @@ export default function AdminPanel() {
       await loadBrands();
     } catch (error) {
       console.error('Error deleting brand:', error);
-      alert('Error al eliminar configuración de marca');
+      toast.error('Error al eliminar configuración de marca');
     }
   };
 
@@ -213,7 +214,7 @@ export default function AdminPanel() {
       await loadBrands();
     } catch (error) {
       console.error('Error toggling brand active:', error);
-      alert('Error al actualizar configuración de marca');
+      toast.error('Error al actualizar configuración de marca');
     }
   };
 

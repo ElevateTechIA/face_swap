@@ -15,24 +15,25 @@ export async function getBrandConfig(): Promise<BrandConfig> {
 
     console.log(`🔍 Loading brand config: ${brandName} (from env: NEXT_PUBLIC_BRAND_NAME)`);
 
-    // Load brand by name
+    // Load all active brands and match case-insensitively
+    // (Firestore doesn't support case-insensitive queries)
     const brandSnapshot = await db
       .collection('brandConfigs')
-      .where('name', '==', brandName)
       .where('isActive', '==', true)
-      .limit(1)
       .get();
 
-    if (brandSnapshot.empty) {
+    const brandDoc = brandSnapshot.docs.find(
+      (doc) => doc.data().name?.toLowerCase() === brandName.toLowerCase()
+    );
+
+    if (!brandDoc) {
       console.log(`⚠️ Brand "${brandName}" not found in Firestore, creating default with name: ${brandName}`);
-      // Return a default brand with the requested name from env
       return {
         ...DEFAULT_BRAND,
         name: brandName,
       };
     }
 
-    const brandDoc = brandSnapshot.docs[0];
     const brandData = brandDoc.data();
 
     const brandConfig: BrandConfig = {

@@ -15,11 +15,12 @@ import { AppHeader } from '@/app/components/AppHeader';
 import { MultiFaceUpload } from '@/app/components/MultiFaceUpload';
 import { TemplateCarousel } from '@/app/components/TemplateCarousel';
 import { AI_STYLES } from '@/lib/styles/style-configs';
+import type { FaceSwapProvider } from '@/lib/ai-providers/types';
 import { processGroupSwap, type GroupSwapProgress } from '@/lib/group-photos/processor';
 import { canUseGuestTrial, markGuestTrialAsUsed, getGuestTrialStatus } from '@/lib/guest-trial';
 import {
   Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
-  Grid, Flame, Layers, Play, Zap
+  Grid, Flame, Layers, Play, Zap, ChevronDown
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
@@ -203,6 +204,16 @@ export default function Home() {
     `😊 ${t('faceSwap.processingTips.tip14')}`,
     `👑 ${t('faceSwap.processingTips.tip15')}`
   ];
+
+  // AI Provider selection
+  const PROVIDER_OPTIONS: { value: FaceSwapProvider; label: string; description: string }[] = [
+    { value: 'gemini', label: 'Gemini', description: 'Google AI' },
+    { value: 'wavespeed-face', label: 'WaveSpeed Face', description: 'Face only' },
+    { value: 'wavespeed-hair-face', label: 'WaveSpeed Full', description: 'Hair + Face' },
+    { value: 'replicate', label: 'Replicate', description: 'Classic swap' },
+  ];
+  const [selectedProvider, setSelectedProvider] = useState<FaceSwapProvider>('gemini');
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
 
   // Group photos state
   const [groupImages, setGroupImages] = useState<string[]>([]);
@@ -694,6 +705,7 @@ export default function Home() {
           targetImage: targetImg,
           style: selectedStyle.id,
           templateTitle: selectedTemplate?.title,
+          provider: selectedProvider,
           isGuestTrial: isGuest,
         }),
       });
@@ -788,6 +800,7 @@ export default function Home() {
         templateUrl: targetImg!,
         userImages: groupImages,
         style: selectedStyle.id,
+        provider: selectedProvider,
         slots: selectedTemplate?.slots,
         templateTitle: selectedTemplate?.title,
         authHeaders,
@@ -1217,6 +1230,49 @@ export default function Home() {
                   }}
                   templatePreview={targetImg || undefined}
                 />
+                {/* AI Model Selector for Group */}
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('faceSwap.buttons.chooseModel')}</p>
+                <div className="relative w-full">
+                  <button
+                    onClick={() => setShowProviderDropdown(!showProviderDropdown)}
+                    className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:border-pink-500/50 transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Zap size={14} className="text-pink-500" />
+                      <span className="text-sm font-bold text-white">
+                        {PROVIDER_OPTIONS.find(p => p.value === selectedProvider)?.label}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {PROVIDER_OPTIONS.find(p => p.value === selectedProvider)?.description}
+                      </span>
+                    </div>
+                    <ChevronDown size={16} className={`text-gray-400 transition-transform ${showProviderDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showProviderDropdown && (
+                    <div className="absolute z-50 bottom-full left-0 right-0 mb-1 rounded-xl bg-[#1a1a1a] border border-white/10 overflow-hidden shadow-2xl">
+                      {PROVIDER_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSelectedProvider(option.value);
+                            setShowProviderDropdown(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-all ${
+                            selectedProvider === option.value ? 'bg-pink-500/10 border-l-2 border-pink-500' : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-white">{option.label}</span>
+                            <span className="text-xs text-gray-500">{option.description}</span>
+                          </div>
+                          {selectedProvider === option.value && (
+                            <div className="w-2 h-2 rounded-full bg-pink-500" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-col gap-3">
                   <Button onClick={startProcessing} disabled={groupImages.length === 0} className="h-16 bg-white text-black text-xl italic font-black uppercase">
                     {t('faceSwap.buttons.generate')} <Zap size={22} fill="currentColor" />
@@ -1251,6 +1307,50 @@ export default function Home() {
                       <p className="text-sm text-pink-500 font-black uppercase tracking-wider">{selectedTemplate?.title || 'Template'}</p>
                     </div>
                   )}
+
+                  {/* AI Model Selector */}
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('faceSwap.buttons.chooseModel')}</p>
+                  <div className="relative w-full max-w-[280px]">
+                    <button
+                      onClick={() => setShowProviderDropdown(!showProviderDropdown)}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:border-pink-500/50 transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Zap size={14} className="text-pink-500" />
+                        <span className="text-sm font-bold text-white">
+                          {PROVIDER_OPTIONS.find(p => p.value === selectedProvider)?.label}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {PROVIDER_OPTIONS.find(p => p.value === selectedProvider)?.description}
+                        </span>
+                      </div>
+                      <ChevronDown size={16} className={`text-gray-400 transition-transform ${showProviderDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showProviderDropdown && (
+                      <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-xl bg-[#1a1a1a] border border-white/10 overflow-hidden shadow-2xl">
+                        {PROVIDER_OPTIONS.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => {
+                              setSelectedProvider(option.value);
+                              setShowProviderDropdown(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-all ${
+                              selectedProvider === option.value ? 'bg-pink-500/10 border-l-2 border-pink-500' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-white">{option.label}</span>
+                              <span className="text-xs text-gray-500">{option.description}</span>
+                            </div>
+                            {selectedProvider === option.value && (
+                              <div className="w-2 h-2 rounded-full bg-pink-500" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   <ChevronRight className="text-pink-500 rotate-90" size={32} />
 

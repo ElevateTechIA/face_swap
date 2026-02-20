@@ -5,6 +5,7 @@ import { X, Upload, Loader2 } from 'lucide-react';
 import { BrandConfig } from '@/types/brand';
 import { User } from 'firebase/auth';
 import { compressImage } from '@/lib/utils/image-compression';
+import { toast } from 'sonner';
 
 interface BrandConfigFormProps {
   brand?: BrandConfig | null;
@@ -42,12 +43,12 @@ export function BrandConfigForm({ brand, onClose, onSuccess, user }: BrandConfig
     e.preventDefault();
 
     if (!domain || !name) {
-      alert('Por favor completa los campos requeridos: Domain y Name');
+      toast.error('Por favor completa los campos requeridos: Domain y Name');
       return;
     }
 
     if (!logoData && !brand) {
-      alert('Por favor sube un logo');
+      toast.error('Por favor sube un logo');
       return;
     }
 
@@ -92,11 +93,11 @@ export function BrandConfigForm({ brand, onClose, onSuccess, user }: BrandConfig
         throw new Error(error.error || 'Error al guardar configuración de marca');
       }
 
-      alert(`✅ Configuración de marca ${brand ? 'actualizada' : 'creada'} exitosamente`);
+      toast.success(`Configuración de marca ${brand ? 'actualizada' : 'creada'} exitosamente`);
       onSuccess();
     } catch (error: any) {
       console.error('Error saving brand config:', error);
-      alert(error.message || 'Error al guardar configuración de marca');
+      toast.error(error.message || 'Error al guardar configuración de marca');
     } finally {
       setLoading(false);
     }

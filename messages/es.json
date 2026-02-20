@@ -199,7 +199,8 @@
     "buttons": {
       "generate": "CREAR FACE SWAP",
       "newSwap": "NUEVO FACE SWAP",
-      "viewHistory": "Ver Historial"
+      "viewHistory": "Ver Historial",
+      "chooseModel": "Escoge el Modelo"
     },
     "guestTrial": {
       "title": "Prueba Gratis",

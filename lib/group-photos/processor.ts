@@ -6,6 +6,7 @@
  */
 
 import { TemplateSlot } from '@/types/template';
+import type { FaceSwapProvider } from '@/lib/ai-providers/types';
 
 export interface GroupSwapProgress {
   currentFace: number;
@@ -19,6 +20,7 @@ export interface GroupSwapParams {
   templateUrl: string;
   userImages: string[];
   style?: string;
+  provider?: FaceSwapProvider;
   slots?: TemplateSlot[];
   templateTitle?: string;
   authHeaders?: Record<string, string>;
@@ -33,6 +35,7 @@ export async function processGroupSwap({
   templateUrl,
   userImages,
   style,
+  provider,
   slots,
   templateTitle,
   authHeaders,
@@ -64,6 +67,7 @@ export async function processGroupSwap({
           sourceImage: userImages[i],
           targetImage: currentTemplate,
           style: style || 'natural',
+          provider,
           isGroupSwap: true,
           faceIndex: i,
           totalFaces,

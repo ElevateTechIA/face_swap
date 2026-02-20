@@ -16,11 +16,11 @@ async function urlToBase64(url: string): Promise<string> {
 }
 
 /**
- * WaveSpeed AI head swap provider
+ * WaveSpeed AI hair+face swap provider
  * Uses image-head-swap endpoint — swaps face + hair together
  * Ignores prompt — dedicated face swap model, not prompt-driven
  */
-export async function wavespeedSwap(input: FaceSwapInput): Promise<FaceSwapResult> {
+export async function wavespeedHairFaceSwap(input: FaceSwapInput): Promise<FaceSwapResult> {
   const apiKey = process.env.WAVESPEED_API_KEY;
   if (!apiKey) {
     throw new Error('WAVESPEED_API_KEY not configured');
@@ -78,25 +78,25 @@ export async function wavespeedSwap(input: FaceSwapInput): Promise<FaceSwapResul
 }
 
 /**
- * WaveSpeed AI face swap PRO provider
- * Uses image-face-swap-pro endpoint — higher quality face blend ($0.025/swap)
- * Face-only (no hair swap), but more realistic blending than standard endpoints
+ * WaveSpeed AI face-only swap provider
+ * Uses image-face-swap-pro endpoint — face-only swap (no hair)
+ * More realistic blending than head swap
  */
-export async function wavespeedProSwap(input: FaceSwapInput): Promise<FaceSwapResult> {
+export async function wavespeedFaceSwap(input: FaceSwapInput): Promise<FaceSwapResult> {
   const apiKey = process.env.WAVESPEED_API_KEY;
   if (!apiKey) {
     throw new Error('WAVESPEED_API_KEY not configured');
   }
 
-  console.log('🔄 [WaveSpeed Pro] Preparing images...');
+  console.log('🔄 [WaveSpeed Face] Preparing images...');
 
-  const targetUrl = await uploadTempImage(input.targetImage, 'wsp-target');
-  const sourceUrl = await uploadTempImage(input.sourceImage, 'wsp-source');
+  const targetUrl = await uploadTempImage(input.targetImage, 'wsf-target');
+  const sourceUrl = await uploadTempImage(input.sourceImage, 'wsf-source');
 
   if (input.isGroupSwap) {
-    console.log(`👥 [WaveSpeed Pro] Group swap: face ${(input.faceIndex || 0) + 1} of ${input.totalFaces}, target_index: ${input.faceIndex || 0}`);
+    console.log(`👥 [WaveSpeed Face] Group swap: face ${(input.faceIndex || 0) + 1} of ${input.totalFaces}, target_index: ${input.faceIndex || 0}`);
   }
-  console.log('🚀 [WaveSpeed Pro] Calling image-face-swap-pro API...');
+  console.log('🚀 [WaveSpeed Face] Calling image-face-swap-pro API...');
 
   const response = await fetch('https://api.wavespeed.ai/api/v3/wavespeed-ai/image-face-swap-pro', {
     method: 'POST',
@@ -114,23 +114,23 @@ export async function wavespeedProSwap(input: FaceSwapInput): Promise<FaceSwapRe
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`❌ [WaveSpeed Pro] API error: ${response.status}`, errorText);
-    throw new Error(`WaveSpeed Pro API error: ${response.status} - ${errorText}`);
+    console.error(`❌ [WaveSpeed Face] API error: ${response.status}`, errorText);
+    throw new Error(`WaveSpeed Face API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
-  console.log('📦 [WaveSpeed Pro] Response received');
+  console.log('📦 [WaveSpeed Face] Response received');
 
   const resultUrl = data?.data?.outputs?.[0];
   if (!resultUrl) {
-    console.error('❌ [WaveSpeed Pro] No output URL in response:', JSON.stringify(data));
-    throw new Error('WaveSpeed Pro returned no output image');
+    console.error('❌ [WaveSpeed Face] No output URL in response:', JSON.stringify(data));
+    throw new Error('WaveSpeed Face returned no output image');
   }
 
-  console.log(`✅ [WaveSpeed Pro] Result URL: ${resultUrl}`);
+  console.log(`✅ [WaveSpeed Face] Result URL: ${resultUrl}`);
 
   const resultImage = await urlToBase64(resultUrl);
-  console.log(`✅ [WaveSpeed Pro] Face swap completed, result size: ${resultImage.length} chars`);
+  console.log(`✅ [WaveSpeed Face] Face swap completed, result size: ${resultImage.length} chars`);
 
   return { resultImage };
 }
