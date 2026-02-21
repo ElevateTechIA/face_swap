@@ -11,6 +11,7 @@ import { ShareModal } from '@/app/components/modals/ShareModal';
 import { MobileMenu } from '@/app/components/MobileMenu';
 import { PublicGalleryToggle } from '@/app/components/PublicGalleryToggle';
 import { AppHeader } from '@/app/components/AppHeader';
+import { BottomTabBar } from '@/app/components/BottomTabBar';
 // StyleSelector removed - using default style only
 import { MultiFaceUpload } from '@/app/components/MultiFaceUpload';
 import { TemplateCarousel } from '@/app/components/TemplateCarousel';
@@ -1532,6 +1533,8 @@ export default function Home() {
         type="app"
       />
 
+      {/* Bottom Tab Bar - only on template browsing */}
+      {step === 1 && <BottomTabBar />}
 
       <style jsx>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }

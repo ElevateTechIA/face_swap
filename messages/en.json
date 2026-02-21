@@ -486,6 +486,18 @@
       "featured": "Featured"
     }
   },
+  "tabs": {
+    "faceSwap": "Face Swap",
+    "videos": "Videos"
+  },
+  "videos": {
+    "comingSoon": "Coming Soon",
+    "subtitle": "AI-powered video creation is on its way",
+    "videoTemplates": "Video Templates",
+    "videoTemplatesDesc": "Choose a video template and swap your face into it — dance, act, or star in any scene",
+    "animateProduct": "Animate Product",
+    "animateProductDesc": "Upload a product photo and describe the animation you want — perfect for ads and social media"
+  },
   "errorBoundary": {
     "title": "Oops! Something went wrong",
     "description": "We encountered an unexpected error. Don't worry, our team has been notified and we're working on it.",

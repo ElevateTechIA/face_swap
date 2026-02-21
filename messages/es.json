@@ -490,6 +490,18 @@
       "featured": "Destacados"
     }
   },
+  "tabs": {
+    "faceSwap": "Face Swap",
+    "videos": "Videos"
+  },
+  "videos": {
+    "comingSoon": "Muy Pronto",
+    "subtitle": "Creación de videos con IA está en camino",
+    "videoTemplates": "Video Templates",
+    "videoTemplatesDesc": "Elige un video template y pon tu cara en él — baila, actúa o protagoniza cualquier escena",
+    "animateProduct": "Animar Producto",
+    "animateProductDesc": "Sube la foto de un producto y describe la animación que quieres — perfecto para anuncios y redes sociales"
+  },
   "errorBoundary": {
     "title": "¡Ups! Algo salió mal",
     "description": "Encontramos un error inesperado. No te preocupes, nuestro equipo ha sido notificado y estamos trabajando en ello.",
