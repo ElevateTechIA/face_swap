@@ -1,6 +1,6 @@
 // Template metadata types for dynamic template management
 
-export type Category = 'trending' | 'editorial' | 'new-year' | 'cinematic' | 'party' | 'birthday' | 'casual' | 'professional' | 'date' | 'wedding' | 'graduation' | 'vacation';
+export type Category = 'trending' | 'editorial' | 'new-year' | 'cinematic' | 'party' | 'birthday' | 'casual' | 'professional' | 'date' | 'wedding' | 'graduation' | 'vacation' | 'barber-shop';
 export type BodyType = 'athletic' | 'slim' | 'curvy' | 'plus-size' | 'average';
 export type StyleTag = 'elegant' | 'casual' | 'professional' | 'party' | 'romantic' | 'edgy' | 'vintage' | 'modern';
 export type Mood = 'happy' | 'confident' | 'relaxed' | 'energetic' | 'mysterious' | 'playful';
