@@ -39,7 +39,8 @@
       "WebFetch(domain:buildaiapplications.com)",
       "WebFetch(domain:www.insightface.ai)",
       "WebFetch(domain:docs.magichour.ai)",
-      "WebFetch(domain:docs.akool.com)"
+      "WebFetch(domain:docs.akool.com)",
+      "Bash(npx next build:*)"
     ]
   }
 }

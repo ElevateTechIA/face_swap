@@ -21,6 +21,7 @@
   "description": "",
   "dependencies": {
     "@fal-ai/client": "^1.7.2",
+    "@fal-ai/server-proxy": "^1.2.1",
     "@google/generative-ai": "^0.24.1",
     "@stripe/stripe-js": "^8.6.0",
     "autoprefixer": "^10.4.23",

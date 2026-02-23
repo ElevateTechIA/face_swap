@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: '*.fal.run',
+      },
+      {
+        protocol: 'https',
+        hostname: 'fal.run',
+      },
     ],
   },
 
@@ -24,7 +32,7 @@ const nextConfig: NextConfig = {
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' blob: data: https: http:;
       font-src 'self' data: https://fonts.gstatic.com;
-      connect-src 'self' https://generativelanguage.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com;
+      connect-src 'self' https://generativelanguage.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://*.fal.run https://fal.run https://queue.fal.run https://fal-cdn.batuhan-941.workers.dev https://rest.alpha.fal.ai;
       frame-src 'self' https://accounts.google.com https://*.firebaseapp.com;
       object-src 'none';
       base-uri 'self';
