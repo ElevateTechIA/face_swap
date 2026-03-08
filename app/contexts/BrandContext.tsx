@@ -1,14 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { BrandConfig, DEFAULT_BRAND } from '@/types/brand';
 
 interface BrandContextType {
   brand: BrandConfig;
+  setBrand: (brand: BrandConfig) => void;
 }
 
 const BrandContext = createContext<BrandContextType>({
   brand: DEFAULT_BRAND,
+  setBrand: () => {},
 });
 
 interface BrandProviderProps {
@@ -17,8 +19,10 @@ interface BrandProviderProps {
 }
 
 export function BrandProvider({ children, brandConfig }: BrandProviderProps) {
+  const [brand, setBrand] = useState<BrandConfig>(brandConfig);
+
   return (
-    <BrandContext.Provider value={{ brand: brandConfig }}>
+    <BrandContext.Provider value={{ brand, setBrand }}>
       {children}
     </BrandContext.Provider>
   );

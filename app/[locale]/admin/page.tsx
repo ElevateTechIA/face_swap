@@ -227,10 +227,9 @@ export default function AdminPanel() {
   // Filter templates by selected brand
   const filteredTemplates = selectedBrandFilter === 'all'
     ? templates
-    : templates.filter(t => {
-        // Show templates with no websiteUrl (shared) or matching websiteUrl
-        return !t.websiteUrl || t.websiteUrl === selectedBrandFilter;
-      });
+    : selectedBrandFilter === ''
+      ? templates.filter(t => !t.websiteUrl)
+      : templates.filter(t => t.websiteUrl === selectedBrandFilter);
 
   // Get brand name for a template
   const getBrandName = (websiteUrl?: string) => {

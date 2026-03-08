@@ -67,7 +67,9 @@
       "date": "Date Night",
       "wedding": "Wedding",
       "graduation": "Graduation",
-      "vacation": "Vacation"
+      "vacation": "Vacation",
+      "barber-shop": "Barber Shop",
+      "nails": "Nails"
     },
     "uploadScene": "UPLOAD SCENE",
     "uploadSceneDesc": "Use your own background photo",

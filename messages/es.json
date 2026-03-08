@@ -67,7 +67,9 @@
       "date": "Cita Romántica",
       "wedding": "Boda",
       "graduation": "Graduación",
-      "vacation": "Vacaciones"
+      "vacation": "Vacaciones",
+      "barber-shop": "Barbería",
+      "nails": "Uñas"
     },
     "uploadScene": "SUBIR ESCENA",
     "uploadSceneDesc": "Usa tu propia foto de fondo",

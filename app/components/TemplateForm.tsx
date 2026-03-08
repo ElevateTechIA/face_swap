@@ -596,7 +596,7 @@ export function TemplateForm({ template, onClose, onSuccess, user }: TemplateFor
               <h3 className="text-lg sm:text-xl font-black mb-3 sm:mb-4">Categorías *</h3>
               <p className="text-xs text-gray-400 mb-3">Selecciona las categorías donde aparecerá este template. Por defecto aparece en "Trending".</p>
               <div className="flex flex-wrap gap-2">
-                {(['trending', 'editorial', 'new-year', 'cinematic', 'party', 'birthday', 'casual', 'professional', 'date', 'wedding', 'graduation', 'vacation', 'barber-shop'] as Category[]).map((cat) => (
+                {(['trending', 'editorial', 'new-year', 'cinematic', 'party', 'birthday', 'casual', 'professional', 'date', 'wedding', 'graduation', 'vacation', 'barber-shop', 'nails'] as Category[]).map((cat) => (
                   <button
                     key={cat}
                     type="button"
