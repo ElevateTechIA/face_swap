@@ -78,8 +78,10 @@ export async function processGroupSwap({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Face swap failed');
+        const errorBody = await response.json();
+        const apiError: any = new Error(errorBody.error || 'Face swap failed');
+        apiError.code = errorBody.code;
+        throw apiError;
       }
 
       const data = await response.json();

@@ -5,6 +5,13 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getTemplatePrompt } from '@/lib/template-prompts';
 import { getStyleById } from '@/lib/styles/style-configs';
 import { withRateLimit, RATE_LIMITS, getClientIp } from '@/lib/security/rate-limiter';
+import {
+  hashGuestIdentifier,
+  consumeGuestTrial,
+  refundGuestTrial,
+  GUEST_TRIAL_COOKIE,
+  GUEST_TRIAL_COOKIE_MAX_AGE,
+} from '@/lib/security/guest-trial-server';
 import { performFaceSwap } from '@/lib/ai-providers';
 import sharp from 'sharp';
 
@@ -115,6 +122,8 @@ export async function POST(request: NextRequest) {
   let transactionId: string | null = null;
   let userId: string | null = null;
   let isGuestTrial = false;
+  let guestIpHash: string | null = null;
+  let guestTrialConsumed = false;
 
   try {
     // Obtener body del request primero
@@ -160,11 +169,30 @@ export async function POST(request: NextRequest) {
     if (!isGuestTrial) {
       userId = await verifyUserAuth(request);
     } else {
-      // Guest trial - generar ID temporal basado en IP o timestamp
-      const forwardedFor = request.headers.get('x-forwarded-for');
-      const ip = forwardedFor?.split(',')[0] || 'unknown';
-      userId = `guest_${ip}_${Date.now()}`;
+      // Guest trial: ID estable por IP (sin Date.now(), para que el
+      // rate limit por usuario funcione) y cookie como señal secundaria
+      const ip = getClientIp(request);
+      guestIpHash = hashGuestIdentifier(ip);
+      userId = `guest_${guestIpHash.slice(0, 16)}`;
       console.log('🎁 Processing GUEST TRIAL for:', userId);
+
+      // Cookie httpOnly como señal secundaria (cubre rotación de IP).
+      // Las caras 2..N de un swap grupal no se bloquean aquí: las valida
+      // consumeGuestTrial con su ventana de ráfaga.
+      const isGroupContinuation = Boolean(isGroupSwap && (faceIndex ?? 0) > 0);
+      if (
+        !isGroupContinuation &&
+        request.cookies.get(GUEST_TRIAL_COOKIE)?.value === 'used'
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Guest trial already used',
+            code: 'GUEST_TRIAL_USED',
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // 🔒 SECURITY: Rate limiting
@@ -275,9 +303,26 @@ export async function POST(request: NextRequest) {
 
       console.log(`✅ Credits deducted: user ${userId} now has ${newCredits} credits`);
     } else {
-      // Guest trial - no deducir créditos, solo crear registro temporal
+      // Guest trial: consumir el trial server-side (1 por IP por ventana)
+      const { allowed: trialAllowed } = await consumeGuestTrial(guestIpHash!, {
+        isGroupContinuation: Boolean(isGroupSwap && (faceIndex ?? 0) > 0),
+      });
+
+      if (!trialAllowed) {
+        console.warn(`🚫 Guest trial already used for ${userId}`);
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Guest trial already used',
+            code: 'GUEST_TRIAL_USED',
+          },
+          { status: 403 }
+        );
+      }
+
+      guestTrialConsumed = true;
       faceSwapId = `guest_${Date.now()}`;
-      console.log(`🎁 Guest trial - no credit deduction`);
+      console.log(`🎁 Guest trial consumed - no credit deduction`);
     }
 
     // Build prompt for the face swap
@@ -449,7 +494,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Face swap completed successfully: ${faceSwapId}`);
 
-    return NextResponse.json({
+    const successResponse = NextResponse.json({
       success: true,
       resultImage,
       resultUrl: resultImageUrl || resultImage, // For group swaps to use in next iteration
@@ -460,8 +505,27 @@ export async function POST(request: NextRequest) {
       totalFaces: totalFaces ?? 1,
     });
 
+    // Marcar el trial también vía cookie httpOnly (cubre rotación de IP)
+    if (isGuestTrial) {
+      successResponse.cookies.set(GUEST_TRIAL_COOKIE, 'used', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: GUEST_TRIAL_COOKIE_MAX_AGE,
+        path: '/',
+      });
+    }
+
+    return successResponse;
+
   } catch (error: any) {
     console.error('❌ Error en Face Swap:', error.message);
+
+    // Si el swap de un guest falló después de consumir su trial, devolverlo
+    if (isGuestTrial && guestTrialConsumed && guestIpHash) {
+      await refundGuestTrial(guestIpHash);
+      console.log('🔄 Guest trial refunded due to failure');
+    }
 
     // Si hay error y ya se descontaron créditos, revertirlos (solo para usuarios autenticados)
     if (!isGuestTrial && userId && transactionId && faceSwapId) {

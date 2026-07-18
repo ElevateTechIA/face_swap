@@ -737,6 +737,14 @@ export default function Home() {
           setStep(3);
           return;
         }
+        if (error.code === 'GUEST_TRIAL_USED') {
+          // El servidor rechazó el trial (localStorage borrado / otra pestaña)
+          markGuestTrialAsUsed();
+          setGuestTrialAvailable(false);
+          setShowLoginGate(true);
+          setStep(3);
+          return;
+        }
         throw new Error(error.error || 'Error procesando Face Swap');
       }
 
@@ -846,6 +854,13 @@ export default function Home() {
 
     } catch (error: any) {
       console.error('❌ Group face swap error:', error);
+      if (error.code === 'GUEST_TRIAL_USED') {
+        markGuestTrialAsUsed();
+        setGuestTrialAvailable(false);
+        setShowLoginGate(true);
+        setStep(3);
+        return;
+      }
       toast.error('Error procesando foto grupal: ' + error.message);
       setStep(3);
     } finally {
