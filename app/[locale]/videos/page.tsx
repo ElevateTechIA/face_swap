@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth/AuthProvider';
 import { AppHeader } from '@/app/components/AppHeader';
 import { MobileMenu } from '@/app/components/MobileMenu';
-import { BottomTabBar } from '@/app/components/BottomTabBar';
 import { ShareModal } from '@/app/components/modals/ShareModal';
 import { Play, Film, Package, Sparkles, ArrowRight } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
@@ -113,8 +112,6 @@ export default function VideosPage() {
           })}
         </div>
       </main>
-
-      <BottomTabBar />
 
       <MobileMenu
         isOpen={showMobileMenu}

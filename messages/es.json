@@ -69,6 +69,10 @@
       "graduation": "Graduación",
       "vacation": "Vacaciones",
       "barber-shop": "Barbería",
+      "fade": "Degradado",
+      "beard": "Barba",
+      "classic-cut": "Corte Clásico",
+      "skin-fade": "Skin Fade",
       "nails": "Uñas"
     },
     "uploadScene": "SUBIR ESCENA",
@@ -493,6 +497,7 @@
     }
   },
   "tabs": {
+    "home": "Inicio",
     "faceSwap": "Face Swap",
     "videos": "Videos"
   },

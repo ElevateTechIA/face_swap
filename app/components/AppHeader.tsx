@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Image, Menu, LogIn, RefreshCw } from 'lucide-react';
@@ -29,8 +29,28 @@ export function AppHeader({
   const router = useRouter();
   const t = useTranslations();
 
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const current = window.scrollY;
+      const diff = current - lastScrollY.current;
+
+      if (Math.abs(diff) < 10) return;
+
+      setVisible(diff < 0 || current < 10);
+      lastScrollY.current = current;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-14 bg-theme-bg-secondary/70 backdrop-blur-2xl border-b border-theme z-50 flex items-center justify-between px-4">
+    <header className={`fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-14 bg-theme-bg-secondary/70 backdrop-blur-2xl border-b border-theme z-50 flex items-center justify-between px-4 transition-transform duration-300 ${
+      visible ? 'translate-y-0' : '-translate-y-full'
+    }`}>
       <BrandSwitcherDropdown />
 
       <div className="flex items-center gap-2">

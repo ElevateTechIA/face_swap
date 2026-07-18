@@ -11,7 +11,6 @@ import { ShareModal } from '@/app/components/modals/ShareModal';
 import { MobileMenu } from '@/app/components/MobileMenu';
 import { PublicGalleryToggle } from '@/app/components/PublicGalleryToggle';
 import { AppHeader } from '@/app/components/AppHeader';
-import { BottomTabBar } from '@/app/components/BottomTabBar';
 // StyleSelector removed - using default style only
 import { MultiFaceUpload } from '@/app/components/MultiFaceUpload';
 import { TemplateCarousel } from '@/app/components/TemplateCarousel';
@@ -21,7 +20,7 @@ import { processGroupSwap, type GroupSwapProgress } from '@/lib/group-photos/pro
 import { canUseGuestTrial, markGuestTrialAsUsed, getGuestTrialStatus } from '@/lib/guest-trial';
 import {
   Upload, Sparkles, Camera, Download, RefreshCw, ChevronRight, X,
-  Grid, Flame, Layers, Play, Zap, ChevronDown
+  Grid, Flame, Layers, Play, Zap, ChevronDown, Scissors
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
@@ -225,6 +224,16 @@ export default function Home() {
   useEffect(() => {
     loadTemplates();
   }, [user, brand.name]); // Reload when user or brand changes
+
+  // Reset to dashboard when Home tab is tapped while already on this page
+  useEffect(() => {
+    const handleReset = () => {
+      setStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    window.addEventListener('resetToHome', handleReset);
+    return () => window.removeEventListener('resetToHome', handleReset);
+  }, []);
 
   // Cambiar mensajes durante el procesamiento con timer real (~25 segundos)
   useEffect(() => {
@@ -941,6 +950,11 @@ export default function Home() {
     wedding: { icon: Sparkles, color: 'text-purple-400' },
     graduation: { icon: Sparkles, color: 'text-blue-300' },
     vacation: { icon: Camera, color: 'text-green-400' },
+    'barber-shop': { icon: Scissors, color: 'text-amber-500' },
+    fade: { icon: Scissors, color: 'text-sky-400' },
+    beard: { icon: Layers, color: 'text-amber-700' },
+    'classic-cut': { icon: Scissors, color: 'text-stone-400' },
+    'skin-fade': { icon: Flame, color: 'text-orange-400' },
     default: { icon: Grid, color: 'text-gray-400' }
   };
 
@@ -1533,8 +1547,6 @@ export default function Home() {
         type="app"
       />
 
-      {/* Bottom Tab Bar - only on template browsing */}
-      {step === 1 && <BottomTabBar />}
 
       <style jsx>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }

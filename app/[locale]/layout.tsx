@@ -3,6 +3,7 @@ import {notFound} from 'next/navigation';
 import {locales} from '@/i18n';
 import {BrandProvider} from '@/app/contexts/BrandContext';
 import {getBrandConfig} from '@/lib/brand/brand-service';
+import {BottomTabBar} from '@/app/components/BottomTabBar';
 
 // Force dynamic rendering so brand config is always fresh from Firestore
 export const dynamic = 'force-dynamic';
@@ -36,6 +37,7 @@ export default async function LocaleLayout({
     <BrandProvider brandConfig={brandConfig}>
       <NextIntlClientProvider locale={locale} messages={messages}>
         {children}
+        <BottomTabBar />
       </NextIntlClientProvider>
     </BrandProvider>
   );
