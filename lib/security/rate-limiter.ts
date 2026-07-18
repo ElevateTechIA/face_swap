@@ -11,6 +11,7 @@ interface RateLimitConfig {
   windowMs: number;        // Time window in milliseconds
   maxRequests: number;     // Max requests per window
   keyPrefix: string;       // Redis/storage key prefix
+  persistent?: boolean;    // Backed by Firestore (survives serverless instances)
 }
 
 interface RateLimitResult {
@@ -31,14 +32,16 @@ export const RATE_LIMITS = {
   FACE_SWAP: {
     windowMs: 60 * 60 * 1000, // 1 hour
     maxRequests: 10,
-    keyPrefix: 'rl:faceswap'
+    keyPrefix: 'rl:faceswap',
+    persistent: true // endpoint costoso: el límite debe sobrevivir cold starts
   },
 
   // Guest trial - 1 per IP ever
   GUEST_TRIAL: {
     windowMs: 365 * 24 * 60 * 60 * 1000, // 1 year (essentially permanent)
     maxRequests: 1,
-    keyPrefix: 'rl:guest'
+    keyPrefix: 'rl:guest',
+    persistent: true
   },
 
   // Image upload - 20 per 10 minutes
@@ -102,6 +105,54 @@ export async function checkRateLimit(
 }
 
 /**
+ * Firestore-backed rate limit check (colección `rateLimits`).
+ * Sobrevive cold starts e instancias múltiples en serverless.
+ * Fail-open: si Firestore falla, cae al store en memoria.
+ */
+async function checkRateLimitPersistent(
+  identifier: string,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  try {
+    const { getAdminFirestore } = await import('@/lib/firebase/admin');
+    const db = getAdminFirestore();
+    // Doc IDs no permiten '/'
+    const key = `${config.keyPrefix}:${identifier}`.replace(/\//g, '_');
+    const ref = db.collection('rateLimits').doc(key);
+
+    return await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(ref);
+      const now = Date.now();
+
+      let count = 0;
+      let resetTime = now + config.windowMs;
+
+      if (doc.exists) {
+        const data = doc.data()!;
+        if (now <= (data.resetTime as number)) {
+          count = (data.count as number) || 0;
+          resetTime = data.resetTime as number;
+        }
+      }
+
+      count++;
+      transaction.set(ref, { count, resetTime });
+
+      const allowed = count <= config.maxRequests;
+      return {
+        allowed,
+        remaining: Math.max(0, config.maxRequests - count),
+        resetTime,
+        retryAfter: allowed ? undefined : Math.ceil((resetTime - now) / 1000),
+      };
+    });
+  } catch (error: any) {
+    console.error('⚠️ Persistent rate limit failed, falling back to memory:', error.message);
+    return checkRateLimit(identifier, config);
+  }
+}
+
+/**
  * Get client IP from request
  */
 export function getClientIp(request: Request): string {
@@ -136,7 +187,9 @@ export async function withRateLimit(
   // Use user ID if authenticated, otherwise use IP
   const identifier = userId || getClientIp(request);
 
-  const result = await checkRateLimit(identifier, config);
+  const result = config.persistent
+    ? await checkRateLimitPersistent(identifier, config)
+    : await checkRateLimit(identifier, config);
 
   return {
     allowed: result.allowed,

@@ -12,15 +12,15 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Users collection
+    // Users collection - cada usuario solo lee/escribe su propio doc
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isOwner(userId);
       allow write: if isOwner(userId);
     }
 
-    // User profiles
+    // User profiles - cada usuario solo lee/escribe su propio doc
     match /userProfiles/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isOwner(userId);
       allow write: if isOwner(userId);
     }
 
