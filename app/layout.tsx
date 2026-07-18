@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Glamour - AI Photo Magic",
+  title: "Glamour - AI Photo Magic v1.1",
   description: "Transform your photos with AI-powered face swap technology",
 };
 
